@@ -77,12 +77,13 @@ void     gmenu_tree_set_user_data (GMenuTree       *tree,
 				   GDestroyNotify  dnotify);
 gpointer gmenu_tree_get_user_data (GMenuTree       *tree);
 
+GSList   *gmenu_tree_get_menu_file_monitors (GMenuTree *tree);
+GSList   *gmenu_tree_get_monitors           (GMenuTree *tree);
+
 const char         *gmenu_tree_get_menu_file           (GMenuTree  *tree);
 GMenuTreeDirectory *gmenu_tree_get_root_directory      (GMenuTree  *tree);
 GMenuTreeDirectory *gmenu_tree_get_directory_from_path (GMenuTree  *tree,
 							const char *path);
-
-
 
 gpointer gmenu_tree_item_ref   (gpointer item);
 void     gmenu_tree_item_unref (gpointer item);

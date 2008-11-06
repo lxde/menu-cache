@@ -733,6 +733,16 @@ gmenu_tree_get_user_data (GMenuTree *tree)
   return tree->user_data;
 }
 
+GSList *gmenu_tree_get_monitors (GMenuTree *tree)
+{
+	return tree->monitors;
+}
+
+GSList *gmenu_tree_get_menu_file_monitors (GMenuTree *tree)
+{
+	return tree->menu_file_monitors;
+}
+
 const char *
 gmenu_tree_get_menu_file (GMenuTree *tree)
 {

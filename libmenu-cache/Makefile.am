@@ -32,10 +32,5 @@ EXTRA_DIST =				\
         libmenu-cache-uninstalled.pc.in	\
 	$(NULL)
 
-bin_PROGRAMS = test_menu
-test_menu_SOURCES = test.c
-test_menu_CFLAGS = $(GLIB_CFLAGS)
-test_menu_LDADD = $(GLIB_LIBS) libmenu-cache.la
-
 pkgconfigdir   = $(libdir)/pkgconfig
 pkgconfig_DATA = libmenu-cache.pc

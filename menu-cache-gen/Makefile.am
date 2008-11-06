@@ -1,6 +1,7 @@
 NULL = 
 
 INCLUDES =				\
+	-I$(top_srcdir)/libmenu-cache	\
 	-DGMENU_I_KNOW_THIS_IS_UNSTABLE	\
 	$(GLIB_CFLAGS)			\
 	$(MONITOR_CFLAGS)		\
@@ -30,8 +31,9 @@ menu_cache_gen_SOURCES =		\
 	$(NULL)
 
 menu_cache_gen_LDADD = 		\
-	$(GLIB_LIBS)			\
-	$(MONITOR_LIBS)			\
+	$(top_builddir)/libmenu-cache/libmenu-cache.la	\
+	$(GLIB_LIBS)					\
+	$(MONITOR_LIBS)					\
 	$(NULL)
 menu_cache_gen_LDFLAGS =			\
 	-version-info $(LIB_MENU_LT_VERSION)	\

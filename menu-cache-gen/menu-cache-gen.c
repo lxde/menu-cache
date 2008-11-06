@@ -21,19 +21,30 @@
 
 #include <glib.h>
 #include <glib/gi18n.h>
+#include <gio/gio.h>
 #include <stdio.h>
+#include <errno.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "gmenu-tree.h"
+#include "menu-cache.h"
 
 static char* ifile = NULL;
 static char* ofile = NULL;
+static gboolean force = FALSE;
 
 GOptionEntry opt_entries[] =
 {
-	{"force", 'f', 0, G_OPTION_ARG_NONE, NULL, "Force regeneration of cache even if it's up-to-date.", NULL },
+	{"force", 'f', 0, G_OPTION_ARG_NONE, &force, "Force regeneration of cache even if it's up-to-date.", NULL },
 	{"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
 	{"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
 	{0}
 };
+
+GHashTable* dir_hash = NULL;
 
 void write_item_ex_info( FILE* of, const char* desktop_file )
 {
@@ -64,10 +75,12 @@ void write_item_ex_info( FILE* of, const char* desktop_file )
 void write_dir( FILE* of, GMenuTreeDirectory* dir )
 {
 	GSList* l;
+	const char* str;
 
 	fprintf( of, "+%s\n", gmenu_tree_directory_get_menu_id( dir ) );
 	fprintf( of, "%s\n", gmenu_tree_directory_get_name( dir ) );
-	fprintf( of, "%s\n", gmenu_tree_directory_get_comment( dir ) );
+	str = gmenu_tree_directory_get_comment( dir );
+	fprintf( of, "%s\n", str ? str : "" );
 	fprintf( of, "%s\n", gmenu_tree_directory_get_icon( dir ) );
 
 	fprintf( of, "%s\n", gmenu_tree_directory_get_desktop_file_path( dir ) );
@@ -88,18 +101,19 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
         {
 			char* tmp;
 			fprintf( of, "-%s\n", gmenu_tree_entry_get_desktop_file_id( (GMenuTreeEntry*)item ) );
-            if( gmenu_tree_entry_get_is_nodisplay(item) || gmenu_tree_entry_get_is_excluded(item) )
+            if( gmenu_tree_entry_get_is_nodisplay(item) /* || gmenu_tree_entry_get_is_excluded(item) */ )
                 continue;
 
 			fprintf( of, "%s\n", gmenu_tree_entry_get_name( item ) );
-			fprintf( of, "%s\n", gmenu_tree_entry_get_comment( item ) );
+			str = gmenu_tree_entry_get_comment( item );
+			fprintf( of, "%s\n", str ? str : "" );
 			fprintf( of, "%s\n", gmenu_tree_entry_get_icon( item ) );
 
 			tmp = g_path_get_dirname( gmenu_tree_entry_get_desktop_file_path( item ) );
 			fprintf( of, "%s\n", tmp);
 			g_free( tmp );
-
 			fprintf( of, "%s\n", gmenu_tree_entry_get_exec( item ) );
+			fprintf( of, "%c\n", gmenu_tree_entry_get_launch_in_terminal( item ) ? '1' : '0' );
 
 			write_item_ex_info(of, gmenu_tree_entry_get_desktop_file_path( item ));
 			fputs( "\n", of );
@@ -110,6 +124,84 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
 	fputs( "\n", of );
 }
 
+static void get_all_involved_dirs( MenuCacheItem* menu, GHashTable* hash )
+{
+	GSList* l = menu_cache_dir_get_children( menu );
+	for( ; l; l = l->next )
+	{
+		MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
+		MenuCacheType type = menu_cache_item_get_type(item);
+		if( type == MENU_CACHE_TYPE_APP )
+		{
+			if( ! g_hash_table_lookup(hash, menu_cache_app_get_file_dir( MENU_CACHE_APP(item) )) )
+				g_hash_table_insert( hash, g_strdup( menu_cache_app_get_file_dir( MENU_CACHE_APP(item)) ), GINT_TO_POINTER(TRUE) );
+		}
+		else if( type == MENU_CACHE_TYPE_DIR )
+		{
+			char* dir_path = g_path_get_dirname( menu_cache_dir_get_file(MENU_CACHE_DIR(item)) );
+			if( ! g_hash_table_lookup(hash, dir_path ) )
+				g_hash_table_insert( hash, dir_path, GINT_TO_POINTER(TRUE) );
+			else
+				g_free( dir_path );
+			get_all_involved_dirs( item, hash );
+		}
+	}
+}
+
+static gboolean is_src_newer( const char* src, const char* dest )
+{
+	struct stat src_st, dest_st;
+
+	if( stat(dest, &dest_st) == -1 )
+		return FALSE;
+
+	if( stat(src, &src_st) == -1 )
+		return FALSE;
+
+	return (src_st.st_mtime > dest_st.st_mtime);
+}
+
+static gboolean is_menu_uptodate()
+{
+	MenuCacheDir* menu;
+	struct stat menu_st, cache_st;
+	GHashTable* hash;
+	GList *dirs, *l;
+	gboolean ret = TRUE;
+
+	if( is_src_newer( ifile, ofile ) )
+		return FALSE;
+
+	/* FIXME: this is quite dirty and probably buggy.
+	 * There should be a better way to detect changed.
+	 */
+
+	/* load the cache and check all files involved */
+	menu = menu_cache_new( ofile, NULL, NULL );
+	if( ! menu )
+		return FALSE;
+
+	hash = g_hash_table_new_full( g_str_hash, g_str_equal, g_free, NULL );
+
+	get_all_involved_dirs( menu, hash );
+	dirs = g_hash_table_get_keys( hash );
+
+	for( l = dirs; l; l = l->next )
+	{
+		if( is_src_newer( (char*)l->data, ofile ) )
+		{
+			ret = FALSE;
+			break;
+		}
+	}
+	g_list_free( dirs );
+	g_hash_table_destroy( hash );
+
+	menu_cache_item_unref( menu );
+
+	return ret;
+}
+
 int main(int argc, char** argv)
 {
 	GOptionContext* opt_ctx;
@@ -118,6 +210,8 @@ int main(int argc, char** argv)
 	GMenuTreeDirectory* root_dir;
 	GSList* l;
 	FILE *of;
+	int ofd;
+	char *tmp;
 
 	opt_ctx = g_option_context_new("Generate cache for freedeskotp.org compliant menus.");
 	g_option_context_add_main_entries( opt_ctx, opt_entries, NULL );
@@ -128,6 +222,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	/* if the cache is already up-to-date, just leave it. */
+	if( !force && is_menu_uptodate() )
+	{
+		return 0;
+	}
+
     menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_NONE );
 	if( ! menu_tree )
 	{
@@ -135,10 +235,18 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-//    gmenu_tree_add_monitor( menu_tree, on_menu_tree_changed, NULL );
-	
 	/* write the tree to cache. */
-	of = fopen( ofile, "w" );
+	tmp = g_malloc( strlen( ofile ) + 7 );
+	strcpy( tmp, ofile );
+	strcat( tmp, "XXXXXX" );
+	ofd = g_mkstemp( tmp );
+	if( ofd == -1 )
+	{
+		g_print( "Error writing output file: %s\n", g_strerror(errno) );
+		return 1;
+	}
+
+	of = fdopen( ofd, "w" );
 	if( ! of )
 	{
 		g_print( "Error writing output file: %s\n", ofile );
@@ -149,7 +257,14 @@ int main(int argc, char** argv)
 	write_dir( of, root_dir );
 
 	fclose( of );
+
     gmenu_tree_unref( menu_tree );
+
+	if( g_rename( tmp, ofile ) == -1 )
+	{
+		g_print( "Error writing output file: %s\n", g_strerror( errno ) );
+	}
+	g_free( tmp );
 
 	return 0;
 }

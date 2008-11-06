@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "menu-cache.h"
 
@@ -129,6 +130,11 @@ static void read_app( FILE* f, MenuCacheApp* app )
 	if( G_LIKELY(len > 1) )
 		app->exec = g_strndup( line, len - 1 );
 
+	/* terminal */
+	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+		return;
+	app->use_terminal = line[0] == '1' ? TRUE : FALSE;
+
 	read_item_extended( f, MENU_CACHE_ITEM(app) );
 }
 
@@ -213,12 +219,12 @@ MenuCacheDir* menu_cache_new( const char* cache_file, char** include, char** exc
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
-	g_atomic_int_inc( item->n_ref );
+	g_atomic_int_inc( &item->n_ref );
 }
 
 void menu_cache_item_unref(MenuCacheItem* item)
 {
-	if( g_atomic_int_dec_and_test( item->n_ref ) )
+	if( g_atomic_int_dec_and_test( &item->n_ref ) )
 	{
 		g_free( item->id );
 		g_free( item->name );
@@ -290,9 +296,19 @@ GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
 	return dir->children;
 }
 
+const char* menu_cache_dir_get_file( MenuCacheDir* dir )
+{
+	return dir->file;
+}
+
 const char* menu_cache_app_get_exec( MenuCacheApp* app )
 {
 	return app->exec;
+}
+
+const char* menu_cache_app_get_file_dir( MenuCacheApp* app )
+{
+	return app->file_dir;
 }
 
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app )
@@ -307,7 +323,7 @@ char** menu_cache_app_get_categories( MenuCacheApp* app )
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app )
 {
-	return FALSE;
+	return app->use_terminal;
 }
 
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app )

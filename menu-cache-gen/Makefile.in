@@ -53,8 +53,9 @@ am_menu_cache_gen_OBJECTS = menu-cache-gen.$(OBJEXT) \
 	menu-util.$(OBJEXT) $(am__objects_1)
 menu_cache_gen_OBJECTS = $(am_menu_cache_gen_OBJECTS)
 am__DEPENDENCIES_1 =
-menu_cache_gen_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+menu_cache_gen_DEPENDENCIES =  \
+	$(top_builddir)/libmenu-cache/libmenu-cache.la \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 menu_cache_gen_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(menu_cache_gen_LDFLAGS) $(LDFLAGS) -o $@
@@ -234,6 +235,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 NULL = 
 INCLUDES = \
+	-I$(top_srcdir)/libmenu-cache	\
 	-DGMENU_I_KNOW_THIS_IS_UNSTABLE	\
 	$(GLIB_CFLAGS)			\
 	$(MONITOR_CFLAGS)		\
@@ -261,8 +263,9 @@ menu_cache_gen_SOURCES = \
 	$(NULL)
 
 menu_cache_gen_LDADD = \
-	$(GLIB_LIBS)			\
-	$(MONITOR_LIBS)			\
+	$(top_builddir)/libmenu-cache/libmenu-cache.la	\
+	$(GLIB_LIBS)					\
+	$(MONITOR_LIBS)					\
 	$(NULL)
 
 menu_cache_gen_LDFLAGS = \

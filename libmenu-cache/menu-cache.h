@@ -62,15 +62,23 @@ const char* menu_cache_item_get_extended( MenuCacheItem* item, const char* key )
 const char* menu_cache_item_get_qextended( MenuCacheItem* item, GQuark key );
 
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
+const char* menu_cache_dir_get_file( MenuCacheDir* dir );
 
+const char* menu_cache_app_get_file_dir( MenuCacheApp* app );
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
+
+/*
 char** menu_cache_app_get_categories( MenuCacheApp* app );
+*/
+
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app );
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app );
 
+/*
 GSList* menu_cache_list_all_apps();
 MenuCacheApp* menu_cache_find_app_by_exec( const char* exec );
+*/
 
 G_END_DECLS
 
