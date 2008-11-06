@@ -1,0 +1,280 @@
+# translation of nn.po to Norwegian Nynorsk
+# Norwegian (nynorsk) translation of gnome-menus.
+# Copyright (C) Roy-Magne Mo <rmo@sunnmore.net>, 2001.
+# Roy-Magne Mo <rmo@sunnmore.net>, 2001.
+# Åsmund Skjæveland <aasmunds@fys.uio.no>, 2003, 2004.
+# Kjartan Maraas <kmaraas@gnome.org>, 2005.
+# Eskild Hustvedt <eskildh@gnome.org>, 2008
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-control-center 2.9.4\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-04-07 14:28+0200\n"
+"PO-Revision-Date: 2008-04-07 14:30+0200\n"
+"Last-Translator: Eskild Hustvedt <eskildh@gnome.org>\n"
+"Language-Team: Norwegian Nynorsk <i18n-no@lister.ping.uio.no>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Tilgjenge"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Innstillingar for tilgjenge"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Tilbehøyr"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Tilbehøyr for skrivebordet"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Program"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Personlege og administrative innstillingar"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "System"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Programmering"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Verkty for programmering"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Utdanning"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Spel"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Spel og underhalding"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Grafikk"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Grafikk-program"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Maskinvare"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Innstillingar for fleire maskinvareeiningar"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Internett og nettverk"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Nettverksrelaterte innstillingar"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Internett"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Program for bruk på Internett til dømes nettlesar og e-post"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Utsjåande"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Innstillingar som kontrollerar skrivebordets utsjåande og oppførsel"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Multimedia-meny"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Lyd og bilete"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Kontor"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Kontorprogram"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Program som ikkje passar i andre kategoriar"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Anna"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Personleg"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Personlege innstillingar"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Personlege innstillingar"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Innstillingar"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Innstillingar relatert til tilgjenge"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Personlege innstillingar"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Systeminnstillingar"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Administrasjon"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Gjer om instillingar for heile systemet (påverkar alle brukarar)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Systemverktøy"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Oppsett og overvaking av systemet"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Menyredigerar"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Rediger menyar"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Program:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "_Forval"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Menyar:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:94
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:121
+msgid "Name"
+msgstr "Namn"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:113
+msgid "Show"
+msgstr "Vis"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:42
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"Klarte ikkje finne heimemappe: ikkje satt i /etc/passwd og ingen verdi for "
+"$HOME i miljøet"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Menyfil"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENY_FIL"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Overvak menyen for endringar"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Inkluder oppføringar som har blitt ekskludert med <exclude>"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr ""
+"Inkluder oppføringar som er satt til å ikkje bli vist med NoDisplay=true"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Ugyldig ID for desktop-fil"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Ugyldig filnamn]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <ekskludert>"
+
+#: ../util/test-menu-spec.c:164
+#, c-format
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Meny endra, lastar på nytt ===\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Menytreet er tomt"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- test GNOME sin implementasjon av desktop-meny spesifikasjonen"
+
+#~ msgid "Accessibility"
+#~ msgstr "Tilgjenge"
+
+#~ msgid "Desktop"
+#~ msgstr "Skrivebord"

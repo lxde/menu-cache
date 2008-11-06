@@ -1,0 +1,233 @@
+# translation of mn.po to Mongolian
+# translation of PACKAGE.
+# Copyright (C) 2006 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# <>, 2006.
+# Badral <badral@openmn.org>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: mn\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-04-12 05:22+0200\n"
+"PO-Revision-Date: 2006-08-15 20:40+0200\n"
+"Last-Translator: Badral <badral@openmn.org>\n"
+"Language-Team: Mongolian <openmn-translation@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10.2\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Accessibility"
+msgstr "Хандалт"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Accessibility Settings"
+msgstr "Хандалтын тохиргоонууд"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Нэмэлт төхөөрөмж"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Дэлгэцийн нэмэлт төхөөрөмжүүд"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Програмууд"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Desktop"
+msgstr "Ажлын талбар"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+msgid "Personal preferences and administration settings"
+msgstr "Хувийн тохиргоо болон удирдлагын тохируулгууд"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Програмчилал"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Програм хөгжүүлэлийн хэрэгслүүд"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Боловсрол"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Тоглоом"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Тоглоом, зугаа цэнгэл"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "График"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "График програмууд"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Интернэт"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Вэб болон э-шуудан гэх мэт интернэт хандалтын програмууд"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Мультимедиа цэс"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Дуу & Видео"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Бичиг хэрэг, офис"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Офисын програмууд"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Бусад ангилалд тохирохгүй програмууд"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Бусад"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Хувийн тохиргоо"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Тохиргоо"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Accessibility related preferences"
+msgstr "Хандалттай холбоотой тохиргоонууд"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Хувийн тохиргоонууд"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Удирдлага"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change systemwide settings (affects all users)"
+msgstr "Системийн тохируулгыг өөрчлөх (бүх хэрэглэгчид нөлөөлнө)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Системийн хэрэгслүүд"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Системийн тохиргоо болон хяналт"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Цэс засварлагч"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Цэс засварлах"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Програмууд:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "_Стандарт"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Цэсүүд:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Нэр"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Харуулах"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr "Home лавлах олдохгүй байна: /etc/passwd болон environment-д $HOME-ийн утга олгогдоогүй байна"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Цэс файл"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "ЦЭС_ФАЙЛ"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Цэс өөрчилөлтийн хяналт"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "<Хассан> элементүүд оруулах"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "NoDisplay=true элемент оруулах"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Хүчингүй ажлын талбар файлын ID"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Хүчингүй файлын нэр]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr "<Хасагдсан>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Цэс өөрчлөгдсөн, дахин ачаалж байна  ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Цэсийн мод хоосон байна"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- GNOME-н Desktop Menu Specification програмчилалыг шалгах"
+

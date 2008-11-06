@@ -1,0 +1,271 @@
+# translation of gnome-menus to Russian
+# Copyright (C) 1998-2003, 2005, 2006, 2007 Free Software Foundation, Inc.
+#
+# Dmitry G. Mastrukov <dmitry@taurussoft.org>, 2004.
+# Leonid Kanter <leon@asplinux.ru>, 2005, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus trunk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-16 19:34+0400\n"
+"PO-Revision-Date: 2007-09-16 12:53+0200\n"
+"Last-Translator: Nickolay V. Shmyrev <nshmyrev@yandex.ru>\n"
+"Language-Team: Russian <gnome-cyr@gnome.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Специальные возможности"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Параметры специальных возможностей"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Стандартные"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Стандартные приложения"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Приложения"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Личные предпочтения и административные параметры"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "Система"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Программирование"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Средства для разработки программ"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Образовательные"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Игры"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Игры и развлечения"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Графика"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Графические приложения"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Оборудование"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Параметры нескольких аппаратных устройств"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Интернет и сеть"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Параметры, относящиеся к настройке сети"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Интернет"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Программы для работы с Интернетом (почта, браузер и т.п.)"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Оформление"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Параметры, влияющие на внешний вид и поведение рабочего стола"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Мультимедиа"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Аудио и видео"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Офис"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Офисные приложения"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Приложения, не подпадающие ни под какие категории"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Прочие"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Персональные"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Персональные параметры"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Персональные предпочтения"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Параметры"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Параметры, связанные со специальными возможностями"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Персональные настройки и установки"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Системные параметры"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Администрирование"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Изменение системных установок (влияет на всех пользователей)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Системные"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Средства конфигурации и мониторинга системы"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Редактор меню"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Редактирование меню"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Приложения:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "_Исходный вид"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Меню:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Имя"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Отображать"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"Не удается найти домашний каталог: не установлен ни в /etc/passwd, ни при "
+"помощи переменной $HOME"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Файл меню"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENU_FILE"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Отслеживать изменения в меню"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Включать исключенные элементы"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Включать элементы NoDisplay=true"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Неверный ID desktop-файла"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[неверное имя файла]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <excluded>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Меню изменено, перегружается ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Дерево меню пусто"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr ""
+"- проверка реализации спецификации Desktop Menu, использованной в GNOME"

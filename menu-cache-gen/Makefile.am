@@ -1,0 +1,42 @@
+NULL = 
+
+INCLUDES =				\
+	-DGMENU_I_KNOW_THIS_IS_UNSTABLE	\
+	$(GLIB_CFLAGS)			\
+	$(MONITOR_CFLAGS)		\
+	$(DEBUG_CFLAGS)			\
+	$(WARN_CFLAGS)			\
+	$(NULL)
+
+bin_PROGRAMS = menu-cache-gen
+
+menu_cache_gen_SOURCES =		\
+	menu-cache-gen.c		\
+	canonicalize.c			\
+	canonicalize.h			\
+	desktop-entries.c		\
+	desktop-entries.h		\
+	entry-directories.c		\
+	entry-directories.h		\
+	gmenu-tree.c			\
+	gmenu-tree.h			\
+	menu-layout.c			\
+	menu-layout.h			\
+	menu-monitor.c			\
+	menu-monitor.h			\
+	menu-util.c			\
+	menu-util.h			\
+	$(MONITOR_SOURCES)		\
+	$(NULL)
+
+menu_cache_gen_LDADD = 		\
+	$(GLIB_LIBS)			\
+	$(MONITOR_LIBS)			\
+	$(NULL)
+menu_cache_gen_LDFLAGS =			\
+	-version-info $(LIB_MENU_LT_VERSION)	\
+	-no-undefined				\
+	-export-symbols-regex gmenu_tree	\
+	$(NULL)
+EXTRA_DIST =				\
+	$(NULL)

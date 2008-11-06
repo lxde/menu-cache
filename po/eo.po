@@ -1,0 +1,236 @@
+# Esperanto translation for gnome-menus
+# Copyright (c) (c) 2006 Canonical Ltd, and Rosetta Contributors 2006
+# This file is distributed under the same license as the gnome-menus package.
+#
+# Joop Eggen <joop_eggen@yahoo.de>, 2006
+# Guillaume Savaton <llumeao@tuxfamily.org>, 2006
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-09-22 07:37+0200\n"
+"PO-Revision-Date: 2006-09-25 13:30+0200\n"
+"Last-Translator: Guillaume Savaton <llumeao@tuxfamily.org>\n"
+"Language-Team: Esperanto <eo@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Accessibility"
+msgstr "Alireblo"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Accessibility Settings"
+msgstr "Agordoj pri alireblo"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Utilaĵoj"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Labortablaj utilaĵoj"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Aplikaĵoj"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Desktop"
+msgstr "Labortablo"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+msgid "Personal preferences and administration settings"
+msgstr "Personaj preferoj kaj administraj agordoj"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Programado"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Iloj por programado"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Edukado"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Ludoj"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Ludoj kaj amuzoj"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Grafikoj"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Grafikaj aplikaĵoj"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Interreto"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Programoj por TTT-uzo, ekzemple por TTT-legado kaj retpoŝto"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Spektada menuo"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Sono kaj video"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Oficejo"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Oficejaj aplikaĵoj"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Aplikaĵoj neagordaj aliajn kategoriojn"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Alia"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Personaj preferoj"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Agordaĵoj"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Accessibility related preferences"
+msgstr "Agordoj pri alireblo"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Personaj agordoj"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Administrado"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change systemwide settings (affects all users)"
+msgstr "Ŝanĝi mallokajn agordojn (afektas ĉiujn uzulojn)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Sistemaj iloj"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Agordi kaj kontroli sistemon"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Menua redaktilo"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Redakti menuojn"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "Aplikaĵoj:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "Defaŭltoj"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "Menuoj:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Nomo"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Vidigi"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"Ne eblas trovi hejman dosierujon: ne agorditan en /etc/passwd kaj mankas "
+"valoro por media variablo $HOME"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Menua dosiero"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENU_FILE"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Kontrolilo por menuaj ŝanĝoj"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Inkludu <Exclud> (ekskluditajn) elementojn"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Inkluzivi elementojn kie NoDisplay=true"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Nevalida identeco de labortabla dosiero"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Nevalida dosiernomo]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <ekskludita>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Menuo ŝanĝita, reŝargado ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Menua arbo malplenas"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "testi la de GNOME realigon de la Labortabla Menua Specifo"
+
+#~ msgid "System"
+#~ msgstr "Sistemo"

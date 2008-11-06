@@ -1,0 +1,277 @@
+# Translation of gnome-menus to Greek
+# This file is distributed under the same license as the gnome-menus package.
+# Copyright (C) Free Software Foundation.
+#
+# Simos Xenitellis <simos@gnome.org>, 2004.
+# Nikos Charonitakis <charosn@her.forthnet.gr>, 2005.
+# Kostas Papadimas <pkst@gnome.org>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: el\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-15 18:31+0300\n"
+"PO-Revision-Date: 2008-03-04 00:31+0200\n"
+"Last-Translator: nikosCharonitakis <nikosx@gmail.com>\n"
+"Language-Team: Greek <team@gnome.gr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Γενική πρόσβαση"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Ρυθμίσεις γενικής πρόσβασης"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Βοηθήματα"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Βοηθήματα επιφάνειας εργασίας"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Εφαρμογές"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Προσωπικές προτιμήσεις και ρυθμίσεις διαχείρισης"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "Σύστημα"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Προγραμματισμός"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Εργαλεία για ανάπτυξη λογισμικού"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Εκπαίδευση"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Παιχνίδια"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Παιχνίδια και διασκέδαση"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Γραφικά"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Εφαρμογές γραφικών"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Υλικό"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Ρυθμίσεις για διάφορες συσκευές υλικού"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Διαδίκτυο και δίκτυο"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Ρυθμίσεις για το δίκτυο"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Διαδίκτυο"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Προγράμματα πρόσβασης στο Διαδίκτυο όπως φυλλομετρητής και ηλεκ. αλληλογραφία"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Μορφή εμφάνισης"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Ρυθμίσεις για την εμφάνιση και συμπεριφορά της επιφάνειας εργασίας"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Μενού πολυμέσων"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Ήχος & βίντεο"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Γραφείο"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Εφαρμογές γραφείου"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Εφαρμογές που δεν ταιριάζουν στις άλλες κατηγορίες"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Άλλα"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Προσωπικά"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Προσωπικές ρυθμίσεις"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Προσωπικές προτιμήσεις"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Προτιμήσεις"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Προτιμήσεις σχετικά με γενική πρόσβαση"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Προσωπικές προτιμήσεις και ρυθμίσεις"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Ρυθμίσεις συστήματος"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Διαχείριση συστήματος"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Τροποποίηση ρυθμίσεων συστήματος (επηρεάζει όλους τους χρήστες)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Εργαλεία συστήματος"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Ρύθμιση και έλεγχος συστήματος"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Επεξεργαστής μενού"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Επεξεργασία μενού"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Εφαρμογές:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "_Προεπιλεγμένα"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Μενού:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Όνομα"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Εμφάνιση"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid "Cannot find home directory: not set in /etc/passwd and no value for $HOME in environment"
+msgstr "Αδυναμία εύρεσης αρχικού καταλόγου: δεν έχει ορισθεί τιμή στο /etc/passwd και στο$HOME στο περιβάλλον"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Αρχείο μενού"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENU_FILE"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Παρακολούθηση για αλλαγές στο μενού"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Να συμπεριλαμβάνονται <αποκλεισμένες> καταχωρίσεις"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Να συμπεριλαμβάνονται <αποκλεισμένες> καταχωρίσεις"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Μη έγκυρο αναγνωριστικό αρχείου επιφάνειας εργασίας"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Μη έγκυρο όνομα αρχείου]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <αποκλεισμένα>"
+
+#: ../util/test-menu-spec.c:164
+#, c-format
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Το μενού άλλαξε, επαναφόρτωση ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169
+#: ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Το δέντρο μενού είναι κενό"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- δοκιμή της εφαρμογής από το GNOME των οδηγιών μενού επιφάνειας εργασίας"
+
+#~ msgid "Accessibility"
+#~ msgstr "Προσιτότητα"
+#~ msgid "Accessibility Settings"
+#~ msgstr "Ρυθμίσεις Προσιτότητας"
+#~ msgid "Desktop"
+#~ msgstr "Επιφάνεια Εργασίας"
+

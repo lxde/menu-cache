@@ -1,0 +1,279 @@
+# German translation of gnome-menus.
+# Copyright (C) 2004 THE gnome-menus'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-menus package.
+# Hendrik Brandt <heb@gnome-de.org>, 2004-2005.
+# Hendrik Richter <hendrikr@gnome.org>, 2006, 2007. 
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus HEAD\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-07-20 19:43+0200\n"
+"PO-Revision-Date: 2007-07-20 19:45+0200\n"
+"Last-Translator: Hendrik Richter <hendrikr@gnome.org>\n"
+"Language-Team: German <gnome-de@gnome.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Barrierefreiheit"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Einstellungen zur Barrierefreiheit"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Zubehör"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Desktop-Zubehör"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Anwendungen"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Persönliche Anpassungen und Administratoreinstellungen"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "System"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Entwicklung"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Werkzeuge zur Software-Entwicklung"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Bildung"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Spiele"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Spiel und Spaß"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Grafik"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Anwendungen zur Grafikbearbeitung"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Hardware"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Einstellungen für Hardware"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Internet und Netzwerk"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Netzwerkbezogene Einstellungen"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Internet"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Programme um Internet-Dienste wie E-Mail oder das WWW zu nutzen"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Darstellung"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Einstellungen für das Aussehen und das Verhalten der Arbeitsoberfläche"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Multimedia-Menü"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Unterhaltungsmedien"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Büro"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Büroanwendungen"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Anwendungen welche in keine andere Kategorie eingeordnet werden können"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Sonstige"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Persönlich"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Persönliche Vorlieben und Einstellungen"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Persönliche Einstellungen"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Einstellungen"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Einstellungen zur Barrierefreiheit"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Persönliche Vorlieben und Einstellungen"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Systemeinstellungen"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Systemverwaltung"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Systemweite Einstellungen ändern (dies betrifft alle Benutzer)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Systemwerkzeuge"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Systemkonfiguration und -überwachung"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Menüeditor"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Menüs bearbeiten"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Anwendungen:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "_Vorgaben"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Menüs:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Name"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Anzeigen"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"Das Heimatverzeichnis des Benutzers konnte nicht gefunden werden: es ist "
+"weder in /etc/passwd angegeben, noch gibt es einen Wert für die "
+"Umgebungsvariable $HOME"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Menüdatei"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENÜ_DATEI"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Menüänderungen überwachen"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Mit »<ausschließen>« markierte Einträge einbeziehen"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Mit »NoDisplay=true« markierte Einträge einbeziehen"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Ungültige Desktop-Dateikennung"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Ungültiger Dateiname]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <ausschließen>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Menü wurde geändert, wird neu geladen ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Der Menübaum ist leer"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- testen der GNOME-Implementation der Desktop-Menü-Spezifikation"
+
+#~ msgid "Accessibility"
+#~ msgstr "Barrierefreiheit"
+
+#~ msgid "Accessibility Settings"
+#~ msgstr "Einstellungen zur Barrierefreiheit"
+
+#~ msgid "Desktop"
+#~ msgstr "Desktop"

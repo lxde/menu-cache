@@ -1,0 +1,274 @@
+# translation of gnome-menus.HEAD.mr.po to marathi
+# Marathi Translation of gnome-menus
+# Copyright (C) 2005, 2006, 2008 Free Software Foundation, Inc.
+# This file is distributed under the same license as the gnome-menus package.
+#
+# FIRST AUTHOR: Gayatri Deshpande <gafinde@gmail.com>, 2005.
+# Rahul Bhalerao <b.rahul.pm@gmail.com>, 2006.
+# Sandeep Shedmake <sandeep.shedmake@gmail.com>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus.HEAD.mr\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-05-02 03:41+0100\n"
+"PO-Revision-Date: 2008-02-29 21:19+0530\n"
+"Last-Translator: Sandeep Shedmake <sandeep.shedmake@gmail.com>\n"
+"Language-Team: marathi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "जागतीक प्रवेश"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "जागतीक प्रवेश संयोजना"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "शिवाय उपकरणं"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "डेस्कटॉपशी निगडित शिवाय उपकरणं"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "उपकरणं"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "व्यक्तिगत प्राधान्यता व प्रशासकीय रचना"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "प्रणाली"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "प्रोग्रामिंग"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "सॉफ्टवेयर बनवण्यासाटीचे अौजार"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "शिक्षण"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "खेळ"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "खेळ व मनोरंजन"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "चित्र-विज्ञान"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "चित्र-विज्ञान उपकरणं"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "हार्डवेअर"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "विविध हार्डवेअर साधन करीता संयोजना"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "महाजाळ व संजाळ"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "संजाळ-संबंधी संयोजना"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "इंटरनेट"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "इंटरनेट वेब व ईमेल बघण्यासाठी प्रोग्राम"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "दृश्य व प्रभाव"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "डेस्कटॉप दृश्य व वागणूक नियंत्रीत करणारी संयोजना"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "विविध-वाहिन्यांचा मेनु"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "आवाज व चलचित्र"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "कार्यालय"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "कार्यालय संबंधित उपकरणं"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "उपकरणं जे दुसरया कुठल्याही गटांत बसले नाही"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "अन्य"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "व्यक्तिगत"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "व्यक्तिगत संयोजना"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "व्यक्तिगत प्राधान्यता"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "प्राधान्ये"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "जागतिक प्रवेश संबंधी प्राधान्यता"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "व्यक्तिगत प्राधान्ये व परिमाणे"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "प्रणाली संयोजना"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "व्यवथापन"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "प्रणाली-करीताचे संयोजना बदलवा (सर्व वापरकर्ते प्रभावीत होतात)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "यंत्रणे संबंधित अौजार"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "यंत्रणेचे सुसुत्रीकरण व संचलन"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "मेनू संपादक"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "मेनू संपादा"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "उपकरणं (_A)"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "मुलभूत(_D)"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "मेनु (_M):"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "शिर्षक"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "दाखवा"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"गृह निर्देशिका शोधता आली नाही: /etc/passwd निर्धारित नाही आणि $HOME या चलनासाठी "
+"पर्यावरणात मुल्य नाही."
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "मेनू फाइल"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENU_FILE"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "मेनूमधील बदलांसाठी निरिक्षक"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "<Exclude>केलेली प्रविष्टे समाविष्ट करा"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "NoDisplay=true प्रविष्टे समाविष्ट करा"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "अवैध कार्यस्थळ फाइल आयडी"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[अवैध फाइलनाम]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <excluded>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== मेनू बदलला, पुनः भारित होतोय ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "मेनू वृक्ष रिकामा आहे"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- GNOME चा कार्यस्थळ मेनू नोंदींचा अवलंब तपासा"
+

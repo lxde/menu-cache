@@ -1,0 +1,283 @@
+# Serbian translation of gnome-menus
+# Courtesy of Prevod.org team (http://prevod.org/) -- 2004, 2005, 2006, 2007.
+#
+# This file is distributed under the same license as the gnome-menus package.
+#
+# Maintainer: Danilo Šegan <dsegan@gmx.net>
+# Reviewed on 2005-09-03 by: Danilo Šegan <danilo@gnome.org>"
+# Transalted on 2006-01-31 by: Slobodan D. Sredojević <slobo@akrep.be> 
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-09-12 01:21+0200\n"
+"PO-Revision-Date: 2007-09-12 01:22+0200\n"
+"Last-Translator: Goran Rakić <grakic@devbase.net>\n"
+"Language-Team: Serbian (sr) <gnome@prevod.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Univerzalni pristup"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Podešavanja univerzalnog pristupa"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Alatke"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Alatke okruženja"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Programi"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Lične postavke i administratorska podešavanja"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "Sistemski alati"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Programiranje"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Alati za razvoj softvera"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Obrazovanje"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Igre"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Igre i zabava"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Grafika"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Grafički programi"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Uređaji"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Podešavanja za neke uređaje"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Internet i mreža"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Mrežna podešavanja"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Internet"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Programi za pristup Internetu kao što je veb i e-pošta"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Izgled i ponašanje"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Podešavanje izgleda i ponašanja radnog okruženja"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Meni za multimediju"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Zvuk i pokretne slike"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Kancelarija"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Programi za kancelariju"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Programi koji ne pripadaju ostalim kategorijama"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Ostalo"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Lično"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Lična podešavanja"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Lične postavke"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Postavke"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Postavke u vezi univerzalnog pristupa"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Lične postavke i podešavanja"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Podešavanja sistema"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Administracija"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Promenite sistemska podešavanja (utiče na sve korisnike)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Sistemski alati"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Podešavanje i praćenje sistema"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Uređivač menija"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Uredi menije"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Programi:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "Po_drazumevani"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Meniji:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Naziv"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Prikaži"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid ""
+"Cannot find home directory: not set in /etc/passwd and no value for $HOME in "
+"environment"
+msgstr ""
+"Ne mogu da nađem lični direktorijum: nije postavljen u /etc/passwd a nema ni "
+"vrednosti $HOME u okruženju"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Datoteka menija"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "DATOTEKA_MENIJA"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Prati izmene menija"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Uključi izuzete stavke"
+
+# bug(slobo): može li bolje?
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Uključi stavke koje ne treba da se vide"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Neispravan IB .desktop datoteke"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Neispravno ime datoteke]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <isključena>"
+
+#: ../util/test-menu-spec.c:164
+#, c-format
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Meni je izmenjen, ponovno učitavanje je u toku ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169 ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Stablo menija je prazno"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "— isprobava Gnomovu izvedbu Specifikacije za menije okruženja"
+
+#~ msgid "Accessibility"
+#~ msgstr "Pristupačnost"
+
+#~ msgid "Accessibility Settings"
+#~ msgstr "Podešavanja pristupačnosti"
+
+#~ msgid "Desktop"
+#~ msgstr "Okruženje"

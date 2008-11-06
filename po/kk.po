@@ -1,0 +1,257 @@
+# translation of gnome-menus to Kazakh
+# Copyright (C) 2008 Free Software Foundation, Inc.
+#
+# Moldabekov Margulan <moldabekov@gmail.com>, 2008
+# Erzhan Shaniev <erzhan.jktl@gmail.com>, 2008
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus trunk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-04-17 14:41+0100\n"
+"PO-Revision-Date: 2008-09-22 10:23+0600\n"
+"Last-Translator: Margulan Moldabekov <frost.uw@gmail.com>\n"
+"Language-Team: Kazakh <gnome-cyr@gnome.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ../desktop-directories/AudioVideo.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Мультимедиа"
+
+#: ../desktop-directories/AudioVideo.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Аудио және видео"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Программдау"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Программа құруға арналған құралдар"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Білім программалары"
+
+#: ../desktop-directories/Game.directory.in.h:1
+msgid "Games"
+msgstr "Ойындар"
+
+#: ../desktop-directories/Game.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Ойын-сауық"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Графика"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Графикалық айқындауыштар"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Жабдықтар"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Аппараттық жабдықтардың параметрлері"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Интернет және тор"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Торға байланысты параметрлер"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Көркемдеу"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Жұмыс үстелін көркейтетін параметрлер"
+
+#: ../desktop-directories/Network.directory.in.h:1
+msgid "Internet"
+msgstr "Интернет"
+
+#: ../desktop-directories/Network.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Интернетті қолдануға арналған программалар (пошта, браузер, т.б.)"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Офис"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Офистық айқындауыштар"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Жеке"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Жеке параметрлер"
+
+#: ../desktop-directories/Settings-System.directory.in.h:1
+msgid "Administration"
+msgstr "Әкімшілік"
+
+#: ../desktop-directories/Settings-System.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Системалық орнатуларды өзгерту (баралық қолданушыларға әсер етеді)"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Жеке қалаулар"
+
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Параметрлер"
+
+#: ../desktop-directories/System.directory.in.h:1
+#: ../desktop-directories/X-GNOME-Menu-System.directory.in.h:2
+msgid "System"
+msgstr "Система"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Системалық параметрлер"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Системалық"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Системаны бақылау және кұру программалары"
+
+#: ../desktop-directories/Utility-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Арнайы мүмкіндіктер"
+
+#: ../desktop-directories/Utility-Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Арнайы мүмкіндіктер параметрлері"
+
+#: ../desktop-directories/Utility.directory.in.h:1
+msgid "Accessories"
+msgstr "Стандарттық"
+
+#: ../desktop-directories/Utility.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Стандарттық айқындауыштар"
+
+#: ../desktop-directories/X-GNOME-Menu-Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Айқындауыштар"
+
+#: ../desktop-directories/X-GNOME-Menu-System.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Жеке қалаулар және әкімшілік параметрлер"
+
+#: ../desktop-directories/X-GNOME-Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Ешқандай санатқа жатпайтын айқындауыштар"
+
+#: ../desktop-directories/X-GNOME-Other.directory.in.h:2
+msgid "Other"
+msgstr "Басқалар"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Мәзір дұрыстаушысы"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Мәзірді дұрыстау"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "Айқындауыштар:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "Бастапқы қалпы"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "Мәзір:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:94
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:121
+msgid "Name"
+msgstr "Аты"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:113
+msgid "Show"
+msgstr "Көрсету"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:42
+msgid "Cannot find home directory: not set in /etc/passwd and no value for $HOME in environment"
+msgstr "Не удается найти домашний каталог: не установлен ни в /etc/passwd, ни при помощи переменной $HOME"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Мәзір файлы"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "МӘЗІР_ФАЙЛЫ"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Мәзірде болған өзгерістерді бақылау"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Шығарылған элементтерді іске келтіру"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "NoDisplay=true элементтерін іске келтіру"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Desktop-файлдың ID-і қате"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[файлдың аты дұрыс емес]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <excluded>"
+
+#: ../util/test-menu-spec.c:164
+#, c-format
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Мәзір өзгертілді, жаңадан қосылуда ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169
+#: ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Мәзір ағашы бос"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- GNOME-да қолданылған Desktop Menu-дің тексерісі"

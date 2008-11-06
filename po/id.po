@@ -1,0 +1,272 @@
+# Indonesian translation of gnome-menus.
+# Copyright (C) 2005 THE gnome-menus's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome-menus package.
+# ahmad riza h nst <ari@160c.afraid.org>, 2005.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-menus HEAD\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-05-02 03:41+0100\n"
+"PO-Revision-Date: 2007-10-19 19:28+0700\n"
+"Last-Translator: Huda Toriq <hudatoriq@gmail.com>\n"
+"Language-Team: Indonesian <sukarelawan@gnome.linux.or.id>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../desktop-directories/Accessibility.directory.in.h:1
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:1
+msgid "Universal Access"
+msgstr "Akses Universal"
+
+#: ../desktop-directories/Accessibility.directory.in.h:2
+msgid "Universal Access Settings"
+msgstr "Penataan Akses Universal"
+
+#: ../desktop-directories/Accessories.directory.in.h:1
+msgid "Accessories"
+msgstr "Aksesoris"
+
+#: ../desktop-directories/Accessories.directory.in.h:2
+msgid "Desktop accessories"
+msgstr "Aksesoris desktop"
+
+#: ../desktop-directories/Applications.directory.in.h:1
+msgid "Applications"
+msgstr "Aplikasi"
+
+#: ../desktop-directories/Desktop.directory.in.h:1
+msgid "Personal preferences and administration settings"
+msgstr "Preferensi pribadi dan penataan administrasi"
+
+#: ../desktop-directories/Desktop.directory.in.h:2
+#: ../desktop-directories/System.directory.in.h:1
+msgid "System"
+msgstr "Sistem"
+
+#: ../desktop-directories/Development.directory.in.h:1
+msgid "Programming"
+msgstr "Pemrograman"
+
+#: ../desktop-directories/Development.directory.in.h:2
+msgid "Tools for software development"
+msgstr "Perkakas untuk pengembangan perangkat lunak"
+
+#: ../desktop-directories/Education.directory.in.h:1
+msgid "Education"
+msgstr "Pendidikan"
+
+#: ../desktop-directories/Games.directory.in.h:1
+msgid "Games"
+msgstr "Permainan"
+
+#: ../desktop-directories/Games.directory.in.h:2
+msgid "Games and amusements"
+msgstr "Permainan dan hiburan"
+
+#: ../desktop-directories/Graphics.directory.in.h:1
+msgid "Graphics"
+msgstr "Grafis"
+
+#: ../desktop-directories/Graphics.directory.in.h:2
+msgid "Graphics applications"
+msgstr "Aplikasi grafis"
+
+#: ../desktop-directories/Hardware.directory.in.h:1
+msgid "Hardware"
+msgstr "Perangkat Keras"
+
+#: ../desktop-directories/Hardware.directory.in.h:2
+msgid "Settings for several hardware devices"
+msgstr "Penataan untuk beberapa peralatan perangkat keras"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:1
+msgid "Internet and Network"
+msgstr "Internet dan Jaringan"
+
+#: ../desktop-directories/InternetAndNetwork.directory.in.h:2
+msgid "Network-related settings"
+msgstr "Penataan terkait jaringan"
+
+#: ../desktop-directories/Internet.directory.in.h:1
+msgid "Internet"
+msgstr "Internet"
+
+#: ../desktop-directories/Internet.directory.in.h:2
+msgid "Programs for Internet access such as web and email"
+msgstr "Program untuk mengakses internet seperti web dan email"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:1
+msgid "Look and Feel"
+msgstr "Tampilan dan Rasa"
+
+#: ../desktop-directories/LookAndFeel.directory.in.h:2
+msgid "Settings controlling the desktop appearance and behavior"
+msgstr "Penataan mengendalikan tampilan dan perilaku desktop"
+
+#: ../desktop-directories/Multimedia.directory.in.h:1
+msgid "Multimedia menu"
+msgstr "Menu multimedia"
+
+#: ../desktop-directories/Multimedia.directory.in.h:2
+msgid "Sound & Video"
+msgstr "Suara & Video"
+
+#: ../desktop-directories/Office.directory.in.h:1
+msgid "Office"
+msgstr "Perkantoran"
+
+#: ../desktop-directories/Office.directory.in.h:2
+msgid "Office Applications"
+msgstr "Aplikasi Perkantoran"
+
+#: ../desktop-directories/Other.directory.in.h:1
+msgid "Applications that did not fit in other categories"
+msgstr "Aplikasi yang tidak termasuk dalam kategori lain"
+
+#: ../desktop-directories/Other.directory.in.h:2
+msgid "Other"
+msgstr "Lainnya"
+
+#: ../desktop-directories/Personal.directory.in.h:1
+msgid "Personal"
+msgstr "Pribadi"
+
+#: ../desktop-directories/Personal.directory.in.h:2
+msgid "Personal settings"
+msgstr "Penataan pribadi"
+
+#: ../desktop-directories/Preferences.directory.in.h:1
+msgid "Personal preferences"
+msgstr "Preferensi pribadi"
+
+#: ../desktop-directories/Preferences.directory.in.h:2
+#: ../desktop-directories/Settings.directory.in.h:2
+msgid "Preferences"
+msgstr "Preferensi"
+
+#: ../desktop-directories/Settings-Accessibility.directory.in.h:2
+msgid "Universal access related preferences"
+msgstr "Preferensi terkait akses universal"
+
+#: ../desktop-directories/Settings.directory.in.h:1
+msgid "Personal preferences and settings"
+msgstr "Preferensi dan penataan pribadi"
+
+#: ../desktop-directories/System.directory.in.h:2
+msgid "System settings"
+msgstr "Penataan sistem"
+
+#: ../desktop-directories/System-Settings.directory.in.h:1
+msgid "Administration"
+msgstr "Administrasi"
+
+#: ../desktop-directories/System-Settings.directory.in.h:2
+msgid "Change system-wide settings (affects all users)"
+msgstr "Ubah pengaturan sistem (mempengaruhi seluruh pengguna)"
+
+#: ../desktop-directories/System-Tools.directory.in.h:1
+msgid "System Tools"
+msgstr "Peralatan Sistem"
+
+#: ../desktop-directories/System-Tools.directory.in.h:2
+msgid "System configuration and monitoring"
+msgstr "Konfigurasi sistem dan pengawasan"
+
+#: ../simple-editor/gmenu-simple-editor.desktop.in.h:1
+msgid "Menu Editor"
+msgstr "Penyunting Menu"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:1
+msgid "Edit Menus"
+msgstr "Penyunting Menu"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:2
+msgid "_Applications:"
+msgstr "_Aplikasi:"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:3
+msgid "_Defaults"
+msgstr "Stan_dar"
+
+#: ../simple-editor/gmenu-simple-editor.glade.h:4
+msgid "_Menus:"
+msgstr "_Menu:"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:96
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:123
+msgid "Name"
+msgstr "Nama"
+
+#: ../simple-editor/GMenuSimpleEditor/maindialog.py:115
+msgid "Show"
+msgstr "Tampilkan"
+
+#: ../simple-editor/GMenuSimpleEditor/menufilewriter.py:44
+msgid "Cannot find home directory: not set in /etc/passwd and no value for $HOME in environment"
+msgstr "Tidak dapat menemukan direktori rumah: tidak tercantum dalam berkas /etc/passwd dan juga tidak ada nilai $HOME dalam lingkungan"
+
+#: ../util/test-menu-spec.c:33
+msgid "Menu file"
+msgstr "Berkas menu"
+
+#: ../util/test-menu-spec.c:33
+msgid "MENU_FILE"
+msgstr "MENU_FILE"
+
+#: ../util/test-menu-spec.c:34
+msgid "Monitor for menu changes"
+msgstr "Pantau perubahan menu"
+
+#: ../util/test-menu-spec.c:35
+msgid "Include <Exclude>d entries"
+msgstr "Ikutkan menu yang <tidak termasuk>"
+
+#: ../util/test-menu-spec.c:36
+msgid "Include NoDisplay=true entries"
+msgstr "Sertakan entri NoDisplay=true"
+
+#: ../util/test-menu-spec.c:91
+msgid "Invalid desktop file ID"
+msgstr "Kode berkas desktop tidak benar"
+
+#: ../util/test-menu-spec.c:92
+msgid "[Invalid Filename]"
+msgstr "[Nama berkas salah]"
+
+#: ../util/test-menu-spec.c:93
+msgid " <excluded>"
+msgstr " <tidak termasuk>"
+
+#: ../util/test-menu-spec.c:164
+msgid ""
+"\n"
+"\n"
+"\n"
+"==== Menu changed, reloading ====\n"
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"\n"
+"==== Menu berubah, memuat ulang ====\n"
+"\n"
+"\n"
+
+#: ../util/test-menu-spec.c:169
+#: ../util/test-menu-spec.c:211
+msgid "Menu tree is empty"
+msgstr "Pohon menu masih kosong"
+
+#: ../util/test-menu-spec.c:189
+msgid "- test GNOME's implementation of the Desktop Menu Specification"
+msgstr "- uji implementasi Spesifikasi Menu Desktop pada GNOME"
+
+#~ msgid "Accessibility"
+#~ msgstr "Kemudahan Akses"
+#~ msgid "Desktop"
+#~ msgstr "Desktop"
+
