@@ -34,6 +34,7 @@ struct _MenuCacheItem
 	char* comment;
 	char* icon;
 	GData* extended;
+	MenuCacheDir* parent;
 };
 
 struct _MenuCacheDir
@@ -71,9 +72,6 @@ static void read_item_extended(  FILE* f, MenuCacheItem* item )
 		if( line[0] == '\n' || line[0] == '\0' ) /* end of item info */
 			break;
 		len = strlen( line );
-
-		continue;
-
 		if( G_LIKELY(len > 1) )
 		{
 			char* sep = strchr( line, '=' );
@@ -83,7 +81,7 @@ static void read_item_extended(  FILE* f, MenuCacheItem* item )
 				g_datalist_init( &item->extended );
 			line[len] = '\0';
 			*sep = '\0';
-			g_datalist_set_data_full( item->extended, line, g_strdup( sep + 1 ), g_free );
+			g_datalist_set_data_full( &item->extended, line, g_strdup( sep + 1 ), g_free );
 		}
 	}
 }
@@ -106,7 +104,10 @@ static void read_dir( FILE* f, MenuCacheDir* dir )
 
 	/* load child items in the dir */
 	while( item = read_item( f ) )
+	{
+		item->parent = menu_cache_item_ref(dir);
 		dir->children = g_slist_prepend( dir->children, item );
+	}
 
 	dir->children = g_slist_reverse( dir->children );
 }
@@ -220,6 +221,7 @@ MenuCacheDir* menu_cache_new( const char* cache_file, char** include, char** exc
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
 	g_atomic_int_inc( &item->n_ref );
+	return item;
 }
 
 void menu_cache_item_unref(MenuCacheItem* item)
@@ -230,6 +232,9 @@ void menu_cache_item_unref(MenuCacheItem* item)
 		g_free( item->name );
 		g_free( item->comment );
 		g_free( item->icon );
+		
+		if( item->parent )
+			menu_cache_item_unref( MENU_CACHE_ITEM(item->parent) );
 
 		if( item->extended )
 			g_datalist_clear( item->extended );
@@ -279,16 +284,17 @@ const char* menu_cache_item_get_icon( MenuCacheItem* item )
 
 const char* menu_cache_item_get_extended( MenuCacheItem* item, const char* key )
 {
-	if( ! item->extended )
-		return NULL;
-	return g_datalist_get_data( item->extended, key );
+	return g_datalist_get_data( &item->extended, key );
 }
 
 const char* menu_cache_item_get_qextended( MenuCacheItem* item, GQuark key )
 {
-	if( ! item->extended )
-		return NULL;
-	return g_datalist_id_get_data( item->extended, key );
+	return g_datalist_id_get_data( &item->extended, key );
+}
+
+MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item )
+{
+	return item->parent;
 }
 
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
@@ -341,3 +347,38 @@ MenuCacheApp* menu_cache_find_app_by_exec( const char* exec )
 	return NULL;
 }
 
+MenuCacheDir* menu_cache_get_dir_from_path( MenuCacheDir* tree, const char* path )
+{
+	char** names = g_strsplit( path, "/", -1 );
+	int i = 0;
+	MenuCacheDir* dir = NULL;
+
+	for( ; names[i]; ++i )
+	{
+		GSList* l;
+		for( l = tree->children; l; l = l->next )
+		{
+			MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
+			if( item->type == MENU_CACHE_TYPE_DIR && g_str_equal( item->id, names[i] ) )
+			{
+				dir = item;
+			}
+		}
+		if( ! dir )
+			return NULL;
+	}
+	return dir;
+}
+
+char* menu_cache_dir_make_path( MenuCacheDir* dir )
+{
+	GString* path = g_string_sized_new(1024);
+
+	while( dir ) /* this is not top dir */
+	{
+		g_string_prepend( path, menu_cache_item_get_id(dir) );
+		g_string_prepend_c( path, '/' );
+		dir = MENU_CACHE_ITEM(dir)->parent;
+	}
+	return g_string_free( path, FALSE );
+}

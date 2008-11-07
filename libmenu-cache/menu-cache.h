@@ -53,6 +53,8 @@ MenuCacheDir* menu_cache_new( const char* cache_file, char** include, char** exc
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item);
 void menu_cache_item_unref(MenuCacheItem* item);
 
+MenuCacheDir* menu_cache_get_dir_from_path( MenuCacheDir* tree, const char* path );
+
 MenuCacheType menu_cache_item_get_type( MenuCacheItem* item );
 const char* menu_cache_item_get_id( MenuCacheItem* item );
 const char* menu_cache_item_get_name( MenuCacheItem* item );
@@ -60,9 +62,11 @@ const char* menu_cache_item_get_comment( MenuCacheItem* item );
 const char* menu_cache_item_get_icon( MenuCacheItem* item );
 const char* menu_cache_item_get_extended( MenuCacheItem* item, const char* key );
 const char* menu_cache_item_get_qextended( MenuCacheItem* item, GQuark key );
+MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
 
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 const char* menu_cache_dir_get_file( MenuCacheDir* dir );
+char* menu_cache_dir_make_path( MenuCacheDir* dir );
 
 const char* menu_cache_app_get_file_dir( MenuCacheApp* app );
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
