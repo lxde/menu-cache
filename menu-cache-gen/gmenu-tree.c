@@ -1172,6 +1172,14 @@ gmenu_tree_entry_get_launch_in_terminal (GMenuTreeEntry *entry)
   return desktop_entry_get_launch_in_terminal (entry->desktop_entry);
 }
 
+gboolean
+gmenu_tree_entry_get_use_startup_notify (GMenuTreeEntry *entry)
+{
+  g_return_val_if_fail (entry != NULL, FALSE);
+
+  return desktop_entry_get_use_startup_notify (entry->desktop_entry);
+}
+
 const char *
 gmenu_tree_entry_get_desktop_file_path (GMenuTreeEntry *entry)
 {

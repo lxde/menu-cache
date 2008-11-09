@@ -46,6 +46,24 @@ GOptionEntry opt_entries[] =
 
 GHashTable* dir_hash = NULL;
 
+/* all used app dirs.
+ * defined in entry-directories.c
+ */
+extern GSList* all_used_dirs;
+
+static int dirname_index( const char* dir )
+{
+	GSList* l;
+	int i = 0;
+	for( l = all_used_dirs; l; l = l->next )
+	{
+		if( strcmp(dir, l->data) == 0 )
+			return i;
+		++i;
+	}
+	return -1;
+}
+
 void write_item_ex_info( FILE* of, const char* desktop_file )
 {
 	gsize len;
@@ -81,11 +99,28 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
 	fprintf( of, "%s\n", gmenu_tree_directory_get_name( dir ) );
 	str = gmenu_tree_directory_get_comment( dir );
 	fprintf( of, "%s\n", str ? str : "" );
-	fprintf( of, "%s\n", gmenu_tree_directory_get_icon( dir ) );
+	str = gmenu_tree_directory_get_icon( dir );
+	fprintf( of, "%s\n", str ? str : "" );
 
-	fprintf( of, "%s\n", gmenu_tree_directory_get_desktop_file_path( dir ) );
+	if( gmenu_tree_directory_get_desktop_file_path( dir ) )
+	{
+		/* get the location of its desktop file. */
+		str = g_path_get_dirname( gmenu_tree_directory_get_desktop_file_path( dir ) );
+		fprintf( of, "%d\n", dirname_index( str ) );
+		g_free( str );
 
-	write_item_ex_info( of, gmenu_tree_directory_get_desktop_file_path( dir ) );
+		/* get basename of its desktop file. */
+		str = g_path_get_basename( gmenu_tree_directory_get_desktop_file_path( dir ) );
+		fprintf( of, "%s\n", str );
+		g_free( str );
+
+		write_item_ex_info( of, gmenu_tree_directory_get_desktop_file_path( dir ) );
+	}
+	else
+	{
+		fprintf( of, "-1\n\n" );
+	}
+
 	fprintf( of, "\n" );	/* end of item info */
 
     for( l = gmenu_tree_directory_get_contents(dir); l; l = l->next )
@@ -99,7 +134,6 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
 		}
         else if( type == GMENU_TREE_ITEM_ENTRY )
         {
-			char* tmp;
 			fprintf( of, "-%s\n", gmenu_tree_entry_get_desktop_file_id( (GMenuTreeEntry*)item ) );
             if( gmenu_tree_entry_get_is_nodisplay(item) /* || gmenu_tree_entry_get_is_excluded(item) */ )
                 continue;
@@ -107,45 +141,33 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
 			fprintf( of, "%s\n", gmenu_tree_entry_get_name( item ) );
 			str = gmenu_tree_entry_get_comment( item );
 			fprintf( of, "%s\n", str ? str : "" );
-			fprintf( of, "%s\n", gmenu_tree_entry_get_icon( item ) );
 
-			tmp = g_path_get_dirname( gmenu_tree_entry_get_desktop_file_path( item ) );
-			fprintf( of, "%s\n", tmp);
-			g_free( tmp );
+			str = gmenu_tree_entry_get_icon( item );
+			fprintf( of, "%s\n", str ? str : "" );
+
+			if( gmenu_tree_entry_get_desktop_file_path( item ) )
+			{
+				str = g_path_get_dirname( gmenu_tree_entry_get_desktop_file_path( item ) );
+				fprintf( of, "%d\n", dirname_index( str) );
+				g_free( str );
+			}
+			else
+			{
+				fprintf( of, "-1\n" );
+			}
+
 			fprintf( of, "%s\n", gmenu_tree_entry_get_exec( item ) );
 			fprintf( of, "%c\n", gmenu_tree_entry_get_launch_in_terminal( item ) ? '1' : '0' );
+			fprintf( of, "%c\n", gmenu_tree_entry_get_use_startup_notify( item ) ? '1' : '0' );
 
-			write_item_ex_info(of, gmenu_tree_entry_get_desktop_file_path( item ));
+			if( gmenu_tree_entry_get_desktop_file_path( item ) )
+				write_item_ex_info(of, gmenu_tree_entry_get_desktop_file_path( item ));
 			fputs( "\n", of );
         }
 		else if( type == GMENU_TREE_ITEM_SEPARATOR )
 			fputs( "-\n", of );
     }
 	fputs( "\n", of );
-}
-
-static void get_all_involved_dirs( MenuCacheItem* menu, GHashTable* hash )
-{
-	GSList* l = menu_cache_dir_get_children( menu );
-	for( ; l; l = l->next )
-	{
-		MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
-		MenuCacheType type = menu_cache_item_get_type(item);
-		if( type == MENU_CACHE_TYPE_APP )
-		{
-			if( ! g_hash_table_lookup(hash, menu_cache_app_get_file_dir( MENU_CACHE_APP(item) )) )
-				g_hash_table_insert( hash, g_strdup( menu_cache_app_get_file_dir( MENU_CACHE_APP(item)) ), GINT_TO_POINTER(TRUE) );
-		}
-		else if( type == MENU_CACHE_TYPE_DIR )
-		{
-			char* dir_path = g_path_get_dirname( menu_cache_dir_get_file(MENU_CACHE_DIR(item)) );
-			if( ! g_hash_table_lookup(hash, dir_path ) )
-				g_hash_table_insert( hash, dir_path, GINT_TO_POINTER(TRUE) );
-			else
-				g_free( dir_path );
-			get_all_involved_dirs( item, hash );
-		}
-	}
 }
 
 static gboolean is_src_newer( const char* src, const char* dest )
@@ -181,23 +203,6 @@ static gboolean is_menu_uptodate()
 	if( ! menu )
 		return FALSE;
 
-	hash = g_hash_table_new_full( g_str_hash, g_str_equal, g_free, NULL );
-
-	get_all_involved_dirs( menu, hash );
-	dirs = g_hash_table_get_keys( hash );
-
-	for( l = dirs; l; l = l->next )
-	{
-		if( is_src_newer( (char*)l->data, ofile ) )
-		{
-			ret = FALSE;
-			break;
-		}
-	}
-	g_list_free( dirs );
-	g_hash_table_destroy( hash );
-
-	menu_cache_item_unref( menu );
 
 	return ret;
 }
@@ -254,6 +259,13 @@ int main(int argc, char** argv)
 	}
 
     root_dir = gmenu_tree_get_root_directory( menu_tree );
+
+	fprintf( of, "%d\n", g_slist_length(all_used_dirs) );
+	for( l = all_used_dirs; l; l = l->next )
+	{
+		fprintf( of, "%s\n", (char*)l->data );
+	}
+
 	write_dir( of, root_dir );
 
 	fclose( of );

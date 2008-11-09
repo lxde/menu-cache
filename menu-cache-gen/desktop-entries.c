@@ -47,7 +47,8 @@ struct DesktopEntry
   char     *comment;
   char     *icon;
   char     *exec;
-  gboolean terminal;
+  gboolean terminal : 1;
+  gboolean startup_notify : 1;
 
   guint type : 2;
   guint flags : 4;
@@ -293,6 +294,7 @@ desktop_entry_load (DesktopEntry *entry)
     {
       retval->exec = g_key_file_get_string (key_file, desktop_entry_group, "Exec", NULL);
       retval->terminal = g_key_file_get_boolean (key_file, desktop_entry_group, "Terminal", NULL);
+	  retval->startup_notify = g_key_file_get_boolean (key_file, desktop_entry_group, "StartupNotify", NULL);
     }
   
 #undef GET_LOCALE_STRING
@@ -372,6 +374,7 @@ desktop_entry_reload (DesktopEntry *entry)
   entry->exec = NULL;
 
   entry->terminal = 0;
+  entry->startup_notify = 0;
   entry->flags = 0;
 
   return desktop_entry_load (entry);
@@ -408,6 +411,7 @@ desktop_entry_copy (DesktopEntry *entry)
   retval->icon     = g_strdup (entry->icon);
   retval->exec     = g_strdup (entry->exec);
   retval->terminal = entry->terminal;
+  retval->startup_notify = entry->startup_notify;
   retval->flags    = entry->flags;
 
   i = 0;
@@ -514,6 +518,12 @@ gboolean
 desktop_entry_get_launch_in_terminal (DesktopEntry *entry)
 {
   return entry->terminal;
+}
+
+gboolean
+desktop_entry_get_use_startup_notify (DesktopEntry *entry)
+{
+  return entry->startup_notify;
 }
 
 gboolean

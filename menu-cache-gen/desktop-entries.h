@@ -50,6 +50,7 @@ const char *desktop_entry_get_icon               (DesktopEntry *entry);
 const char *desktop_entry_get_exec               (DesktopEntry *entry);
 const GQuark *desktop_entry_get_categories       (DesktopEntry *entry);
 gboolean    desktop_entry_get_launch_in_terminal (DesktopEntry *entry);
+gboolean    desktop_entry_get_use_startup_notify (DesktopEntry *entry);
 
 gboolean desktop_entry_get_hidden         (DesktopEntry *entry);
 gboolean desktop_entry_get_no_display     (DesktopEntry *entry);

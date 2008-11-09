@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 typedef struct _MenuCacheItem MenuCacheItem;
 typedef struct _MenuCacheDir MenuCacheDir;
 typedef struct _MenuCacheApp MenuCacheApp;
+typedef struct _MenuCache MenuCache;
 
 typedef enum _MenuCacheType MenuCacheType;
 enum _MenuCacheType
@@ -48,12 +49,20 @@ enum _MenuCacheType
 
 void menu_cache_init();
 
-MenuCacheDir* menu_cache_new( const char* cache_file, char** include, char** exclude );
+MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclude );
+
+MenuCache* menu_cache_ref(MenuCache* cache);
+void menu_cache_unref(MenuCache* cache);
+
+MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache );
+MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path );
+
+gboolean menu_cache_file_is_updated( const char* menu_file );
+gboolean menu_cache_is_updated( MenuCache* cache );
+
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item);
 void menu_cache_item_unref(MenuCacheItem* item);
-
-MenuCacheDir* menu_cache_get_dir_from_path( MenuCacheDir* tree, const char* path );
 
 MenuCacheType menu_cache_item_get_type( MenuCacheItem* item );
 const char* menu_cache_item_get_id( MenuCacheItem* item );
@@ -65,10 +74,11 @@ const char* menu_cache_item_get_qextended( MenuCacheItem* item, GQuark key );
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
 
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
-const char* menu_cache_dir_get_file( MenuCacheDir* dir );
+const char* menu_cache_dir_get_file_basename( MenuCacheDir* dir );
+const char* menu_cache_dir_get_file_dirname( MenuCacheDir* dir );
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
 
-const char* menu_cache_app_get_file_dir( MenuCacheApp* app );
+const char* menu_cache_app_get_file_dirname( MenuCacheApp* app );
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
 

@@ -89,6 +89,9 @@ static void handle_cached_dir_changed (MenuMonitor      *monitor,
 
 static CachedDir *dir_cache = NULL;
 
+/* all used app dirs, required by menu-cache-gen */
+GSList* all_used_dirs = NULL;
+
 static CachedDir *
 cached_dir_new (const char *name)
 {
@@ -688,6 +691,7 @@ EntryDirectory *
 entry_directory_new (DesktopEntryType  entry_type,
                      const char       *path)
 {
+  all_used_dirs = g_slist_prepend( all_used_dirs, g_strdup( path ) );
   return entry_directory_new_full (entry_type, path, FALSE, NULL);
 }
 

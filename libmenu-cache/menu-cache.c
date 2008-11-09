@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <time.h>
 
 #include "menu-cache.h"
 
@@ -40,19 +44,29 @@ struct _MenuCacheItem
 struct _MenuCacheDir
 {
 	MenuCacheItem item;
-	char* file;
+	const char* file_dir;
+	char* file_name;
 	GSList* children;
 };
 
 struct _MenuCacheApp
 {
 	MenuCacheItem item;
-	char* file_dir;
+	const char* file_dir;
 	char* exec;
 	char* working_dir;
-//	char** categories;
+/*	char** categories;	*/
 	gboolean use_terminal : 1;
 	gboolean use_sn : 1;
+};
+
+struct _MenuCache
+{
+	guint n_ref;
+	MenuCacheDir* root_dir;
+	char** all_used_dirs;
+	int n_all_used_dirs;
+	time_t time;
 };
 
 void menu_cache_init()
@@ -60,7 +74,7 @@ void menu_cache_init()
 	
 }
 
-static MenuCacheItem* read_item(  FILE* f );
+static MenuCacheItem* read_item(  FILE* f, MenuCache* cache );
 
 static void read_item_extended(  FILE* f, MenuCacheItem* item )
 {
@@ -86,24 +100,31 @@ static void read_item_extended(  FILE* f, MenuCacheItem* item )
 	}
 }
 
-static void read_dir( FILE* f, MenuCacheDir* dir )
+static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
 {
 	char line[4096];
-	int len;
+	int len, idx;
 	MenuCacheItem* item;
 
-	/* file path */
+	/* desktop file dir */
+	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+		return;
+	idx = atoi( line );
+	if( G_LIKELY( idx >=0 && idx < cache->n_all_used_dirs ) )
+		dir->file_dir = cache->all_used_dirs[ idx ];
+
+	/* file name */
 	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
 		return;
 	len = strlen( line );
 	if( G_LIKELY(len > 1) )
-		dir->file = g_strndup( line, len - 1 );
+		dir->file_name = g_strndup( line, len - 1 );
 
 	/* load extended key/values */
 	read_item_extended( f, dir );
 
 	/* load child items in the dir */
-	while( item = read_item( f ) )
+	while( item = read_item( f, cache ) )
 	{
 		item->parent = menu_cache_item_ref(dir);
 		dir->children = g_slist_prepend( dir->children, item );
@@ -112,17 +133,17 @@ static void read_dir( FILE* f, MenuCacheDir* dir )
 	dir->children = g_slist_reverse( dir->children );
 }
 
-static void read_app( FILE* f, MenuCacheApp* app )
+static void read_app( FILE* f, MenuCacheApp* app, MenuCache* cache )
 {
 	char line[4096];
-	int len;
+	int len, idx;
 
 	/* desktop file dir */
 	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
 		return;
-	len = strlen( line );
-	if( G_LIKELY(len > 1) )
-		app->file_dir = g_strndup( line, len - 1 );
+	idx = atoi( line );
+	if( G_LIKELY( idx >=0 && idx < cache->n_all_used_dirs ) )
+		app->file_dir = cache->all_used_dirs[ idx ];
 
 	/* exec */
 	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
@@ -136,15 +157,20 @@ static void read_app( FILE* f, MenuCacheApp* app )
 		return;
 	app->use_terminal = line[0] == '1' ? TRUE : FALSE;
 
+	/* startup notify */
+	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+		return;
+	app->use_sn = line[0] == '1' ? TRUE : FALSE;
+
 	read_item_extended( f, MENU_CACHE_ITEM(app) );
 }
 
-static MenuCacheItem* read_item(  FILE* f )
+static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 {
 	MenuCacheItem* item;
 	char line[4096];
 	int len;
-	
+
 	/* desktop/menu id */
 	if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
 		return NULL;
@@ -200,23 +226,84 @@ static MenuCacheItem* read_item(  FILE* f )
 		item->icon = g_strndup( line, len - 1 );
 
 	if( item->type == MENU_CACHE_TYPE_DIR )
-		read_dir( f, MENU_CACHE_DIR(item) );
+		read_dir( f, MENU_CACHE_DIR(item), cache );
 	else if( item->type == MENU_CACHE_TYPE_APP )
-		read_app( f, MENU_CACHE_APP(item) );
+		read_app( f, MENU_CACHE_APP(item), cache );
 
 	return item;
 }
 
-MenuCacheDir* menu_cache_new( const char* cache_file, char** include, char** exclude )
+static gboolean read_all_used_dirs( FILE* f, MenuCache* cache )
 {
-	MenuCacheDir* dir;
+	char line[ 4096 ];
+	int i, n_all_used_dirs;
+
+	if( ! fgets( line, G_N_ELEMENTS(line), f ) )
+		return FALSE;
+
+	n_all_used_dirs = atoi( line );
+	cache->n_all_used_dirs = n_all_used_dirs;
+	cache->all_used_dirs = g_new0( char*, n_all_used_dirs + 1 );
+
+	for( i = 0; i < n_all_used_dirs; ++i )
+	{
+		int len;
+		if( ! fgets( line, G_N_ELEMENTS(line), f ) )
+			return FALSE;
+
+		len = strlen( line );
+		if( len <= 1 )
+			return FALSE;
+		cache->all_used_dirs[ i ] = g_strndup( line, len - 1 ); /* don't include \n */
+	}
+
+	return TRUE;
+}
+
+MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclude )
+{
+	MenuCache* cache;
 	FILE* f = fopen( cache_file, "r" );
 	if( ! f )
 		return NULL;
-	dir = (MenuCacheDir*)read_item( f );
+
+	cache = g_slice_new0( MenuCache );
+
+	/* get all used dirs */
+	if( ! read_all_used_dirs( f, cache ) )
+	{
+		g_slice_free( MenuCache, cache );
+		return NULL;
+	}
+	cache->n_ref = 1;
+	cache->root_dir = (MenuCacheDir*)read_item( f, cache );
+	cache->time = time(NULL);	/* save current time */
 	fclose( f );
-	return dir;
+	return cache;
 }
+
+MenuCache* menu_cache_ref(MenuCache* cache)
+{
+	g_atomic_int_inc( &cache->n_ref );
+	return cache;
+}
+
+void menu_cache_unref(MenuCache* cache)
+{
+	if( g_atomic_int_dec_and_test( &cache->n_ref ) )
+	{
+		if( G_LIKELY(cache->root_dir) )
+			menu_cache_item_unref( cache->root_dir );
+		g_strfreev( cache->all_used_dirs );
+		g_slice_free( MenuCache, cache );
+	}
+}
+
+MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
+{
+	return cache->root_dir;
+}
+
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
@@ -242,7 +329,7 @@ void menu_cache_item_unref(MenuCacheItem* item)
 		if( item->type == MENU_CACHE_TYPE_DIR )
 		{
 			MenuCacheDir* dir = MENU_CACHE_DIR(item);
-			g_free( dir->file );
+			g_free( dir->file_name );
 			g_slist_foreach( dir->children, (GFunc)menu_cache_item_unref, NULL );
 			g_slist_free( dir->children );
 			g_slice_free( MenuCacheDir, item );
@@ -250,7 +337,6 @@ void menu_cache_item_unref(MenuCacheItem* item)
 		else
 		{
 			MenuCacheApp* app = MENU_CACHE_APP(item);
-			g_free( app->file_dir );
 			g_free( app->exec );
 			g_slice_free( MenuCacheApp, item );
 		}
@@ -302,9 +388,14 @@ GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
 	return dir->children;
 }
 
-const char* menu_cache_dir_get_file( MenuCacheDir* dir )
+const char* menu_cache_dir_get_file_basename( MenuCacheDir* dir )
 {
-	return dir->file;
+	return dir->file_name;
+}
+
+const char* menu_cache_dir_get_file_dirname( MenuCacheDir* dir )
+{
+	return dir->file_dir;
 }
 
 const char* menu_cache_app_get_exec( MenuCacheApp* app )
@@ -312,7 +403,7 @@ const char* menu_cache_app_get_exec( MenuCacheApp* app )
 	return app->exec;
 }
 
-const char* menu_cache_app_get_file_dir( MenuCacheApp* app )
+const char* menu_cache_app_get_file_dirname( MenuCacheApp* app )
 {
 	return app->file_dir;
 }
@@ -334,7 +425,7 @@ gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app )
 
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app )
 {
-	return TRUE;
+	return app->use_sn;
 }
 
 GSList* menu_cache_list_all_apps()
@@ -347,7 +438,7 @@ MenuCacheApp* menu_cache_find_app_by_exec( const char* exec )
 	return NULL;
 }
 
-MenuCacheDir* menu_cache_get_dir_from_path( MenuCacheDir* tree, const char* path )
+MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
 {
 	char** names = g_strsplit( path, "/", -1 );
 	int i = 0;
@@ -356,7 +447,7 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCacheDir* tree, const char* path
 	for( ; names[i]; ++i )
 	{
 		GSList* l;
-		for( l = tree->children; l; l = l->next )
+		for( l = cache->root_dir->children; l; l = l->next )
 		{
 			MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
 			if( item->type == MENU_CACHE_TYPE_DIR && g_str_equal( item->id, names[i] ) )
@@ -382,3 +473,24 @@ char* menu_cache_dir_make_path( MenuCacheDir* dir )
 	}
 	return g_string_free( path, FALSE );
 }
+
+gboolean menu_cache_file_is_updated( const char* menu_file )
+{
+	
+	return TRUE;
+}
+
+gboolean menu_cache_is_updated( MenuCache* cache )
+{
+	struct stat st;
+	int i;
+	for( i = 0; i < cache->n_all_used_dirs; ++i )
+	{
+		if( stat( cache->all_used_dirs[i], &st ) == -1 )
+			continue;
+		if( st.st_mtime > cache->time )
+			return FALSE;
+	}
+	return TRUE;
+}
+

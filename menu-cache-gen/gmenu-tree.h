@@ -116,6 +116,7 @@ const char *gmenu_tree_entry_get_comment            (GMenuTreeEntry *entry);
 const char *gmenu_tree_entry_get_icon               (GMenuTreeEntry *entry);
 const char *gmenu_tree_entry_get_exec               (GMenuTreeEntry *entry);
 gboolean    gmenu_tree_entry_get_launch_in_terminal (GMenuTreeEntry *entry);
+gboolean    gmenu_tree_entry_get_use_startup_notify (GMenuTreeEntry *entry);
 
 const char *gmenu_tree_entry_get_desktop_file_path (GMenuTreeEntry *entry);
 const char *gmenu_tree_entry_get_desktop_file_id   (GMenuTreeEntry *entry);
