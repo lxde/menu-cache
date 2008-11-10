@@ -81,6 +81,7 @@ GSList   *gmenu_tree_get_menu_file_monitors (GMenuTree *tree);
 GSList   *gmenu_tree_get_monitors           (GMenuTree *tree);
 
 const char         *gmenu_tree_get_menu_file           (GMenuTree  *tree);
+const char         *gmenu_tree_get_menu_file_full_path (GMenuTree  *tree);
 GMenuTreeDirectory *gmenu_tree_get_root_directory      (GMenuTree  *tree);
 GMenuTreeDirectory *gmenu_tree_get_directory_from_path (GMenuTree  *tree,
 							const char *path);

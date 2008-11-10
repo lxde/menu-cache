@@ -194,17 +194,7 @@ static gboolean is_menu_uptodate()
 	if( is_src_newer( ifile, ofile ) )
 		return FALSE;
 
-	/* FIXME: this is quite dirty and probably buggy.
-	 * There should be a better way to detect changed.
-	 */
-
-	/* load the cache and check all files involved */
-	menu = menu_cache_new( ofile, NULL, NULL );
-	if( ! menu )
-		return FALSE;
-
-
-	return ret;
+	return menu_cache_file_is_updated( ofile );
 }
 
 int main(int argc, char** argv)
@@ -233,7 +223,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-    menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_NONE );
+    menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_NONE | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
 	if( ! menu_tree )
 	{
 		g_print("Error loading source menu file: %s\n", ifile);
@@ -257,6 +247,8 @@ int main(int argc, char** argv)
 		g_print( "Error writing output file: %s\n", ofile );
 		return 1;
 	}
+	
+	fprintf( of, "%s\n", gmenu_tree_get_menu_file_full_path(menu_tree) );
 
     root_dir = gmenu_tree_get_root_directory( menu_tree );
 

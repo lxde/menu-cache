@@ -101,8 +101,12 @@ int main(int argc, char** argv)
 	GtkWidget* win, *btn;
 	gtk_init( &argc, &argv );
 
-	MenuCacheDir* menu = menu_cache_new( argv[1] ? argv[1] : "/etc/xdg/menus/applications.menu", NULL, NULL );
+	MenuCache* menu_cache = menu_cache_new( argv[1] ? argv[1] : "/etc/xdg/menus/applications.menu", NULL, NULL );
+	MenuCacheDir* menu = menu_cache_get_root_dir( menu_cache );
 	GtkWidget* pop = create_menu( menu, NULL );
+
+//	g_debug( "update: %d", menu_cache_is_updated( menu_cache ) );
+	g_debug( "update: %d", menu_cache_file_is_updated( argv[1] ) );
 
 	win = gtk_window_new( GTK_WINDOW_TOPLEVEL );
 	gtk_window_set_title( win, "MenuCache Test" );
@@ -114,7 +118,7 @@ int main(int argc, char** argv)
 
 	gtk_widget_show_all( win );
 
-	menu_cache_item_unref( menu );
+	menu_cache_unref( menu );
 
 	gtk_main();
 	return 0;

@@ -773,6 +773,17 @@ gmenu_tree_get_menu_file (GMenuTree *tree)
     return tree->absolute_path;
 }
 
+const char *
+gmenu_tree_get_menu_file_full_path (GMenuTree  *tree)
+{
+  if( ! tree->canonical_path )
+  {
+    if (!gmenu_tree_canonicalize_path (tree))
+      return NULL;
+  }
+  return tree->canonical_path;
+}
+
 GMenuTreeDirectory *
 gmenu_tree_get_root_directory (GMenuTree *tree)
 {
@@ -1912,6 +1923,11 @@ load_parent_merge_file (GMenuTree      *tree,
   return found;
 }
 
+/* all used app dirs.
+ * defined in entry-directories.c
+ */
+extern GSList* all_used_dirs;
+
 static void
 load_merge_dir (GMenuTree      *tree,
 		GHashTable     *loaded_menu_files,
@@ -1922,6 +1938,8 @@ load_merge_dir (GMenuTree      *tree,
   const char *menu_file;
 
   menu_verbose ("Loading merge dir \"%s\"\n", dirname);
+
+  all_used_dirs = g_slist_append( all_used_dirs, g_strdup(dirname) );
 
   gmenu_tree_add_menu_file_monitor (tree,
 				    dirname,
@@ -2903,6 +2921,7 @@ gmenu_tree_load_layout (GMenuTree *tree)
   loaded_menu_files = g_hash_table_new (g_str_hash, g_str_equal);
   g_hash_table_insert (loaded_menu_files, tree->canonical_path, GUINT_TO_POINTER (TRUE));
   gmenu_tree_resolve_files (tree, loaded_menu_files, tree->layout);
+  
   g_hash_table_destroy (loaded_menu_files);
 
   gmenu_tree_strip_duplicate_children (tree, tree->layout);

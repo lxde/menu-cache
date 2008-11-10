@@ -66,6 +66,8 @@ struct _MenuCache
 	MenuCacheDir* root_dir;
 	char** all_used_dirs;
 	int n_all_used_dirs;
+	char* menu_file_path;
+	time_t mtime;
 	time_t time;
 };
 
@@ -233,19 +235,19 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 	return item;
 }
 
-static gboolean read_all_used_dirs( FILE* f, MenuCache* cache )
+static gboolean read_all_used_dirs( FILE* f, int* n_all_used_dirs, char*** all_used_dirs )
 {
 	char line[ 4096 ];
-	int i, n_all_used_dirs;
+	int i, n;
+	char** dirs;
 
 	if( ! fgets( line, G_N_ELEMENTS(line), f ) )
 		return FALSE;
 
-	n_all_used_dirs = atoi( line );
-	cache->n_all_used_dirs = n_all_used_dirs;
-	cache->all_used_dirs = g_new0( char*, n_all_used_dirs + 1 );
+	*n_all_used_dirs = n = atoi( line );
+	dirs = g_new0( char*, n + 1 );
 
-	for( i = 0; i < n_all_used_dirs; ++i )
+	for( i = 0; i < n; ++i )
 	{
 		int len;
 		if( ! fgets( line, G_N_ELEMENTS(line), f ) )
@@ -254,23 +256,38 @@ static gboolean read_all_used_dirs( FILE* f, MenuCache* cache )
 		len = strlen( line );
 		if( len <= 1 )
 			return FALSE;
-		cache->all_used_dirs[ i ] = g_strndup( line, len - 1 ); /* don't include \n */
+		dirs[ i ] = g_strndup( line, len - 1 ); /* don't include \n */
 	}
-
+	*all_used_dirs = dirs;
 	return TRUE;
 }
 
 MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclude )
 {
 	MenuCache* cache;
+	struct stat st;
+	char line[4096];
+
 	FILE* f = fopen( cache_file, "r" );
 	if( ! f )
 		return NULL;
 
+	if( fstat( fileno( f ), &st ) == -1 )
+	{
+		fclose( f );
+		return NULL;
+	}
+
+	if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
+		return NULL;
+
 	cache = g_slice_new0( MenuCache );
+	cache->mtime = st.st_mtime;
+
+	cache->menu_file_path = g_strdup( strtok(line, "\n") );
 
 	/* get all used dirs */
-	if( ! read_all_used_dirs( f, cache ) )
+	if( ! read_all_used_dirs( f, &cache->n_all_used_dirs, &cache->all_used_dirs ) )
 	{
 		g_slice_free( MenuCache, cache );
 		return NULL;
@@ -476,19 +493,51 @@ char* menu_cache_dir_make_path( MenuCacheDir* dir )
 
 gboolean menu_cache_file_is_updated( const char* menu_file )
 {
-	
-	return TRUE;
+	gboolean ret = TRUE;
+	struct stat st;
+	time_t cache_mtime;
+	char** dirs;
+	int n, i;
+	FILE* f;
+
+	f = fopen( menu_file, "r" );
+	if( f )
+	{
+		if( fstat( fileno(f), &st) == 0 )
+		{
+			if( read_all_used_dirs( f, &n, &dirs ) )
+			{
+				cache_mtime = st.st_mtime;
+				for( i = 0; i < n; ++i )
+				{
+					if( stat( dirs[i], &st ) == -1 )
+						continue;
+
+					if( st.st_mtime > cache_mtime )
+					{
+						ret = FALSE;
+						break;
+					}
+				}
+			}
+		}
+		fclose( f );
+		g_strfreev( dirs );
+	}
+	return ret;
 }
 
 gboolean menu_cache_is_updated( MenuCache* cache )
 {
 	struct stat st;
 	int i;
+
 	for( i = 0; i < cache->n_all_used_dirs; ++i )
 	{
 		if( stat( cache->all_used_dirs[i], &st ) == -1 )
 			continue;
-		if( st.st_mtime > cache->time )
+
+		if( st.st_mtime > cache->mtime )
 			return FALSE;
 	}
 	return TRUE;
