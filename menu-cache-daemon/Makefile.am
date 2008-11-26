@@ -6,6 +6,7 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
+        -DBINDIR=\"$(bindir)\"          \
 	$(NULL)
 
 bin_PROGRAMS = menu-cached
