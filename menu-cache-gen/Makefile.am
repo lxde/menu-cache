@@ -36,9 +36,7 @@ menu_cache_gen_LDADD = 		\
 	$(MONITOR_LIBS)					\
 	$(NULL)
 menu_cache_gen_LDFLAGS =			\
-	-version-info $(LIB_MENU_LT_VERSION)	\
 	-no-undefined				\
-	-export-symbols-regex gmenu_tree	\
 	$(NULL)
 EXTRA_DIST =				\
 	$(NULL)

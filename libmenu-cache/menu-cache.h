@@ -49,13 +49,21 @@ enum _MenuCacheType
 
 void menu_cache_init();
 
+MenuCache* menu_cache_lookup( const char* menu_name );
+
+/* Don't call this API directly. Use menu_cache_lookup instead. */
 MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclude );
 
 MenuCache* menu_cache_ref(MenuCache* cache);
 void menu_cache_unref(MenuCache* cache);
 
+gboolean menu_cache_reload( MenuCache* cache );
+
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache );
 MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path );
+
+gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data);
+void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id);
 
 gboolean menu_cache_file_is_updated( const char* menu_file );
 gboolean menu_cache_is_updated( MenuCache* cache );

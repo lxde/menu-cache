@@ -26,6 +26,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/fcntl.h>
+#include <errno.h>
 
 #include "menu-cache.h"
 
@@ -64,12 +68,17 @@ struct _MenuCache
 {
 	guint n_ref;
 	MenuCacheDir* root_dir;
+	char* menu_file_path;
+	char* cache_file_path;
 	char** all_used_dirs;
 	int n_all_used_dirs;
-	char* menu_file_path;
 	time_t mtime;
 	time_t time;
+	GSList* notifiers;
 };
+
+static int server_fd = -1;
+static GIOChannel* server_ch = NULL;
 
 void menu_cache_init()
 {
@@ -284,6 +293,7 @@ MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclud
 	cache = g_slice_new0( MenuCache );
 	cache->mtime = st.st_mtime;
 
+	cache->cache_file_path = g_strdup( cache_file );
 	cache->menu_file_path = g_strdup( strtok(line, "\n") );
 
 	/* get all used dirs */
@@ -311,6 +321,8 @@ void menu_cache_unref(MenuCache* cache)
 	{
 		if( G_LIKELY(cache->root_dir) )
 			menu_cache_item_unref( cache->root_dir );
+		g_free( cache->cache_file_path );
+		g_free( cache->menu_file_path );
 		g_strfreev( cache->all_used_dirs );
 		g_slice_free( MenuCache, cache );
 	}
@@ -326,6 +338,64 @@ MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
 	g_atomic_int_inc( &item->n_ref );
 	return item;
+}
+
+typedef struct _CacheReloadNotifier
+{
+	GFunc func;
+	gpointer user_data;
+}CacheReloadNotifier;
+
+gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data)
+{
+	GSList* l = g_slist_alloc();
+	CacheReloadNotifier* n = g_slice_new(CacheReloadNotifier);
+	n->func = func;
+	n->user_data = user_data;
+	l->data = n;
+	cache->notifiers = g_slist_concat( cache->notifiers, l );
+	return l;
+}
+
+void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id)
+{
+	g_slice_free( CacheReloadNotifier, ((GSList*)notify_id)->data );
+	cache->notifiers = g_list_delete_link( cache->notifiers, (GSList*)notify_id );
+}
+
+gboolean menu_cache_reload( MenuCache* cache )
+{
+#if 0
+	FILE* f = fopen( cache_file, "r" );
+	if( ! f )
+		return FALSE;
+
+	if( fstat( fileno( f ), &st ) == -1 )
+	{
+		fclose( f );
+		return FALSE;
+	}
+
+	if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
+		return FALSE;
+
+	cache->mtime = st.st_mtime;
+
+	cache->cache_file_path = g_strdup( cache_file );
+	cache->menu_file_path = g_strdup( strtok(line, "\n") );
+
+	/* get all used dirs */
+	if( ! read_all_used_dirs( f, &cache->n_all_used_dirs, &cache->all_used_dirs ) )
+	{
+		g_slice_free( MenuCache, cache );
+		return FALSE;
+	}
+	cache->n_ref = 1;
+	cache->root_dir = (MenuCacheDir*)read_item( f, cache );
+	cache->time = time(NULL);	/* save current time */
+	fclose( f );
+#endif
+	return TRUE;
 }
 
 void menu_cache_item_unref(MenuCacheItem* item)
@@ -532,6 +602,19 @@ gboolean menu_cache_is_updated( MenuCache* cache )
 	struct stat st;
 	int i;
 
+	/* on-disk cache file is newer than our in-memory data? */
+	if( stat( cache->cache_file_path, &st ) == -1 )
+		return FALSE;
+	if( st.st_mtime > cache->mtime )
+		return FALSE;
+
+	/* source *.menu file is newer? */
+	if( stat( cache->menu_file_path, &st ) == -1 )
+		return FALSE;
+	if( st.st_mtime > cache->mtime )
+		return FALSE;
+
+	/* anyone of the involved dirs is newer? */
 	for( i = 0; i < cache->n_all_used_dirs; ++i )
 	{
 		if( stat( cache->all_used_dirs[i], &st ) == -1 )
@@ -543,3 +626,222 @@ gboolean menu_cache_is_updated( MenuCache* cache )
 	return TRUE;
 }
 
+static void get_socket_name( char* buf, int len )
+{
+    char* dpy = g_getenv("DISPLAY");
+    g_snprintf( buf, len, "/tmp/.menu-cached-%s-%s", dpy, g_get_user_name() );
+}
+
+#define MAX_RETRIES 25
+
+static gboolean fork_server()
+{
+    const char *server_path = g_find_program_in_path("menu-cached");
+    int ret, pid, status;
+
+    if (!server_path)
+    {
+        g_print("failed to find menu-cached\n");
+    }
+
+    /* Become a daemon */
+    pid = fork();
+    if (pid == 0)
+    {
+        int fd;
+        long open_max;
+        long i;
+
+        /* don't hold open fd opened from the client of the library */
+        open_max = sysconf (_SC_OPEN_MAX);
+        for (i = 0; i < open_max; i++)
+            fcntl (i, F_SETFD, FD_CLOEXEC);
+
+        /* /dev/null for stdin, stdout, stderr */
+        fd = open ("/dev/null", O_RDONLY);
+        if (fd != -1)
+        {
+            dup2 (fd, 0);
+            close (fd);
+        }
+        fd = open ("/dev/null", O_WRONLY);
+        if (fd != -1)
+        {
+            dup2 (fd, 1);
+            dup2 (fd, 2);
+            close (fd);
+        }
+        setsid();
+        if (fork() == 0)
+        {
+            execl( server_path, server_path, NULL);
+            g_print("failed to exec %s\n", server_path);
+        }
+        _exit(0);
+    }
+
+    /*
+     * do a waitpid on the intermediate process to avoid zombies.
+     */
+retry_wait:
+    ret = waitpid(pid, &status, 0);
+    if (ret < 0) {
+        if (errno == EINTR)
+            goto retry_wait;
+    }
+    return TRUE;
+}
+
+static gboolean on_server_io(GIOChannel* ch, GIOCondition cond, gpointer user_data)
+{
+    GIOStatus st;
+    char* line;
+    gsize len;
+    g_debug("server IO: %d", cond);
+retry:
+    st = g_io_channel_read_line( ch, &line, &len, NULL, NULL );
+    if( st == G_IO_STATUS_AGAIN )
+        goto retry;
+    if ( st != G_IO_STATUS_NORMAL || len < 4 )
+    {
+        g_io_channel_unref(ch);
+        g_debug("server IO error!!");
+        return FALSE;
+    }
+
+    if( memcmp( line, "REL:", 4 ) ) /* reload */
+    {
+        char* menu_cache_id = line + 4;
+
+    }
+
+    g_free( line );
+    return TRUE;
+}
+
+static gboolean connect_server()
+{
+    int fd;
+    struct sockaddr_un addr;
+    int retries = 0;
+
+    if( server_fd != -1 )
+        return TRUE;
+
+retry:
+    fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        g_print("Failed to create socket\n");
+        return FALSE;
+    }
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+
+    get_socket_name( addr.sun_path, sizeof( addr.sun_path ) );
+
+    if( connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+    {
+        if(retries == 0)
+        {
+            close(fd);
+            fork_server();
+            ++retries;
+            goto retry;
+        }
+        if (retries < MAX_RETRIES)
+        {
+            close(fd);
+            usleep(5000);
+            ++retries;
+            goto retry;
+        }
+        g_print("Unable to connect\n");
+        close(fd);
+        return FALSE;
+    }
+    server_fd = fd;
+    server_ch = g_io_channel_unix_new(fd);
+    g_io_channel_set_close_on_unref(server_ch, TRUE);
+    g_io_add_watch(server_ch, G_IO_IN|G_IO_PRI|G_IO_ERR|G_IO_HUP, on_server_io, NULL);
+    return TRUE;
+}
+
+static char* register_menu_to_server( const char* menu_name )
+{
+    const gchar * const * langs = g_get_language_names();
+    const char* xdg_cfg = g_getenv("XDG_CONFIG_DIRS");
+    const char* xdg_prefix = g_getenv("XDG_MENU_PREFIX");
+    const char* xdg_data = g_getenv("XDG_DATA_DIRS");
+    const char* xdg_cfg_home = g_getenv("XDG_CONFIG_HOME");
+    const char* xdg_data_home = g_getenv("XDG_DATA_HOME");
+    char* buf;
+    char md5[36];
+    int len = 0, r;
+
+    if( !xdg_cfg )
+        xdg_cfg = "";
+    if( ! xdg_prefix )
+        xdg_prefix = "";
+    if( ! xdg_data )
+        xdg_data = "";
+    if( ! xdg_cfg_home )
+        xdg_cfg_home = "";
+    if( ! xdg_data_home )
+        xdg_data_home = "";
+
+    /* get rid of the encoding part of locale name. */
+    while( strchr(langs[0], '.') )
+        ++langs;
+
+    buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                            menu_name,
+                            *langs,
+                            xdg_cfg,
+                            xdg_prefix,
+                            xdg_data,
+                            xdg_cfg_home,
+                            xdg_data_home );
+    write( server_fd, buf, strlen(buf) );
+
+    while( (r=read(server_fd, md5 + len, 32 - len)) > 0 && len < 32 )
+        len += r;
+    md5[32] = '\0';
+
+    g_debug("md5: %s", md5);
+
+    if( r == -1 )
+    {
+        g_debug("server error!");
+        return NULL;
+    }
+
+    g_free( buf );
+
+    return len == 32 ? g_build_filename( g_get_user_cache_dir(), "menus", md5, NULL ) : NULL;
+}
+
+static void unregister_menu_from_server( const char* menu_cache_name )
+{
+    char* buf = g_strdup_printf("UNR:%s\n", menu_cache_name );
+    write( server_fd, buf, strlen(buf) );
+    g_free( buf );
+}
+
+MenuCache* menu_cache_lookup( const char* menu_name )
+{
+    MenuCache* cache;
+    char* file_name;
+    /* FIXME: lookup in a hash table for already loaded menus */
+
+    if( !connect_server() )
+    {
+        g_print("unable to connect to menu-cached.\n");
+        return NULL;
+    }
+    file_name = register_menu_to_server( menu_name );
+    g_debug("file_name = %s", file_name);
+    cache = menu_cache_new( file_name, NULL, NULL );
+    g_free( file_name );
+    return cache;
+}

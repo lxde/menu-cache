@@ -59,5 +59,6 @@ libmenu-cache/Makefile
 libmenu-cache/libmenu-cache.pc
 libmenu-cache/libmenu-cache-uninstalled.pc
 menu-cache-gen/Makefile
+menu-cache-daemon/Makefile
 po/Makefile.in
 ])

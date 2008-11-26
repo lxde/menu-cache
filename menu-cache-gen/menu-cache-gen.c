@@ -34,6 +34,7 @@
 
 static char* ifile = NULL;
 static char* ofile = NULL;
+static char* lang = NULL;
 static gboolean force = FALSE;
 
 GOptionEntry opt_entries[] =
@@ -41,6 +42,7 @@ GOptionEntry opt_entries[] =
 	{"force", 'f', 0, G_OPTION_ARG_NONE, &force, "Force regeneration of cache even if it's up-to-date.", NULL },
 	{"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
 	{"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
+	{"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", NULL },
 	{0}
 };
 
@@ -175,10 +177,10 @@ static gboolean is_src_newer( const char* src, const char* dest )
 	struct stat src_st, dest_st;
 
 	if( stat(dest, &dest_st) == -1 )
-		return FALSE;
+		return TRUE;
 
 	if( stat(src, &src_st) == -1 )
-		return FALSE;
+		return TRUE;
 
 	return (src_st.st_mtime > dest_st.st_mtime);
 }
@@ -207,6 +209,7 @@ int main(int argc, char** argv)
 	FILE *of;
 	int ofd;
 	char *tmp;
+    char *dir;
 
 	opt_ctx = g_option_context_new("Generate cache for freedeskotp.org compliant menus.");
 	g_option_context_add_main_entries( opt_ctx, opt_entries, NULL );
@@ -217,9 +220,13 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+    if( lang )
+        g_setenv( "LANGUAGE", lang, TRUE );
+
 	/* if the cache is already up-to-date, just leave it. */
 	if( !force && is_menu_uptodate() )
 	{
+        g_print("upda-to-date, re-generation is not needed.");
 		return 0;
 	}
 
@@ -229,6 +236,11 @@ int main(int argc, char** argv)
 		g_print("Error loading source menu file: %s\n", ifile);
 		return 1;
 	}
+
+    dir = g_path_get_dirname( ofile );
+    if( !g_file_test( dir, G_FILE_TEST_EXISTS ) )
+        g_mkdir_with_parents( dir, 0700 );
+    g_free( dir );
 
 	/* write the tree to cache. */
 	tmp = g_malloc( strlen( ofile ) + 7 );
@@ -247,7 +259,7 @@ int main(int argc, char** argv)
 		g_print( "Error writing output file: %s\n", ofile );
 		return 1;
 	}
-	
+
 	fprintf( of, "%s\n", gmenu_tree_get_menu_file_full_path(menu_tree) );
 
     root_dir = gmenu_tree_get_root_directory( menu_tree );
@@ -269,6 +281,6 @@ int main(int argc, char** argv)
 		g_print( "Error writing output file: %s\n", g_strerror( errno ) );
 	}
 	g_free( tmp );
-
+g_print("success!\n");
 	return 0;
 }
