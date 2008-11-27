@@ -732,7 +732,7 @@ reconnect:
             /* re-register all menu caches */
             g_hash_table_iter_init(&it, hash);
             while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache)) 
-                register_menu_to_server( cache->md5, TRUE );
+                register_menu_to_server( menu_name, TRUE );
         }
         return FALSE;
     }
@@ -875,7 +875,6 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
         return NULL;
     }
     g_free( buf );
-
     if( len != 32 || re_register )
         return NULL;
 
