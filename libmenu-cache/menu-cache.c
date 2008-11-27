@@ -762,7 +762,6 @@ reconnect:
             g_hash_table_iter_init(&it, hash);
             while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
             {
-                g_debug("menu_name=%s, md5=%32s", menu_name, cache->md5);
                 if(0 == memcmp(cache->md5, menu_cache_id, 32))
                 {
                     g_debug("RELOAD!");
