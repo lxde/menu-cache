@@ -53,6 +53,10 @@ typedef struct _MenuCache
 }MenuCache;
 
 static GHashTable* hash = NULL;
+guint delayed_reload_handler = 0;
+
+static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
+                             GFileMonitorEvent evt, MenuCache* cache );
 
 static void menu_cache_unref(MenuCache* cache)
 {
@@ -78,6 +82,16 @@ static void menu_cache_unref(MenuCache* cache)
     {
         /* g_debug("menu cache removed from hash"); */
         g_hash_table_remove( hash, cache->md5 );
+        if( g_hash_table_size(hash) == 0 ) /* no menu cache is in use. */
+        {
+            g_hash_table_destroy(hash);
+            hash = NULL;
+            if( delayed_reload_handler )
+            {
+                g_source_remove( delayed_reload_handler );
+                delayed_reload_handler = 0;
+            }
+        }
     }
 }
 
@@ -176,8 +190,7 @@ static gboolean regenerate_cache( const char* menu_name,
     return TRUE;
 }
 
-static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
-                             GFileMonitorEvent evt, MenuCache* cache )
+static gboolean delayed_reload( MenuCache* cache )
 {
     GSList* l;
     char buf[38];
@@ -197,6 +210,7 @@ static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
     for( i = 0; i < cache->n_files; ++i )
     {
         g_file_monitor_cancel( cache->mons[i] );
+        g_signal_handlers_disconnect_by_func( cache->mons[i], on_file_changed, cache );
         g_object_unref( cache->mons[i] );
     }
     if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache_file,
@@ -221,6 +235,18 @@ static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
         GIOChannel* ch = (GIOChannel*)l->data;
         write(g_io_channel_unix_get_fd(ch), buf, 37 );
     }
+    delayed_reload_handler = 0;
+    return FALSE;
+}
+
+void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
+                      GFileMonitorEvent evt, MenuCache* cache )
+{
+    /* g_debug("file %s is changed.", g_file_get_path(gf)); */
+    if( delayed_reload_handler )
+        g_source_remove(delayed_reload_handler);
+
+    delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
 
 static gboolean menu_cache_file_is_updated( const char* menu_file, int* n_used_files, char** used_files )

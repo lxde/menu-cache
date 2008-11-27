@@ -29,9 +29,9 @@
 
 G_BEGIN_DECLS
 
-#define	MENU_CACHE_ITEM(x)	((MenuCacheItem*)x)
-#define	MENU_CACHE_DIR(x)	((MenuCacheDir*)x)
-#define	MENU_CACHE_APP(x)	((MenuCacheApp*)x)
+#define    MENU_CACHE_ITEM(x)    ((MenuCacheItem*)x)
+#define    MENU_CACHE_DIR(x)    ((MenuCacheDir*)x)
+#define    MENU_CACHE_APP(x)    ((MenuCacheApp*)x)
 
 typedef struct _MenuCacheItem MenuCacheItem;
 typedef struct _MenuCacheDir MenuCacheDir;
@@ -41,18 +41,15 @@ typedef struct _MenuCache MenuCache;
 typedef enum _MenuCacheType MenuCacheType;
 enum _MenuCacheType
 {
-	MENU_CACHE_TYPE_NONE,
-	MENU_CACHE_TYPE_DIR,
-	MENU_CACHE_TYPE_APP,
-	MENU_CACHE_TYPE_SEP
+    MENU_CACHE_TYPE_NONE,
+    MENU_CACHE_TYPE_DIR,
+    MENU_CACHE_TYPE_APP,
+    MENU_CACHE_TYPE_SEP
 };
 
 void menu_cache_init();
 
 MenuCache* menu_cache_lookup( const char* menu_name );
-
-/* Don't call this API directly. Use menu_cache_lookup instead. */
-MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclude );
 
 MenuCache* menu_cache_ref(MenuCache* cache);
 void menu_cache_unref(MenuCache* cache);
@@ -66,7 +63,6 @@ gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer use
 void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id);
 
 gboolean menu_cache_file_is_updated( const char* menu_file );
-gboolean menu_cache_is_updated( MenuCache* cache );
 
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item);
