@@ -49,9 +49,11 @@ GOptionEntry opt_entries[] =
 GHashTable* dir_hash = NULL;
 
 /* all used app dirs.
- * defined in entry-directories.c
+ * defined in gmenu-tree.c
  */
 extern GSList* all_used_dirs;
+extern GSList* all_used_files;
+
 
 static int dirname_index( const char* dir )
 {
@@ -210,6 +212,10 @@ int main(int argc, char** argv)
     int ofd;
     char *tmp;
     char *dir;
+    const gchar* const * xdg_cfg_dirs;
+    const gchar* const * pdir;
+    char* menu_prefix;
+    char* menu_file;
 
     opt_ctx = g_option_context_new("Generate cache for freedeskotp.org compliant menus.");
     g_option_context_add_main_entries( opt_ctx, opt_entries, NULL );
@@ -260,12 +266,57 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    fprintf( of, "%s\n", gmenu_tree_get_menu_file_full_path(menu_tree) );
+    fprintf( of, "%s\n", ifile );
 
     root_dir = gmenu_tree_get_root_directory( menu_tree );
 
-    fprintf( of, "%d\n", g_slist_length(all_used_dirs) );
+    if( g_path_is_absolute(ifile) )
+        all_used_files = g_slist_prepend(all_used_files, g_strdup(ifile));
+    else
+    {
+        xdg_cfg_dirs = g_get_system_config_dirs();
+        menu_prefix = g_getenv("XDG_MENU_PREFIX");
+        for( pdir = xdg_cfg_dirs; *pdir; ++pdir )
+        {
+            if(menu_prefix)
+                menu_file = g_build_filename( *pdir, "menus", menu_prefix, ifile, NULL );
+            else
+                menu_file = g_build_filename( *pdir, "menus", ifile, NULL );
+            all_used_files = g_slist_prepend(all_used_files, menu_file);
+        }
+        if(menu_prefix)
+            menu_file = g_build_filename( g_get_user_config_dir(), "menus", menu_prefix, ifile, NULL );
+        else
+            menu_file = g_build_filename( g_get_user_config_dir(), "menus", ifile, NULL );
+        all_used_files = g_slist_prepend(all_used_files, menu_file);
+    }
+#if 0
+    /* write all involved files. */
+    /* remove duplicated monitors */
+    for( l = all_used_files; l; l = l->next )
+    {
+        GSList* l2;
+        char* dir = g_path_get_dirname(l->data);
+        for( l2 = all_used_dirs; l2; l2 = l2->next )
+        {
+            /* if p2 is the direct parent dir of p1, there is no need to monitor p1 */
+            if( strcmp(dir, (char*)l2->data) == 0 )
+            {
+                GSList* next = l->next;
+                g_free(l->data);
+                all_used_files = g_slist_delete_link(all_used_files, l);
+            }
+        }
+        g_free(dir);
+    }
+#endif
+
+    fprintf( of, "%d\n", g_slist_length(all_used_dirs) + g_slist_length(all_used_files) );
     for( l = all_used_dirs; l; l = l->next )
+    {
+        fprintf( of, "%s\n", (char*)l->data );
+    }
+    for( l = all_used_files; l; l = l->next )
     {
         fprintf( of, "%s\n", (char*)l->data );
     }

@@ -171,6 +171,12 @@ static void gmenu_tree_item_unref_and_unset_parent (gpointer itemp);
 
 static GHashTable *gmenu_tree_cache = NULL;
 
+/* all used app dirs.
+ */
+/* all used app dirs, required by menu-cache-gen */
+GSList* all_used_dirs = NULL;
+GSList* all_used_files = NULL;
+
 static inline char *
 get_cache_key (GMenuTree      *tree,
 	       GMenuTreeFlags  flags)
@@ -1707,6 +1713,7 @@ load_merge_file (GMenuTree      *tree,
   MenuLayoutNode *to_merge;
   const char     *canonical;
   char           *freeme;
+  char           *dirname;
   gboolean        retval;
 
   freeme = NULL;
@@ -1731,6 +1738,12 @@ load_merge_file (GMenuTree      *tree,
     {
       canonical = filename;
     }
+
+  /* only add this merge file if it's parent dir is not a merge dir. */
+  dirname = g_path_get_dirname(canonical);
+  if( ! g_slist_find_custom(all_used_dirs, dirname, (GCompareFunc)strcmp ) )
+    all_used_files = g_slist_prepend( all_used_files, g_strdup(canonical) );
+  g_free(dirname);
 
   if (g_hash_table_lookup (loaded_menu_files, canonical) != NULL)
     {
@@ -1922,11 +1935,6 @@ load_parent_merge_file (GMenuTree      *tree,
 
   return found;
 }
-
-/* all used app dirs.
- * defined in entry-directories.c
- */
-extern GSList* all_used_dirs;
 
 static void
 load_merge_dir (GMenuTree      *tree,
