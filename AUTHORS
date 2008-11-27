@@ -1,8 +1,9 @@
-Authors of libmenu-cache:
-	Hong Jen Yee <pcman.tw@gmail.com>
+Authors of libmenu-cache and menu-cache-daemon:
+	Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 
-Most parts of menu-cache-gen was taken from gnome-menus written by:
+Most parts of menu-cache-gen was taken from libmenu of gnome-menus written by:
 	Mark McLoughlin <mark@skynet.ie>
 	Havoc Pennington <hp@redhat.com>
 Modified by:
-	Hong Jen Yee <pcman.tw@gmail.com>
+	Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+
