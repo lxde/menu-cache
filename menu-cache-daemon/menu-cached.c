@@ -47,6 +47,7 @@ typedef struct _MenuCache
     int n_files;
     char** files;
     GFileMonitor** mons;
+    GFileMonitor* cache_mon;
     /* FIXME: the cached file itself should be monitored, too. */
 
     /* clients requesting this menu cache */
@@ -74,6 +75,9 @@ static void menu_cache_unref(MenuCache* cache)
             g_file_monitor_cancel( cache->mons[i] );
             g_object_unref( cache->mons[i] );
         }
+        g_file_monitor_cancel(cache->cache_mon);
+        g_object_unref(cache->cache_mon);
+
         g_free( cache->mons );
         g_strfreev( cache->env );
         g_strfreev( cache->files );
@@ -197,6 +201,8 @@ static gboolean delayed_reload( MenuCache* cache )
     char buf[38];
     char* cache_file;
     int i;
+    GFile* gf;
+
     g_debug("Re-generation of cache is needed!");
     g_debug("call menu-cache-gen to re-generate the cache");
     memcpy( buf, "REL:", 4 );
@@ -214,22 +220,31 @@ static gboolean delayed_reload( MenuCache* cache )
         g_signal_handlers_disconnect_by_func( cache->mons[i], on_file_changed, cache );
         g_object_unref( cache->mons[i] );
     }
+    g_file_monitor_cancel(cache->cache_mon);
+    g_object_unref(cache->cache_mon);
+
     if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache_file,
                             cache->env, &cache->n_files, &cache->files ) )
     {
         g_debug("regeneration of cache failed.");
     }
-    g_free(cache_file);
 
     cache->mons = g_realloc( cache->mons, sizeof(GFileMonitor*)*(cache->n_files+1) );
     /* create required file monitors */
     for( i = 0; i < cache->n_files; ++i )
     {
-        GFile* gf = g_file_new_for_path( cache->files[i] );
+        gf = g_file_new_for_path( cache->files[i] );
         cache->mons[i] = g_file_monitor( gf, 0, NULL, NULL );
         g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
         g_object_unref(gf);
     }
+    gf = g_file_new_for_path( cache_file );
+    cache->cache_mon = g_file_monitor_file( gf, 0, NULL, NULL );
+    g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
+    g_object_unref(gf);
+
+    g_free(cache_file);
+
     /* notify the clients that reload is needed. */
     for( l = cache->clients; l; l = l->next )
     {
@@ -243,14 +258,14 @@ static gboolean delayed_reload( MenuCache* cache )
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, MenuCache* cache )
 {
-    /* g_debug("file %s is changed.", g_file_get_path(gf)); */
+    g_debug("file %s is changed.", g_file_get_path(gf));
     if( delayed_reload_handler )
         g_source_remove(delayed_reload_handler);
 
     delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
 
-static gboolean menu_cache_file_is_updated( const char* menu_file, int* n_used_files, char** used_files )
+static gboolean menu_cache_file_is_updated( const char* cache_file, int* n_used_files, char** used_files )
 {
     gboolean ret = FALSE;
     struct stat st;
@@ -260,7 +275,7 @@ static gboolean menu_cache_file_is_updated( const char* menu_file, int* n_used_f
     FILE* f;
     char line[ 4096 ];
 
-    f = fopen( menu_file, "r" );
+    f = fopen( cache_file, "r" );
     if( f )
     {
         if( fstat( fileno(f), &st) == 0 )
@@ -308,7 +323,7 @@ static int create_socket()
     if (fd < 0)
     {
         g_print("Failed to create socket\n");
-        return FALSE;
+        return -1;
     }
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
@@ -319,13 +334,13 @@ static int create_socket()
     {
         g_debug("Failed to bind to socket");
         close(fd);
-        return 1;
+        return -1;
     }
     if(listen(fd, 30) < 0)
     {
         g_debug( "Failed to listen to socket" );
         close(fd);
-        return 1;
+        return -1;
     }
     return fd;
 }
@@ -337,6 +352,7 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     GIOStatus st;
     const char* md5;
     MenuCache* cache;
+    GFile* gf;
 
     g_debug("child data");
 retry:
@@ -396,7 +412,6 @@ retry:
                     g_debug("regeneration of cache failed!!");
                 }
             }
-            g_free(cache_file);
             cache = g_slice_new0( MenuCache );
             memcpy( cache->md5, md5, 33 );
             cache->n_files = n_files;
@@ -408,11 +423,18 @@ retry:
             /* create required file monitors */
             for( i = 0; i < n_files; ++i )
             {
-                GFile* gf = g_file_new_for_path( files[i] );
+                gf = g_file_new_for_path( files[i] );
                 cache->mons[i] = g_file_monitor( gf, 0, NULL, NULL );
                 g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
                 g_object_unref(gf);
             }
+            gf = g_file_new_for_path( cache_file );
+            cache->cache_mon = g_file_monitor_file( gf, 0, NULL, NULL );
+            g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
+            g_object_unref(gf);
+
+            g_free(cache_file);
+
             g_hash_table_insert(hash, cache->md5, cache);
             g_debug("new menu cache added to hash");
             cache->n_ref = 1;
@@ -513,6 +535,10 @@ int main(int argc, char** argv)
     GIOChannel* ch;
     int fd;
 
+    fd = create_socket();
+    if( fd < 0 )
+        return 1;
+
     signal(SIGHUP, terminate);
     signal(SIGINT, terminate);
     signal(SIGQUIT, terminate);
@@ -520,7 +546,6 @@ int main(int argc, char** argv)
     signal(SIGKILL, terminate);
     signal(SIGPIPE, SIG_IGN);
 
-    fd = create_socket();
     ch = g_io_channel_unix_new(fd);
     if(!ch)
         return 1;
