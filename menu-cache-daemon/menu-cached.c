@@ -32,6 +32,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
 
 typedef struct _MenuCache
 {
@@ -487,21 +488,39 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     return TRUE;
 }
 
-static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer user_data)
+static void terminate(int sig)
 {
+/* #ifndef HAVE_ABSTRACT_SOCKETS */
     char path[256];
     get_socket_name(path, 256);
-    /* the server socket is accidentally closed. terminate the server. */
     unlink(path);
-    exit(1);
+    exit(0);
+/* #endif */
+}
+
+static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer user_data)
+{
+    /* FIXME: is this possible? */
+    /* the server socket is accidentally closed. terminate the server. */
+    terminate(SIGTERM);
     return TRUE;
 }
+
 
 int main(int argc, char** argv)
 {
     GMainLoop* main_loop = g_main_loop_new( NULL, TRUE );
     GIOChannel* ch;
-    int fd = create_socket();
+    int fd;
+
+    signal(SIGHUP, terminate);
+    signal(SIGINT, terminate);
+    signal(SIGQUIT, terminate);
+    signal(SIGTERM, terminate);
+    signal(SIGKILL, terminate);
+    signal(SIGPIPE, SIG_IGN);
+
+    fd = create_socket();
     ch = g_io_channel_unix_new(fd);
     if(!ch)
         return 1;

@@ -266,6 +266,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    /* FIXME: version number should be added to the head of this cache file. */
+
+    /* the first line is menu name */
     fprintf( of, "%s\n", ifile );
 
     root_dir = gmenu_tree_get_root_directory( menu_tree );
@@ -311,6 +314,8 @@ int main(int argc, char** argv)
     }
 #endif
 
+    /* FIXME: prevent duplicates */
+    /* FIXME: add D or F at the begin of the line to indicate it's a file or directory. */
     fprintf( of, "%d\n", g_slist_length(all_used_dirs) + g_slist_length(all_used_files) );
     for( l = all_used_dirs; l; l = l->next )
     {
