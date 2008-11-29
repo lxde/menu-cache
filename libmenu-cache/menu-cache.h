@@ -22,10 +22,10 @@
  *      MA 02110-1301, USA.
  */
 
-#include <glib.h>
-
 #ifndef __MENU_CACHE_H__
 #define __MENU_CACHE_H__
+
+#include <glib.h>
 
 G_BEGIN_DECLS
 

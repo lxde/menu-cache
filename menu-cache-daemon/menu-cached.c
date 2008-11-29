@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include "version.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
@@ -164,7 +166,7 @@ static gboolean regenerate_cache( const char* menu_name,
         "-l", NULL,
         "-i", NULL,
         "-o", NULL,
-        "-f", NULL};
+        NULL};
     argv[2] = lang_name;
     argv[4] = menu_name;
     argv[6] = cache_file;
@@ -233,8 +235,11 @@ static gboolean delayed_reload( MenuCache* cache )
     /* create required file monitors */
     for( i = 0; i < cache->n_files; ++i )
     {
-        gf = g_file_new_for_path( cache->files[i] );
-        cache->mons[i] = g_file_monitor( gf, 0, NULL, NULL );
+        gf = g_file_new_for_path( cache->files[i] + 1 );
+        if( cache->files[i][0] == 'D' )
+            cache->mons[i] = g_file_monitor_directory( gf, 0, NULL, NULL );
+        else
+            cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
         g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
         g_object_unref(gf);
     }
@@ -265,7 +270,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
     delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
 
-static gboolean menu_cache_file_is_updated( const char* cache_file, int* n_used_files, char** used_files )
+static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files, char** used_files )
 {
     gboolean ret = FALSE;
     struct stat st;
@@ -280,12 +285,22 @@ static gboolean menu_cache_file_is_updated( const char* cache_file, int* n_used_
     {
         if( fstat( fileno(f), &st) == 0 )
         {
+        	int ver_maj, ver_min;
+        	/* the first line is version number */
+        	if( !fgets(line, G_N_ELEMENTS(line),f) )
+        		goto _out;
+        	if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
+        		goto _out;
+			if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+        		goto _out;
+
             cache_mtime = st.st_mtime;
             if( read_all_used_files(f, &n, &files) )
             {
                 for( i =0; i < n; ++i )
                 {
-                    if( stat( files[i], &st ) == -1 )
+                    /* files[i][0] is 'D' or 'F' indicating file type. */
+                    if( stat( files[i] + 1, &st ) == -1 )
                         continue;
                     if( st.st_mtime > cache_mtime )
                         break;
@@ -354,7 +369,6 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     MenuCache* cache;
     GFile* gf;
 
-    g_debug("child data");
 retry:
     st = g_io_channel_read_line( ch, &line, &len, NULL, NULL );
     if( st == G_IO_STATUS_AGAIN )
@@ -404,7 +418,7 @@ retry:
 
             /* FIXME: should obtain cache dir from client's env */
             cache_file = g_build_filename(g_get_user_cache_dir(), "menus", md5, NULL );
-            if( ! menu_cache_file_is_updated(cache_file, &n_files, &files) )
+            if( ! cache_file_is_updated(cache_file, &n_files, &files) )
             {
                 /* run menu-cache-gen */
                 if(! regenerate_cache( menu_name, lang_name, cache_file, env, &n_files, &files ) )
@@ -423,8 +437,11 @@ retry:
             /* create required file monitors */
             for( i = 0; i < n_files; ++i )
             {
-                gf = g_file_new_for_path( files[i] );
-                cache->mons[i] = g_file_monitor( gf, 0, NULL, NULL );
+                gf = g_file_new_for_path( files[i] + 1 );
+                if( files[i][0] == 'D' )
+                    cache->mons[i] = g_file_monitor_directory( gf, 0, NULL, NULL );
+                else
+                    cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
                 g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
                 g_object_unref(gf);
             }

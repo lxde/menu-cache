@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 #include "gmenu-tree.h"
-#include "menu-cache.h"
+#include "version.h"
 
 static char* ifile = NULL;
 static char* ofile = NULL;
@@ -39,7 +39,9 @@ static gboolean force = FALSE;
 
 GOptionEntry opt_entries[] =
 {
+/*
     {"force", 'f', 0, G_OPTION_ARG_NONE, &force, "Force regeneration of cache even if it's up-to-date.", NULL },
+*/
     {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
     {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
     {"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", NULL },
@@ -174,6 +176,7 @@ void write_dir( FILE* of, GMenuTreeDirectory* dir )
     fputs( "\n", of );
 }
 
+#if 0
 static gboolean is_src_newer( const char* src, const char* dest )
 {
     struct stat src_st, dest_st;
@@ -200,6 +203,7 @@ static gboolean is_menu_uptodate()
 
     return menu_cache_file_is_updated( ofile );
 }
+#endif
 
 int main(int argc, char** argv)
 {
@@ -228,13 +232,14 @@ int main(int argc, char** argv)
 
     if( lang )
         g_setenv( "LANGUAGE", lang, TRUE );
-
+#if 0
     /* if the cache is already up-to-date, just leave it. */
     if( !force && is_menu_uptodate() )
     {
         g_print("upda-to-date, re-generation is not needed.");
         return 0;
     }
+#endif
 
     menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_NONE | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
     if( ! menu_tree )
@@ -266,7 +271,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    /* FIXME: version number should be added to the head of this cache file. */
+    /* Version number should be added to the head of this cache file. */
+    fprintf( of, "%d.%d\n", VER_MAJOR, VER_MINOR );
 
     /* the first line is menu name */
     fprintf( of, "%s\n", ifile );
@@ -314,16 +320,15 @@ int main(int argc, char** argv)
     }
 #endif
 
-    /* FIXME: prevent duplicates */
     /* FIXME: add D or F at the begin of the line to indicate it's a file or directory. */
     fprintf( of, "%d\n", g_slist_length(all_used_dirs) + g_slist_length(all_used_files) );
     for( l = all_used_dirs; l; l = l->next )
     {
-        fprintf( of, "%s\n", (char*)l->data );
+        fprintf( of, "D%s\n", (char*)l->data );
     }
     for( l = all_used_files; l; l = l->next )
     {
-        fprintf( of, "%s\n", (char*)l->data );
+        fprintf( of, "F%s\n", (char*)l->data );
     }
 
     write_dir( of, root_dir );

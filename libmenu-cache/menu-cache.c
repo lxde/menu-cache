@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include "version.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -302,6 +304,19 @@ MenuCache* menu_cache_new( const char* cache_file, char** include, char** exclud
         return NULL;
     }
 
+    /* the first line is version number */
+    if( fgets( line, G_N_ELEMENTS(line) ,f ) )
+    {
+        int ver_maj, ver_min;
+        if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
+            return NULL;
+        if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+            return NULL;
+    }
+    else
+        return NULL;
+
+    /* the second line is menu name */
     if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
         return NULL;
 
@@ -336,6 +351,11 @@ void menu_cache_unref(MenuCache* cache)
     {
         unregister_menu_from_server( cache );
         g_hash_table_remove( hash, cache->menu_name );
+        if( g_hash_table_size(hash) )
+        {
+            g_hash_table_destroy(hash);
+            hash = NULL;
+        }
 
         if( G_LIKELY(cache->root_dir) )
             menu_cache_item_unref( cache->root_dir );
@@ -903,7 +923,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
 
     /* lookup in a hash table for already loaded menus */
     if( G_UNLIKELY( ! hash ) )
-        hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, menu_cache_unref );
+        hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL );
     else
     {
         cache = (MenuCache*)g_hash_table_lookup(hash, menu_name);
