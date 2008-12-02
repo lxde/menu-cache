@@ -75,7 +75,7 @@ struct _MenuCache
     guint n_ref;
     MenuCacheDir* root_dir;
     char* menu_name;
-    char md5[32];
+    char md5[36];
     char* cache_file;
     char** all_used_files;
     int n_all_used_files;
@@ -154,7 +154,9 @@ static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
     /* load child items in the dir */
     while( item = read_item( f, cache ) )
     {
-        item->parent = menu_cache_item_ref(dir);
+        /* menu_cache_ref shouldn't be called here for dir.
+         * Otherwise, circular reference will happen. */
+        item->parent = dir;
         dir->children = g_slist_prepend( dir->children, item );
     }
 
@@ -347,18 +349,22 @@ MenuCache* menu_cache_ref(MenuCache* cache)
 
 void menu_cache_unref(MenuCache* cache)
 {
+    /* g_debug("cache_unref: %d", cache->n_ref); */
     if( g_atomic_int_dec_and_test( &cache->n_ref ) )
     {
         unregister_menu_from_server( cache );
         g_hash_table_remove( hash, cache->menu_name );
-        if( g_hash_table_size(hash) )
+        if( g_hash_table_size(hash) == 0 )
         {
             g_hash_table_destroy(hash);
             hash = NULL;
         }
 
         if( G_LIKELY(cache->root_dir) )
+        {
+            /* g_debug("unref root dir"); */
             menu_cache_item_unref( cache->root_dir );
+        }
         g_free( cache->cache_file );
         g_free( cache->menu_name );
         /* g_free( cache->menu_file_path ); */
@@ -376,6 +382,7 @@ MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
     g_atomic_int_inc( &item->n_ref );
+    /* g_debug("item_ref %s: %d -> %d", item->id, item->n_ref-1, item->n_ref); */
     return item;
 }
 
@@ -416,7 +423,6 @@ gboolean menu_cache_reload( MenuCache* cache )
 {
     struct stat st;
     char line[4096];
-
     FILE* f = fopen( cache->cache_file, "r" );
     if( ! f )
         return FALSE;
@@ -427,11 +433,22 @@ gboolean menu_cache_reload( MenuCache* cache )
         return FALSE;
     }
 
-    if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
+    /* the first line is version number */
+    if( fgets( line, G_N_ELEMENTS(line) ,f ) )
     {
-        fclose( f );
-        return FALSE;
+        int ver_maj, ver_min;
+        if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
+            return FALSE;
+        if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+            return FALSE;
     }
+    else
+        return FALSE;
+
+    /* the second line is menu name */
+    if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
+        return FALSE;
+
     cache->mtime = st.st_mtime;
     g_strfreev( cache->all_used_files );
 
@@ -454,15 +471,21 @@ gboolean menu_cache_reload( MenuCache* cache )
 
 void menu_cache_item_unref(MenuCacheItem* item)
 {
+    /* g_debug("item_unref(%s): %d", item->id, item->n_ref); */
     if( g_atomic_int_dec_and_test( &item->n_ref ) )
     {
+        /* g_debug("free item: %s", item->id); */
         g_free( item->id );
         g_free( item->name );
         g_free( item->comment );
         g_free( item->icon );
-        
+
         if( item->parent )
-            menu_cache_item_unref( MENU_CACHE_ITEM(item->parent) );
+        {
+            /* g_debug("remove %s from parent %s", item->id, MENU_CACHE_ITEM(item->parent)->id); */
+            /* remove ourselve from the parent node. */
+            item->parent->children = g_slist_remove(item->parent->children, item);
+        }
 
         if( item->extended )
             g_datalist_clear( item->extended );
@@ -470,8 +493,15 @@ void menu_cache_item_unref(MenuCacheItem* item)
         if( item->type == MENU_CACHE_TYPE_DIR )
         {
             MenuCacheDir* dir = MENU_CACHE_DIR(item);
+            GSList* l;
             g_free( dir->file_name );
-            g_slist_foreach( dir->children, (GFunc)menu_cache_item_unref, NULL );
+            for(l = dir->children; l; l = l->next )
+            {
+                MenuCacheItem* child = MENU_CACHE_ITEM(l->data);
+                /* remove ourselve from the children. */
+                child->parent = NULL;
+                menu_cache_item_unref(child);
+            }
             g_slist_free( dir->children );
             g_slice_free( MenuCacheDir, item );
         }

@@ -280,7 +280,10 @@ int main(int argc, char** argv)
     root_dir = gmenu_tree_get_root_directory( menu_tree );
 
     if( g_path_is_absolute(ifile) )
-        all_used_files = g_slist_prepend(all_used_files, g_strdup(ifile));
+    {
+        if( ! g_slist_find_custom(all_used_files, ifile, (GCompareFunc)strcmp ) )
+            all_used_files = g_slist_prepend(all_used_files, g_strdup(ifile));
+    }
     else
     {
         xdg_cfg_dirs = g_get_system_config_dirs();
@@ -291,13 +294,20 @@ int main(int argc, char** argv)
                 menu_file = g_build_filename( *pdir, "menus", menu_prefix, ifile, NULL );
             else
                 menu_file = g_build_filename( *pdir, "menus", ifile, NULL );
-            all_used_files = g_slist_prepend(all_used_files, menu_file);
+            if( ! g_slist_find_custom(all_used_dirs, menu_file, (GCompareFunc)strcmp ) )
+                all_used_files = g_slist_prepend(all_used_files, menu_file);
+            else
+                g_free( menu_file );
         }
         if(menu_prefix)
             menu_file = g_build_filename( g_get_user_config_dir(), "menus", menu_prefix, ifile, NULL );
         else
             menu_file = g_build_filename( g_get_user_config_dir(), "menus", ifile, NULL );
-        all_used_files = g_slist_prepend(all_used_files, menu_file);
+
+        if( ! g_slist_find_custom(all_used_dirs, menu_file, (GCompareFunc)strcmp ) )
+            all_used_files = g_slist_prepend(all_used_files, menu_file);
+        else
+            g_free(menu_file);
     }
 #if 0
     /* write all involved files. */

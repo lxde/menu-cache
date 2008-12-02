@@ -691,7 +691,8 @@ EntryDirectory *
 entry_directory_new (DesktopEntryType  entry_type,
                      const char       *path)
 {
-  all_used_dirs = g_slist_prepend( all_used_dirs, g_strdup( path ) );
+  if( ! g_slist_find_custom(all_used_dirs, path, (GCompareFunc)strcmp ) )
+      all_used_dirs = g_slist_prepend( all_used_dirs, g_strdup( path ) );
   return entry_directory_new_full (entry_type, path, FALSE, NULL);
 }
 

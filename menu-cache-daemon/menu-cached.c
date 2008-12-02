@@ -91,8 +91,6 @@ static void menu_cache_unref(MenuCache* cache)
         g_hash_table_remove( hash, cache->md5 );
         if( g_hash_table_size(hash) == 0 ) /* no menu cache is in use. */
         {
-            g_hash_table_destroy(hash);
-            hash = NULL;
             if( delayed_reload_handler )
             {
                 g_source_remove( delayed_reload_handler );
