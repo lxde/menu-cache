@@ -364,6 +364,7 @@ void menu_cache_unref(MenuCache* cache)
         {
             /* g_debug("unref root dir"); */
             menu_cache_item_unref( cache->root_dir );
+            /* g_debug("unref root dir finished"); */
         }
         g_free( cache->cache_file );
         g_free( cache->menu_name );
@@ -406,7 +407,7 @@ gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer use
 void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id)
 {
     g_slice_free( CacheReloadNotifier, ((GSList*)notify_id)->data );
-    cache->notifiers = g_list_delete_link( cache->notifiers, (GSList*)notify_id );
+    cache->notifiers = g_slist_delete_link( cache->notifiers, (GSList*)notify_id );
 }
 
 static void reload_notify( MenuCache* cache )
