@@ -600,11 +600,6 @@ gboolean menu_cache_app_get_use_sn( MenuCacheApp* app )
     return app->use_sn;
 }
 
-GSList* menu_cache_list_all_apps()
-{
-    return NULL;
-}
-
 MenuCacheApp* menu_cache_find_app_by_exec( const char* exec )
 {
     return NULL;
@@ -969,3 +964,28 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     }
     return register_menu_to_server( menu_name, FALSE );
 }
+
+static GSList* list_app_in_dir(MenuCacheDir* dir, GSList* list)
+{
+    GSList* l;
+    for( l = dir->children; l; l = l->next )
+    {
+        MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
+        switch( menu_cache_item_get_type(item) )
+        {
+        case MENU_CACHE_TYPE_DIR:
+            list = list_app_in_dir( item, list );
+            break;
+        case MENU_CACHE_TYPE_APP:
+            list = g_slist_prepend(list, menu_cache_item_ref(item));
+            break;
+        }
+    }
+    return list;
+}
+
+GSList* menu_cache_list_all_apps(MenuCache* cache)
+{
+    return list_app_in_dir(cache->root_dir, NULL);
+}
+
