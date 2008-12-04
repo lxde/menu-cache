@@ -1,7 +1,7 @@
 /*
  *      menu-cached.c
  *      
- *      Copyright 2008 PCMan <pcman@thinkpad>
+ *      Copyright 2008 PCMan <pcman.tw@gmail.com>
  *      
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <utime.h>
 
 typedef struct _MenuCache
 {
@@ -105,11 +106,21 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
     char line[ 4096 ];
     int i, n;
     char** files;
+    int ver_maj, ver_min;
 
-    /* skip menu name */
+    /* the first line of the cache file is version number */
+    if( !fgets(line, G_N_ELEMENTS(line),f) )
+        return FALSE;
+    if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
+        return FALSE;
+    if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+        return FALSE;
+
+    /* skip the second line containing menu name */
     if( ! fgets( line, G_N_ELEMENTS(line), f ) )
         return FALSE;
 
+    /* num of files used */
     if( ! fgets( line, G_N_ELEMENTS(line), f ) )
         return FALSE;
 
@@ -175,6 +186,7 @@ static gboolean regenerate_cache( const char* menu_name,
     {
         g_debug("error executing menu-cache-gen");
     }
+    /* g_debug("exit status of menu-cache-gen: %d", status); */
     if( status != 0 )
         return FALSE;
 
@@ -185,6 +197,7 @@ static gboolean regenerate_cache( const char* menu_name,
         {
             n_files = 0;
             files = NULL;
+            /* g_debug("error: read_all_used_files"); */
         }
         fclose(f);
     }
@@ -203,8 +216,8 @@ static gboolean delayed_reload( MenuCache* cache )
     int i;
     GFile* gf;
 
-    g_debug("Re-generation of cache is needed!");
-    g_debug("call menu-cache-gen to re-generate the cache");
+    /* g_debug("Re-generation of cache is needed!"); */
+    /* g_debug("call menu-cache-gen to re-generate the cache"); */
     memcpy( buf, "REL:", 4 );
     memcpy( buf + 4, cache->md5, 32 );
     buf[36] = '\n';
@@ -261,7 +274,74 @@ static gboolean delayed_reload( MenuCache* cache )
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, MenuCache* cache )
 {
-    g_debug("file %s is changed.", g_file_get_path(gf));
+    /* g_debug("file %s is changed (%d).", g_file_get_path(gf), evt); */
+    if( mon != cache->cache_mon )
+    {
+        /* Optimization: Some files in the dir are changed, but it
+         * won't affect the content of the menu. So, just omit them,
+         * and update the mtime of the cached file with utime.
+         */
+
+        /* FIXME/TODO: further optimization:
+         * If the changed file is a desktop entry file with
+         * Hidden=true or NoDisplay=true, and it's not in our
+         * original menu cache, either, just omit it since it won't
+         * affect the content of our menu.
+         */
+        int idx;
+        /* dirty hack: get index of the monitor in array */
+        for(idx = 0; idx < cache->n_files; ++idx)
+        {
+            if(mon == cache->mons[idx])
+                break;
+        }
+        /* if the monitored file is a directory */
+        if( G_LIKELY(idx < cache->n_files) && cache->files[idx][0] == 'D' )
+        {
+            char* changed_file = g_file_get_path(gf);
+            char* dir_path = cache->files[idx]+1;
+            int len = strlen(dir_path);
+            /* if the changed file is a file in the monitored dir */
+            if( strncmp(changed_file, dir_path, len) == 0 && changed_file[len] == '/' )
+            {
+                char* base_name = changed_file + len + 1;
+                /* only *.desktop and *.directory files can affect the content of the menu. */
+                if( !g_str_has_suffix(base_name, ".desktop") && !g_str_has_suffix(base_name, ".directory") )
+                {
+                    /* FIXME: utime to update the mtime of cached file. */
+                    /* FIXME: temporarily disable monitor of the cached file before utime() */
+                    /* without this, directory mtime will > mtime of cache file,
+                     * and the menu will get re-generated unnecessarily the next time. */
+                    GFile* gf;
+                    struct utimbuf ut;
+                    char* cache_file;
+
+                    g_free(changed_file);
+
+                    cache_file = g_build_filename(g_get_user_cache_dir(), "menus", cache->md5, NULL );
+
+                    ut.actime = ut.modtime = time(NULL);
+                    /* stop monitor of cache file. */
+                    g_file_monitor_cancel( cache->cache_mon );
+                    g_object_unref( cache->cache_mon );
+                    cache->cache_mon = NULL;
+                    /* update the mtime of the cache file. */
+                    utime( cache_file, &ut );
+                    /* restart the monitor */
+
+                    gf = g_file_new_for_path( cache_file );
+                    g_free(cache_file);
+                    cache->cache_mon = g_file_monitor_file(gf, 0, NULL, NULL);
+                    g_object_unref(gf);
+                    g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
+                    g_debug("files are changed, but no re-generation is needed.");
+                    return;
+                }
+            }
+            g_free(changed_file);
+        }
+    }
+
     if( delayed_reload_handler )
         g_source_remove(delayed_reload_handler);
 
@@ -283,15 +363,6 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
     {
         if( fstat( fileno(f), &st) == 0 )
         {
-        	int ver_maj, ver_min;
-        	/* the first line is version number */
-        	if( !fgets(line, G_N_ELEMENTS(line),f) )
-        		goto _out;
-        	if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
-        		goto _out;
-			if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
-        		goto _out;
-
             cache_mtime = st.st_mtime;
             if( read_all_used_files(f, &n, &files) )
             {
@@ -308,10 +379,6 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
                     ret = TRUE;
                     *n_used_files = n;
                     *used_files = files;
-                }
-                else
-                {
-                    g_strfreev(files);
                 }
             }
         }
@@ -433,6 +500,7 @@ retry:
             cache->env = env;
             cache->mons = g_new0(GFileMonitor*, n_files+1);
             /* create required file monitors */
+            g_debug("%d files/dirs are monitored.", n_files);
             for( i = 0; i < n_files; ++i )
             {
                 gf = g_file_new_for_path( files[i] + 1 );
@@ -440,6 +508,7 @@ retry:
                     cache->mons[i] = g_file_monitor_directory( gf, 0, NULL, NULL );
                 else
                     cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
+                /* g_debug("monitor: %s", g_file_get_path(gf)); */
                 g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
                 g_object_unref(gf);
             }
@@ -489,6 +558,15 @@ static gboolean on_client_closed(GIOChannel* ch, GIOCondition cond, gpointer use
     {
         if( l = g_slist_find( cache->clients, ch ) )
         {
+            /* FIXME: some clients are closed accidentally without
+             * unregister the menu first due to crashes.
+             * We need to do unref for them to prevent memory leaks.
+             *
+             * The behavior is not currently well-defined.
+             * if a client do unregister first, and then was closed,
+             * unref will be called twice and incorrect ref. counting
+             * will happen.
+             */
             to_remove = g_slist_prepend( to_remove, cache );
             cache->clients = g_slist_delete_link( cache->clients, l );
         }
