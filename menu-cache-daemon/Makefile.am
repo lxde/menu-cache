@@ -7,6 +7,7 @@ INCLUDES =				\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
         -DBINDIR=\"$(bindir)\"          \
+	-Werror-implicit-function-declaration \
 	$(NULL)
 
 bin_PROGRAMS = menu-cached

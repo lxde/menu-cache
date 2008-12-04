@@ -3,6 +3,7 @@ NULL =
 INCLUDES =				\
 	$(GLIB_CFLAGS)			\
 	$(MONITOR_CFLAGS)		\
+	-Werror-implicit-function-declaration \
 	$(NULL)
 
 lib_LTLIBRARIES = libmenu-cache.la

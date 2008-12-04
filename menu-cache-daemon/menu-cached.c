@@ -51,7 +51,6 @@ typedef struct _MenuCache
     char** files;
     GFileMonitor** mons;
     GFileMonitor* cache_mon;
-    /* FIXME: the cached file itself should be monitored, too. */
 
     /* clients requesting this menu cache */
     GSList* clients;
@@ -305,8 +304,20 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
             if( strncmp(changed_file, dir_path, len) == 0 && changed_file[len] == '/' )
             {
                 char* base_name = changed_file + len + 1;
+                gboolean skip = TRUE;
                 /* only *.desktop and *.directory files can affect the content of the menu. */
-                if( !g_str_has_suffix(base_name, ".desktop") && !g_str_has_suffix(base_name, ".directory") )
+                if( g_str_has_suffix(base_name, ".desktop") )
+                {
+                    /* GSList* all_apps = menu_cache_list_all_apps(cache); */
+                    /* FIXME: currently NoDisplay and Hidden desktop files
+                     *        are not listed in the cache file so we are not
+                     *        able to check them. */
+                    skip = FALSE;
+                }
+                else if( g_str_has_suffix(base_name, ".directory") )
+                    skip = FALSE;
+
+                if( skip )
                 {
                     /* FIXME: utime to update the mtime of cached file. */
                     /* FIXME: temporarily disable monitor of the cached file before utime() */

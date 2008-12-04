@@ -1,7 +1,6 @@
 NULL =
 
 ALL_SUBDIRS = 			\
-	po 			\
 	libmenu-cache		\
 	menu-cache-gen		\
 	menu-cache-daemon	\

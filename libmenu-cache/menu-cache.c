@@ -36,6 +36,7 @@
 #include <sys/un.h>
 #include <sys/fcntl.h>
 #include <errno.h>
+#include <sys/wait.h>
 
 #include "menu-cache.h"
 

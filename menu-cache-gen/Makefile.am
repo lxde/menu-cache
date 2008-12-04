@@ -7,6 +7,7 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
+	-Werror-implicit-function-declaration \
 	$(NULL)
 
 bin_PROGRAMS = menu-cache-gen

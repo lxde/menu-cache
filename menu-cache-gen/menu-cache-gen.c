@@ -20,9 +20,11 @@
  */
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #include <sys/types.h>
