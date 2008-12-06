@@ -598,6 +598,17 @@ gboolean menu_cache_app_get_use_sn( MenuCacheApp* app )
     return !!(app->flags & FLAG_USE_SN);
 }
 
+guint32 menu_cache_app_get_show_flags( MenuCacheApp* app )
+{
+    return app->show_in_flags;
+}
+
+gboolean menu_cache_app_should_show( MenuCacheApp* app, guint32 de_flags )
+{
+    return !app->show_in_flags || (app->show_in_flags & de_flags);
+}
+
+
 MenuCacheApp* menu_cache_find_app_by_exec( const char* exec )
 {
     return NULL;

@@ -47,7 +47,8 @@ enum _MenuCacheType
     MENU_CACHE_TYPE_SEP
 };
 
-enum {
+typedef enum _MenuCacheShowFlag MenuCacheShowFlag;
+enum _MenuCacheShowFlag{
     SHOW_IN_LXDE = 1 << 0,
     SHOW_IN_GNOME = 1 << 1,
     SHOW_IN_KDE = 1 << 2,
@@ -56,7 +57,8 @@ enum {
     N_KNOWN_DESKTOPS = 5
 };
 
-enum {
+typedef enum _MenuCacheItemFlag MenuCacheItemFlag;
+enum _MenuCacheItemFlag{
     FLAG_USE_TERMINAL = 1 << 0,
     FLAG_USE_SN = 1 << 1
 };
@@ -102,11 +104,8 @@ char* menu_cache_dir_make_path( MenuCacheDir* dir );
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
 
-guint32 menu_cache_app_get_showin_flags( MenuCacheApp* app );
-
-/*
-char** menu_cache_app_get_categories( MenuCacheApp* app );
-*/
+guint32 menu_cache_app_get_show_flags( MenuCacheApp* app );
+gboolean menu_cache_app_should_show( MenuCacheApp* app, guint32 de_flags );
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app );
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app );
