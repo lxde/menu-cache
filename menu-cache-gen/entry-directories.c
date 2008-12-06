@@ -496,6 +496,10 @@ cached_dir_load_entries_recursive (CachedDir  *dir,
       return FALSE;
     }
 
+  /* add the dir to files to monitor */
+  if( ! g_slist_find_custom(all_used_dirs, dirname, (GCompareFunc)strcmp ) )
+    all_used_dirs = g_slist_prepend(all_used_dirs, g_strdup(dirname));
+
   cached_dir_ensure_monitor (dir, dirname);
 
   fullpath = g_string_new (dirname);

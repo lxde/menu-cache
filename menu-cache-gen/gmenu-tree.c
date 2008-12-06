@@ -1150,6 +1150,14 @@ gmenu_tree_entry_get_name (GMenuTreeEntry *entry)
 }
 
 const char *
+gmenu_tree_entry_get_generic_name (GMenuTreeEntry *entry)
+{
+  g_return_val_if_fail (entry != NULL, NULL);
+
+  return desktop_entry_get_generic_name (entry->desktop_entry);
+}
+
+const char *
 gmenu_tree_entry_get_comment (GMenuTreeEntry *entry)
 {
   g_return_val_if_fail (entry != NULL, NULL);
@@ -1195,6 +1203,14 @@ gmenu_tree_entry_get_use_startup_notify (GMenuTreeEntry *entry)
   g_return_val_if_fail (entry != NULL, FALSE);
 
   return desktop_entry_get_use_startup_notify (entry->desktop_entry);
+}
+
+guint32
+gmenu_tree_entry_get_show_in_flags (GMenuTreeEntry *entry)
+{
+  g_return_val_if_fail (entry != NULL, FALSE);
+
+  return desktop_entry_get_show_in_flags (entry->desktop_entry);
 }
 
 const char *

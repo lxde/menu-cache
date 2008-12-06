@@ -44,11 +44,14 @@ struct DesktopEntry
   GQuark *categories;
 
   char     *name;
+  char     *generic_name;
   char     *comment;
   char     *icon;
   char     *exec;
   gboolean terminal : 1;
   gboolean startup_notify : 1;
+
+  guint32 show_in_flags;
 
   guint type : 2;
   guint flags : 4;
@@ -61,10 +64,13 @@ struct DesktopEntrySet
   GHashTable *hash;
 };
 
+/* defined in menu-cache-gen.c */
+guint32 menu_cache_get_de_flag( const char* de_name );
+
 /*
  * Desktop entries
  */
-
+#include<stdio.h>
 static guint
 get_flags_from_key_file (DesktopEntry *entry,
                          GKeyFile     *key_file,
@@ -110,14 +116,18 @@ get_flags_from_key_file (DesktopEntry *entry,
                                      NULL);
   if (strv)
     {
-      show_in_gnome = FALSE;
+/*      show_in_gnome = FALSE; */
       for (i = 0; strv[i]; i++)
         {
+          guint32 de_flag = menu_cache_get_de_flag(strv[i]);
+          entry->show_in_flags |= de_flag; /* add the DE */
+/*
           if (!strcmp (strv[i], "GNOME"))
             {
               show_in_gnome = TRUE;
               break;
             }
+*/
         }
     }
   else
@@ -129,18 +139,24 @@ get_flags_from_key_file (DesktopEntry *entry,
                                          NULL);
       if (strv)
         {
-          show_in_gnome = TRUE;
+          /* show in all DEs by default */
+          guint32 de_flag = menu_cache_get_de_flag(strv[i]);
+          entry->show_in_flags = (guint32)-1;
+/*          show_in_gnome = TRUE; */
           for (i = 0; strv[i]; i++)
             {
+              entry->show_in_flags &= (~de_flag); /* remove the DE */
+/*
               if (!strcmp (strv[i], "GNOME"))
                 {
                   show_in_gnome = FALSE;
                 }
+*/
             }
         }
     }
   g_strfreev (strv);
-
+  /* printf( "DE flag of %s is %d\n", entry->name, entry->show_in_flags); */
   tryexec_failed = FALSE;
   tryexec = g_key_file_get_string (key_file,
                                    desktop_entry_group,
@@ -284,11 +300,12 @@ desktop_entry_load (DesktopEntry *entry)
 
 #define GET_LOCALE_STRING(n) g_key_file_get_locale_string (key_file, desktop_entry_group, (n), NULL, NULL)
 
-  retval->name       = GET_LOCALE_STRING ("Name");
-  retval->comment    = GET_LOCALE_STRING ("Comment");
-  retval->icon       = GET_LOCALE_STRING ("Icon");
-  retval->flags      = get_flags_from_key_file (retval, key_file, desktop_entry_group);
-  retval->categories = get_categories_from_key_file (retval, key_file, desktop_entry_group);
+  retval->name         = GET_LOCALE_STRING ("Name");
+  retval->generic_name = GET_LOCALE_STRING ("GenericName");
+  retval->comment      = GET_LOCALE_STRING ("Comment");
+  retval->icon         = GET_LOCALE_STRING ("Icon");
+  retval->flags        = get_flags_from_key_file (retval, key_file, desktop_entry_group);
+  retval->categories   = get_categories_from_key_file (retval, key_file, desktop_entry_group);
 
   if (entry->type == DESKTOP_ENTRY_DESKTOP)
     {
@@ -364,6 +381,9 @@ desktop_entry_reload (DesktopEntry *entry)
   g_free (entry->name);
   entry->name = NULL;
 
+  g_free (entry->generic_name);
+  entry->generic_name = NULL;
+
   g_free (entry->comment);
   entry->comment = NULL;
 
@@ -407,6 +427,7 @@ desktop_entry_copy (DesktopEntry *entry)
   retval->basename = g_strdup (entry->basename);
   retval->path     = g_strdup (entry->path);
   retval->name     = g_strdup (entry->name);
+  retval->generic_name = g_strdup (entry->generic_name);
   retval->comment  = g_strdup (entry->comment);
   retval->icon     = g_strdup (entry->icon);
   retval->exec     = g_strdup (entry->exec);
@@ -446,6 +467,9 @@ desktop_entry_unref (DesktopEntry *entry)
 
       g_free (entry->name);
       entry->name = NULL;
+
+      g_free (entry->generic_name);
+      entry->generic_name = NULL;
 
       g_free (entry->comment);
       entry->comment = NULL;
@@ -488,6 +512,12 @@ const char *
 desktop_entry_get_name (DesktopEntry *entry)
 {
   return entry->name;
+}
+
+const char *
+desktop_entry_get_generic_name (DesktopEntry *entry)
+{
+  return entry->generic_name;
 }
 
 const char *
@@ -542,6 +572,12 @@ gboolean
 desktop_entry_get_show_in_gnome (DesktopEntry *entry)
 {
   return (entry->flags & DESKTOP_ENTRY_SHOW_IN_GNOME) != 0;
+}
+
+gboolean
+desktop_entry_get_show_in_flags (DesktopEntry *entry)
+{
+  return entry->show_in_flags;
 }
 
 gboolean

@@ -47,7 +47,21 @@ enum _MenuCacheType
     MENU_CACHE_TYPE_SEP
 };
 
-void menu_cache_init();
+enum {
+    SHOW_IN_LXDE = 1 << 0,
+    SHOW_IN_GNOME = 1 << 1,
+    SHOW_IN_KDE = 1 << 2,
+    SHOW_IN_XFCE = 1 << 3,
+    SHOW_IN_ROX = 1 << 4,
+    N_KNOWN_DESKTOPS = 5
+};
+
+enum {
+    FLAG_USE_TERMINAL = 1 << 0,
+    FLAG_USE_SN = 1 << 1
+};
+
+void menu_cache_init(int flags);
 
 MenuCache* menu_cache_lookup( const char* menu_name );
 
@@ -62,7 +76,7 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
 gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data);
 void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id);
 
-gboolean menu_cache_file_is_updated( const char* menu_file );
+guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_env );
 
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item);
@@ -73,18 +87,22 @@ const char* menu_cache_item_get_id( MenuCacheItem* item );
 const char* menu_cache_item_get_name( MenuCacheItem* item );
 const char* menu_cache_item_get_comment( MenuCacheItem* item );
 const char* menu_cache_item_get_icon( MenuCacheItem* item );
-const char* menu_cache_item_get_extended( MenuCacheItem* item, const char* key );
-const char* menu_cache_item_get_qextended( MenuCacheItem* item, GQuark key );
+
+const char* menu_cache_item_get_file_basename( MenuCacheItem* item );
+const char* menu_cache_item_get_file_dirname( MenuCacheItem* item );
+char* menu_cache_item_get_file_path( MenuCacheItem* item );
+
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
 
+
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
-const char* menu_cache_dir_get_file_basename( MenuCacheDir* dir );
-const char* menu_cache_dir_get_file_dirname( MenuCacheDir* dir );
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
 
-const char* menu_cache_app_get_file_dirname( MenuCacheApp* app );
+
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
+
+guint32 menu_cache_app_get_showin_flags( MenuCacheApp* app );
 
 /*
 char** menu_cache_app_get_categories( MenuCacheApp* app );

@@ -9,3 +9,41 @@ Advantages:
 4. Less unnecessary and complicated file monitoring.
 5. Greatly reduced disk I/O.
 
+Spec:
+
+Cached menus are localized and stored in ~/.cache/menus/file_name.
+file_name is a md5 hash of the name of the original menu + some environment variable + locale name.
+
+Since most data in a menu are plain text (names, comments, icon names,...etc.), the cached file is in 
+plain text rather than binary to prevent byte order problems.
+
+Format of the cached menu file, line by line.
+(Spaces before the lines are for easier demostration of hierarchy.
+ There are no spaces in the real cached file.):
+
+version number (major.minor)
+menu name>
+number of files to monitor
+list of files/dirs which require monitor (prefix D or F indicate whether it's a dir or file)
+list of DE names used in this menu other than the known DEs(LXDE, GNOME, XFCE, KDE, ROX), seperated by ;
++id of top menu dir (+ means dir entry, and - means an application entry)
+  title
+  comment
+  icon name
+  dir in which menu directory file locates (use this number as index to get the string from array of preceding list of monitored files)
+  menu directory file basename
+    -application desktop id (FIXME: desktop id is not necessarily the basename of desktop file)
+     title
+     comment
+     icon name
+     dir in which the desktop file localtes (use this number as index to get the string from array of preceding list of monitored files)
+     app desktop file basename, empty means the same as desktop id.
+     generic name
+     exec command line
+     bitmask flags: (use terminal)|(use startup notification)
+     show_in_flags: bitwise or of masks for various DEs.
+    +sub dir id
+     title
+     comment
+     icon name
+     ...
