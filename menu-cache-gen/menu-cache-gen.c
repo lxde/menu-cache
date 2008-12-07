@@ -69,18 +69,22 @@ static GHashTable* de_hash = NULL;
  */
 guint32 menu_cache_get_de_flag( const char* de_name )
 {
-    guint32 flag = g_hash_table_lookup(de_hash, de_name);
-    if( G_UNLIKELY(!flag) )
+    gpointer val = g_hash_table_lookup(de_hash, de_name);
+    guint32 flag;
+    if( G_LIKELY(val) )
+        flag = GPOINTER_TO_UINT(val);
+    else
     {
-        ++n_known_de;
         if( G_UNLIKELY(n_known_de > 31) )
         {
             g_debug("only up to 31 different DEs are supported");
             return 0;
         }
-        flag = 1 << n_known_de;
+        flag = (1 << n_known_de);
+        ++n_known_de;
         g_hash_table_insert(de_hash, g_strdup(de_name), GUINT_TO_POINTER(flag));
     }
+    g_debug("flag of %s is %d", de_name, flag);
     return flag;
 }
 

@@ -180,6 +180,8 @@ static gboolean regenerate_cache( const char* menu_name,
     argv[4] = menu_name;
     argv[6] = cache_file;
 
+    /* g_debug("cmd: %s", g_strjoinv(" ", argv)); */
+
     /* run menu-cache-gen */
     if( !g_spawn_sync(NULL, argv, NULL, 0,
                     pre_exec, env, NULL, NULL, &status, NULL ))
