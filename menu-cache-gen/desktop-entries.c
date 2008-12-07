@@ -140,11 +140,11 @@ get_flags_from_key_file (DesktopEntry *entry,
       if (strv)
         {
           /* show in all DEs by default */
-          guint32 de_flag = menu_cache_get_de_flag(strv[i]);
           entry->show_in_flags = (guint32)-1;
 /*          show_in_gnome = TRUE; */
           for (i = 0; strv[i]; i++)
             {
+              guint32 de_flag = menu_cache_get_de_flag(strv[i]);
               entry->show_in_flags &= (~de_flag); /* remove the DE */
 /*
               if (!strcmp (strv[i], "GNOME"))
