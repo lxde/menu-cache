@@ -70,7 +70,7 @@ guint32 menu_cache_get_de_flag( const char* de_name );
 /*
  * Desktop entries
  */
-#include<stdio.h>
+
 static guint
 get_flags_from_key_file (DesktopEntry *entry,
                          GKeyFile     *key_file,
