@@ -1,21 +1,25 @@
-Libmenu-cache is a library creating and utilizing caches to speed up freedesktop.org application menus.
+Libmenu-cache is a library creating and utilizing caches to speed up
+the manipulation for freedesktop.org defined application menus.
 It can be used as a replacement of libgnome-menu of gnome-menus.
 
 Advantages:
-1. Faster loading of menus.
+1. Shorten time for loading menu entries.
 2. Ease of use. (API is very similar to that of libgnome-menu)
 3. Lightweight runtime library. (Parsing of the menu definition files 
    are done by menu-cache-gen when the menus are really changed.)
 4. Less unnecessary and complicated file monitoring.
-5. Greatly reduced disk I/O.
+5. Heavily reduced disk I/O.
 
 Spec:
 
 Cached menus are localized and stored in ~/.cache/menus/file_name.
-file_name is a md5 hash of the name of the original menu + some environment variable + locale name.
+file_name is a md5 hash of the name of the original menu +
+                                       some environment variable +
+                                       locale name.
 
-Since most data in a menu are plain text (names, comments, icon names,...etc.), the cached file is in 
-plain text rather than binary to prevent byte order problems.
+Since most data in a menu are plain text (names, description comments,
+icon names,...etc.), the cached file is in plain text rather than binary
+to prevent byte order problems.
 
 Format of the cached menu file, line by line.
 (Spaces before the lines are for easier demostration of hierarchy.
@@ -24,20 +28,28 @@ Format of the cached menu file, line by line.
 version number (major.minor)
 menu name>
 number of files to monitor
-list of files/dirs which require monitor (prefix D or F indicate whether it's a dir or file)
-list of DE names used in this menu other than the known DEs(LXDE, GNOME, XFCE, KDE, ROX), seperated by ;
+list of files/dirs which require monitor (prefix D or F indicate whether it
+                                          is a dir or file)
+list of DE names used in this menu other than the known DEs (LXDE, GNOME,
+                                                             XFCE, KDE, ROX),
+seperated by ;
 +id of top menu dir (+ means dir entry, and - means an application entry)
   title
   comment
   icon name
   menu directory file basename
-  dir in which menu directory file locates (use this number as index to get the string from array of preceding list of monitored files)
-    -application desktop id (FIXME: desktop id is not necessarily the basename of desktop file)
+  dir in which menu directory file locates (use this number as index to get
+                                            the string from array of preceding
+                                            list of monitored files)
+    -application desktop id (FIXME: desktop id is not necessarily the basename
+                             of desktop file)
      title
      comment
      icon name
      app desktop file basename, empty means the same as desktop id.
-     dir in which the desktop file localtes (use this number as index to get the string from array of preceding list of monitored files)
+     dir in which the desktop file localtes (use this number as index to get
+                                             the string from array of
+                                             preceding list of monitored files)
      generic name
      exec command line
      bitmask flags: (use terminal)|(use startup notification)
