@@ -603,7 +603,7 @@ guint32 menu_cache_app_get_show_flags( MenuCacheApp* app )
     return app->show_in_flags;
 }
 
-gboolean menu_cache_app_should_show( MenuCacheApp* app, guint32 de_flags )
+gboolean menu_cache_app_get_is_visible( MenuCacheApp* app, guint32 de_flags )
 {
     return !app->show_in_flags || (app->show_in_flags & de_flags);
 }

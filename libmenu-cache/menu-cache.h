@@ -106,7 +106,7 @@ const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
 
 guint32 menu_cache_app_get_show_flags( MenuCacheApp* app );
-gboolean menu_cache_app_should_show( MenuCacheApp* app, guint32 de_flags );
+gboolean menu_cache_app_get_is_visible( MenuCacheApp* app, guint32 de_flags );
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app );
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app );
