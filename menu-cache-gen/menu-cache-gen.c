@@ -156,20 +156,23 @@ static void write_entry( FILE* of, GMenuTreeEntry* item )
          * /usr/share/applications, the filename foo/bar.desltop, and the
          * desktop id: foo-bar.desktop
          */
-        str = g_path_get_dirname( gmenu_tree_entry_get_desktop_file_path( item ) );
-        fprintf( of, "%d\n", dirname_index( str) );
-        g_free( str );
 
+        /* filename */
         str = g_path_get_basename( gmenu_tree_entry_get_desktop_file_path( item ) );
         if( strcmp(str, gmenu_tree_entry_get_desktop_file_id(item) ) )
             fprintf( of, "%s\n", str );
         else
             fprintf( of, "\n" );
         g_free( str );
+
+        /* dirname */
+        str = g_path_get_dirname( gmenu_tree_entry_get_desktop_file_path( item ) );
+        fprintf( of, "%d\n", dirname_index( str) );
+        g_free( str );
     }
     else
     {
-        fprintf( of, "-1\n\n" );
+        fprintf( of, "\n-1\n" );
     }
 
     /* GenericName */
@@ -210,19 +213,19 @@ static void write_dir( FILE* of, GMenuTreeDirectory* dir )
 
     if( gmenu_tree_directory_get_desktop_file_path( dir ) )
     {
-        /* get the location of its desktop file. */
-        str = g_path_get_dirname( gmenu_tree_directory_get_desktop_file_path( dir ) );
-        fprintf( of, "%d\n", dirname_index( str ) );
-        g_free( str );
-
         /* get basename of its desktop file. */
         str = g_path_get_basename( gmenu_tree_directory_get_desktop_file_path( dir ) );
         fprintf( of, "%s\n", str );
         g_free( str );
+
+        /* get the location of its desktop file. */
+        str = g_path_get_dirname( gmenu_tree_directory_get_desktop_file_path( dir ) );
+        fprintf( of, "%d\n", dirname_index( str ) );
+        g_free( str );
     }
     else
     {
-        fprintf( of, "-1\n\n" );
+        fprintf( of, "\n-1\n" );
     }
 
     // fprintf( of, "\n" );    /* end of item info */

@@ -23,6 +23,7 @@
 #include <config.h>
 #endif
 
+#include "menu-cache.h"
 #include "version.h"
 
 #include <stdio.h>
@@ -37,7 +38,7 @@
 #include <signal.h>
 #include <utime.h>
 
-typedef struct _MenuCache
+typedef struct _Cache
 {
     int n_ref;
     char md5[33]; /* cache id */
@@ -54,15 +55,15 @@ typedef struct _MenuCache
 
     /* clients requesting this menu cache */
     GSList* clients;
-}MenuCache;
+}Cache;
 
 static GHashTable* hash = NULL;
 guint delayed_reload_handler = 0;
 
 static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
-                             GFileMonitorEvent evt, MenuCache* cache );
+                             GFileMonitorEvent evt, Cache* cache );
 
-static void menu_cache_unref(MenuCache* cache)
+static void cache_unref(Cache* cache)
 {
     --cache->n_ref;
     /* g_debug("menu cache unrefed: ref_count=%d", cache->n_ref); */
@@ -83,7 +84,7 @@ static void menu_cache_unref(MenuCache* cache)
         g_free( cache->mons );
         g_strfreev( cache->env );
         g_strfreev( cache->files );
-        g_slice_free( MenuCache, cache );
+        g_slice_free( Cache, cache );
     }
     else if( cache->n_ref == 1 ) /* the last ref count is held by hash table */
     {
@@ -207,7 +208,7 @@ static gboolean regenerate_cache( const char* menu_name,
     return TRUE;
 }
 
-static gboolean delayed_reload( MenuCache* cache )
+static gboolean delayed_reload( Cache* cache )
 {
     GSList* l;
     char buf[38];
@@ -270,8 +271,62 @@ static gboolean delayed_reload( MenuCache* cache )
     return FALSE;
 }
 
+static gboolean is_desktop_file_in_cache(Cache* cache, int dir_idx, const char* base_name)
+{
+    gboolean ret = FALSE;
+    char* cache_file = g_build_filename(g_get_user_cache_dir(), "menus", cache->md5, NULL );
+    FILE* f = fopen(cache_file, "r");
+    g_free(cache_file);
+    if( f )
+    {
+        char line[4096];
+        while( fgets(line, G_N_ELEMENTS(line), f) )
+        {
+            int l = strlen(line);
+            line[l - 1] = '\0';
+            /* this is not a 100% safe way to check if the
+             * desktop file is listed in our original cache,
+             * but this works in 99.9% of cases. */
+            if( line[0] == '-' && 0 == strcmp(line+1, base_name) )
+            {
+                int i;
+                /* if this line is -desktop_id, we can get its dir_idx in following 5 lines. */
+                for( i = 0; i < 5; ++i )
+                {
+                    if( ! fgets(line, G_N_ELEMENTS(line), f) )
+                        break;
+                    if( i == 3 && !line[0] ) /* the 4th line should be empty */
+                        break;
+                }
+                if( i >= 5 )
+                {
+                    if( dir_idx == atoi(line) )
+                    {
+                        ret = TRUE;
+                        break;
+                    }
+                }
+            }
+            else if(strcmp(line, base_name) == 0)
+            {
+                /* if this line is a basename, we can get its dir_idx in the next line. */
+                if( fgets( line, G_N_ELEMENTS(line), f) )
+                {
+                    if( dir_idx == atoi(line) )
+                    {
+                        ret = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+        fclose(f);
+    }
+    return ret;
+}
+
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
-                      GFileMonitorEvent evt, MenuCache* cache )
+                      GFileMonitorEvent evt, Cache* cache )
 {
     /* g_debug("file %s is changed (%d).", g_file_get_path(gf), evt); */
     if( mon != cache->cache_mon )
@@ -279,13 +334,6 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
         /* Optimization: Some files in the dir are changed, but it
          * won't affect the content of the menu. So, just omit them,
          * and update the mtime of the cached file with utime.
-         */
-
-        /* FIXME/TODO: further optimization:
-         * If the changed file is a desktop entry file with
-         * Hidden=true or NoDisplay=true, and it's not in our
-         * original menu cache, either, just omit it since it won't
-         * affect the content of our menu.
          */
         int idx;
         /* dirty hack: get index of the monitor in array */
@@ -308,11 +356,30 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                 /* only *.desktop and *.directory files can affect the content of the menu. */
                 if( g_str_has_suffix(base_name, ".desktop") )
                 {
-                    /* GSList* all_apps = menu_cache_list_all_apps(cache); */
-                    /* FIXME: currently NoDisplay and Hidden desktop files
-                     *        are not listed in the cache file so we are not
-                     *        able to check them. */
-                    skip = FALSE;
+                    /* FIXME: there seems to be some problems here... so weird. */
+                    /* further optimization:
+                     * If the changed file is a desktop entry file with
+                     * Hidden=true or NoDisplay=true, and it's not in our
+                     * original menu cache, either, just omit it since it won't
+                     * affect the content of our menu.
+                     */
+                    gboolean in_cache = is_desktop_file_in_cache(cache, idx, base_name);
+                    /* g_debug("in_cache = %d", in_cache); */
+                    if( ! in_cache ) /* means this is a new file or previously hidden */
+                    {
+                        GKeyFile* kf = g_key_file_new();
+                        if( g_key_file_load_from_file( kf, changed_file, 0, NULL ) )
+                        {
+                            if( ! g_key_file_get_boolean(kf, "Desktop Entry", "Hidden", NULL)
+                                && ! g_key_file_get_boolean(kf, "Desktop Entry", "NoDisplay", NULL) )
+                            {
+                                skip = FALSE;
+                            }
+                        }
+                        g_key_file_free(kf);
+                    }
+                    else
+                        skip = FALSE;
                 }
                 else if( g_str_has_suffix(base_name, ".directory") )
                     skip = FALSE;
@@ -442,7 +509,7 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     gsize len;
     GIOStatus st;
     const char* md5;
-    MenuCache* cache;
+    Cache* cache;
     GFile* gf;
 
 retry:
@@ -477,7 +544,7 @@ retry:
         g_checksum_update(sum, pline, len);
         md5 = g_checksum_get_string(sum);
 
-        cache = (MenuCache*)g_hash_table_lookup(hash, md5);
+        cache = (Cache*)g_hash_table_lookup(hash, md5);
         if( !cache )
         {
             sep = strchr(pline, '\t');
@@ -502,7 +569,7 @@ retry:
                     g_debug("regeneration of cache failed!!");
                 }
             }
-            cache = g_slice_new0( MenuCache );
+            cache = g_slice_new0( Cache );
             memcpy( cache->md5, md5, 33 );
             cache->n_files = n_files;
             cache->files = files;
@@ -547,9 +614,9 @@ retry:
     {
         md5 = line + 4;
         g_debug("unregister: %s", md5);
-        cache = (MenuCache*)g_hash_table_lookup(hash, md5);
+        cache = (Cache*)g_hash_table_lookup(hash, md5);
         if( cache )
-            menu_cache_unref(cache);
+            cache_unref(cache);
         else
             g_debug("bug! client is not found.");
     }
@@ -562,7 +629,7 @@ static gboolean on_client_closed(GIOChannel* ch, GIOCondition cond, gpointer use
 {
     GHashTableIter it;
     char* md5;
-    MenuCache* cache;
+    Cache* cache;
     GSList *l, *to_remove = NULL;
     g_hash_table_iter_init (&it, hash);
     while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
@@ -583,7 +650,7 @@ static gboolean on_client_closed(GIOChannel* ch, GIOCondition cond, gpointer use
         }
     }
     /* g_debug("client closed"); */
-    g_slist_foreach( to_remove, (GFunc)menu_cache_unref, NULL );
+    g_slist_foreach( to_remove, (GFunc)cache_unref, NULL );
     g_slist_free( to_remove );
     return FALSE;
 }
@@ -659,7 +726,7 @@ int main(int argc, char** argv)
 
     g_type_init();
 
-    hash = g_hash_table_new_full(g_str_hash, g_str_equal,NULL,(GDestroyNotify)menu_cache_unref);
+    hash = g_hash_table_new_full(g_str_hash, g_str_equal,NULL,(GDestroyNotify)cache_unref);
 
     g_main_loop_run( main_loop );
     g_main_loop_unref( main_loop );

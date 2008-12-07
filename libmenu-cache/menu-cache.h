@@ -66,6 +66,7 @@ enum _MenuCacheItemFlag{
 void menu_cache_init(int flags);
 
 MenuCache* menu_cache_lookup( const char* menu_name );
+/* MenuCache* menu_cache_lookup_by_cache_id( const char* md5 ); */
 
 MenuCache* menu_cache_ref(MenuCache* cache);
 void menu_cache_unref(MenuCache* cache);

@@ -17,7 +17,7 @@ menu_cached_SOURCES =		\
 	$(NULL)
 
 menu_cached_LDADD = 		\
-	$(top_builddir)/libmenu-cache/libmenu-cache.la	\
+#	$(top_builddir)/libmenu-cache/libmenu-cache.la	\
 	$(GLIB_LIBS)					\
 	$(NULL)
 menu_cached_LDFLAGS =			\

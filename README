@@ -30,14 +30,14 @@ list of DE names used in this menu other than the known DEs(LXDE, GNOME, XFCE, K
   title
   comment
   icon name
-  dir in which menu directory file locates (use this number as index to get the string from array of preceding list of monitored files)
   menu directory file basename
+  dir in which menu directory file locates (use this number as index to get the string from array of preceding list of monitored files)
     -application desktop id (FIXME: desktop id is not necessarily the basename of desktop file)
      title
      comment
      icon name
-     dir in which the desktop file localtes (use this number as index to get the string from array of preceding list of monitored files)
      app desktop file basename, empty means the same as desktop id.
+     dir in which the desktop file localtes (use this number as index to get the string from array of preceding list of monitored files)
      generic name
      exec command line
      bitmask flags: (use terminal)|(use startup notification)

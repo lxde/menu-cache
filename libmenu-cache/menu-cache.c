@@ -620,6 +620,14 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
     int i = 0;
     MenuCacheDir* dir = NULL;
 
+    if( !names )
+        return NULL;
+
+    if( G_UNLIKELY(!names[0]) )
+    {
+        g_strfreev(names);
+        return NULL;
+    }
     /* the topmost dir of the path should be the root menu dir. */
     if( strcmp(names[0], MENU_CACHE_ITEM(cache->root_dir)->id) )
         return NULL;
