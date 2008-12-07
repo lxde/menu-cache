@@ -214,13 +214,6 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 
     /* file dir/basename */
 
-    /* desktop file dir */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
-        return;
-    idx = atoi( line );
-    if( G_LIKELY( idx >=0 && idx < cache->n_all_used_files ) )
-        item->file_dir = cache->all_used_files[ idx ] + 1;
-
     /* file name */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
         return;
@@ -234,6 +227,13 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
          * save memory usage. */
         item->file_name = item->id;
     }
+
+    /* desktop file dir */
+    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+        return;
+    idx = atoi( line );
+    if( G_LIKELY( idx >=0 && idx < cache->n_all_used_files ) )
+        item->file_dir = cache->all_used_files[ idx ] + 1;
 
     if( item->type == MENU_CACHE_TYPE_DIR )
         read_dir( f, MENU_CACHE_DIR(item), cache );

@@ -84,7 +84,7 @@ guint32 menu_cache_get_de_flag( const char* de_name )
         ++n_known_de;
         g_hash_table_insert(de_hash, g_strdup(de_name), GUINT_TO_POINTER(flag));
     }
-    g_debug("flag of %s is %d", de_name, flag);
+    /* g_debug("flag of %s is %d", de_name, flag); */
     return flag;
 }
 

@@ -41,7 +41,7 @@ seperated by ;
   dir in which menu directory file locates (use this number as index to get
                                             the string from array of preceding
                                             list of monitored files)
-    -application desktop id (FIXME: desktop id is not necessarily the basename
+    -application desktop id (NOTE: desktop id is not necessarily the basename
                              of desktop file)
      title
      comment
