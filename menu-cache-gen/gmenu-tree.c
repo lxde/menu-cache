@@ -332,6 +332,7 @@ gmenu_tree_add_menu_file_monitor (GMenuTree           *tree,
                   const char          *path,
                   MenuFileMonitorType  type)
 {
+#if 0
   MenuFileMonitor *monitor;
 
   monitor = g_new0 (MenuFileMonitor, 1);
@@ -373,12 +374,14 @@ gmenu_tree_add_menu_file_monitor (GMenuTree           *tree,
     }
 
   tree->menu_file_monitors = g_slist_prepend (tree->menu_file_monitors, monitor);
+#endif
 }
 
 static void
 remove_menu_file_monitor (MenuFileMonitor *monitor,
               GMenuTree       *tree)
 {
+#if 0
   switch (monitor->type)
     {
     case MENU_FILE_MONITOR_FILE:
@@ -410,11 +413,13 @@ remove_menu_file_monitor (MenuFileMonitor *monitor,
   monitor->type = MENU_FILE_MONITOR_INVALID;
 
   g_free (monitor);
+#endif
 }
 
 static void
 gmenu_tree_remove_menu_file_monitors (GMenuTree *tree)
 {
+#if 0
   menu_verbose ("Removing all menu file monitors\n");
 
   g_slist_foreach (tree->menu_file_monitors,
@@ -422,6 +427,7 @@ gmenu_tree_remove_menu_file_monitors (GMenuTree *tree)
                    tree);
   g_slist_free (tree->menu_file_monitors);
   tree->menu_file_monitors = NULL;
+#endif
 }
 
 static GMenuTree *
@@ -890,6 +896,7 @@ gmenu_tree_add_monitor (GMenuTree            *tree,
                        GMenuTreeChangedFunc   callback,
                        gpointer               user_data)
 {
+#if 0
   GMenuTreeMonitor *monitor;
   GSList           *tmp;
 
@@ -917,6 +924,7 @@ gmenu_tree_add_monitor (GMenuTree            *tree,
 
       tree->monitors = g_slist_append (tree->monitors, monitor);
     }
+#endif
 }
 
 void

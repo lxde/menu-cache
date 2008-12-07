@@ -28,7 +28,6 @@ menu_cache_gen_SOURCES =		\
 	menu-monitor.h			\
 	menu-util.c			\
 	menu-util.h			\
-	$(MONITOR_SOURCES)		\
 	$(NULL)
 
 menu_cache_gen_LDADD = 		\
