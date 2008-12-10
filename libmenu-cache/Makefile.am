@@ -9,6 +9,7 @@ INCLUDES =				\
 lib_LTLIBRARIES = libmenu-cache.la
 
 libmenu_cache_la_SOURCES =		\
+	version.h			\
 	menu-cache.c			\
 	$(MONITOR_SOURCES)		\
 	$(NULL)
