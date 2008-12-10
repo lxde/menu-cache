@@ -381,23 +381,21 @@ int main(int argc, char** argv)
     }
     else
     {
+        char* file_name;
         xdg_cfg_dirs = g_get_system_config_dirs();
         menu_prefix = g_getenv("XDG_MENU_PREFIX");
+        file_name = menu_prefix ? g_strconcat(menu_prefix, ifile, NULL) : ifile;
         for( pdir = xdg_cfg_dirs; *pdir; ++pdir )
         {
-            if(menu_prefix)
-                menu_file = g_build_filename( *pdir, "menus", menu_prefix, ifile, NULL );
-            else
-                menu_file = g_build_filename( *pdir, "menus", ifile, NULL );
+            menu_file = g_build_filename( *pdir, "menus", file_name, NULL );
             if( ! g_slist_find_custom(all_used_dirs, menu_file, (GCompareFunc)strcmp ) )
                 all_used_files = g_slist_prepend(all_used_files, menu_file);
             else
                 g_free( menu_file );
         }
-        if(menu_prefix)
-            menu_file = g_build_filename( g_get_user_config_dir(), "menus", menu_prefix, ifile, NULL );
-        else
-            menu_file = g_build_filename( g_get_user_config_dir(), "menus", ifile, NULL );
+        menu_file = g_build_filename( g_get_user_config_dir(), "menus", file_name, NULL );
+        if( file_name != ifile )
+            g_free(file_name);
 
         if( ! g_slist_find_custom(all_used_dirs, menu_file, (GCompareFunc)strcmp ) )
             all_used_files = g_slist_prepend(all_used_files, menu_file);
