@@ -513,14 +513,9 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     const char* md5;
     Cache* cache;
     GFile* gf;
-    GError *error = NULL;
 
 retry:
-    st = g_io_channel_read_line( ch, &line, &len, NULL, &error );
-    if ( st == G_IO_STATUS_ERROR) {
-      g_warning ("Error: %s\n", error->message);
-      return FALSE;
-    }
+    st = g_io_channel_read_line( ch, &line, &len, NULL, NULL );
     if( st == G_IO_STATUS_AGAIN )
         goto retry;
     if( st != G_IO_STATUS_NORMAL )
