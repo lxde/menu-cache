@@ -912,7 +912,7 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
 void unregister_menu_from_server( MenuCache* cache )
 {
     char buf[38];
-    g_snprintf( buf, "UNR:%s\n", cache->md5 );
+    g_snprintf( buf, 38, "UNR:%s\n", cache->md5 );
     write( server_fd, buf, 37 );
 }
 
