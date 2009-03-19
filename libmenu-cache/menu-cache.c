@@ -679,40 +679,12 @@ static gboolean fork_server()
         g_print("failed to find menu-cached\n");
     }
 
-    /* Become a daemon */
+    /* Start daemon */
     pid = fork();
     if (pid == 0)
     {
-        int fd;
-        long open_max;
-        long i;
-
-        /* don't hold open fd opened from the client of the library */
-        open_max = sysconf (_SC_OPEN_MAX);
-        for (i = 0; i < open_max; i++)
-            fcntl (i, F_SETFD, FD_CLOEXEC);
-
-        /* /dev/null for stdin, stdout, stderr */
-        fd = open ("/dev/null", O_RDONLY);
-        if (fd != -1)
-        {
-            dup2 (fd, 0);
-            close (fd);
-        }
-        fd = open ("/dev/null", O_WRONLY);
-        if (fd != -1)
-        {
-            dup2 (fd, 1);
-            dup2 (fd, 2);
-            close (fd);
-        }
-        setsid();
-        if (fork() == 0)
-        {
-            execl( server_path, server_path, NULL);
-            g_print("failed to exec %s\n", server_path);
-        }
-        _exit(0);
+        execl( server_path, server_path, NULL);
+        g_print("failed to exec %s\n", server_path);
     }
 
     /*

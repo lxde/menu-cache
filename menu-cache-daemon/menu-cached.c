@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
@@ -489,7 +490,6 @@ static int create_socket()
     addr.sun_family = AF_UNIX;
 
     get_socket_name( addr.sun_path, sizeof( addr.sun_path ) );
-
     if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
         g_debug("Failed to bind to socket");
@@ -706,12 +706,49 @@ int main(int argc, char** argv)
 {
     GMainLoop* main_loop = g_main_loop_new( NULL, TRUE );
     GIOChannel* ch;
-    int fd;
+    int fd, pid;
 
     fd = create_socket();
+
     if( fd < 0 )
         return 1;
 
+    /* Become a daemon */
+    if (pid == 0)
+        {
+            int fd;
+            long open_max;
+            long i;
+            
+            /* don't hold open fd opened besides server socket */
+            open_max = sysconf (_SC_OPEN_MAX);
+            for (i = 0; i < open_max; i++) 
+                {
+                    if (i != fd)
+                        fcntl (i, F_SETFD, FD_CLOEXEC);
+                }
+            
+            /* /dev/null for stdin, stdout, stderr */
+            fd = open ("/dev/null", O_RDONLY);
+            if (fd != -1)
+                {
+                    dup2 (fd, 0);
+                    close (fd);
+                }
+            fd = open ("/dev/null", O_WRONLY);
+            if (fd != -1)
+                {
+                    dup2 (fd, 1);
+                    dup2 (fd, 2);
+                    close (fd);
+                }
+            setsid();
+            /* parent process terminates */
+            if (fork() != 0) 	
+                exit(0);
+        }
+
+    /* child continues */
     signal(SIGHUP, terminate);
     signal(SIGINT, terminate);
     signal(SIGQUIT, terminate);
