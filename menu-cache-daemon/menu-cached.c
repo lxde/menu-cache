@@ -36,6 +36,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 #include <signal.h>
 #include <utime.h>
 
@@ -488,8 +489,17 @@ static int create_socket()
     }
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
-
     get_socket_name( addr.sun_path, sizeof( addr.sun_path ) );
+    
+    /* remove previous socket file */
+    if (unlink(addr.sun_path) < 0) {
+	if (errno != ENOENT)
+	    g_error("Couldn't remove previous socket file %s", addr.sun_path);
+    }
+    /* remove of previous socket file successful */
+    else
+	g_warning("removed previous socket file %s");
+    
     if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
         g_debug("Failed to bind to socket");
@@ -706,49 +716,59 @@ int main(int argc, char** argv)
 {
     GMainLoop* main_loop = g_main_loop_new( NULL, TRUE );
     GIOChannel* ch;
-    int fd, pid;
+    int fd, pid, server_fd;
 
-    fd = create_socket();
+    long open_max;
+    long i;
 
-    if( fd < 0 )
+    server_fd = create_socket();
+
+    if( server_fd < 0 )
         return 1;
 
     /* Become a daemon */
-    if (pid == 0)
-        {
-            int fd;
-            long open_max;
-            long i;
-            
-            /* don't hold open fd opened besides server socket */
-            open_max = sysconf (_SC_OPEN_MAX);
-            for (i = 0; i < open_max; i++) 
-                {
-                    if (i != fd)
-                        fcntl (i, F_SETFD, FD_CLOEXEC);
-                }
-            
-            /* /dev/null for stdin, stdout, stderr */
-            fd = open ("/dev/null", O_RDONLY);
-            if (fd != -1)
-                {
-                    dup2 (fd, 0);
-                    close (fd);
-                }
-            fd = open ("/dev/null", O_WRONLY);
-            if (fd != -1)
-                {
-                    dup2 (fd, 1);
-                    dup2 (fd, 2);
-                    close (fd);
-                }
-            setsid();
-            /* parent process terminates */
-            if (fork() != 0) 	
-                exit(0);
-        }
 
-    /* child continues */
+    if ((pid = fork()) < 0) {
+	g_error("can't fork");
+    }
+    else if (pid != 0) {
+	/* exit parent */
+	exit(0);		
+    }
+
+    /* child (daemon process) != process group leader continues and
+     * becomes a session leader  */
+    setsid();
+
+    /* change working directory to root, so previous working directory
+     * can be unmounted */
+    if (chdir("/") < 0) {
+	g_error("can't change directory to /");
+    }
+
+    open_max = sysconf (_SC_OPEN_MAX);
+    for (i = 0; i < open_max; i++) 
+    {
+	/* don't hold open fd opened besides server socket */
+	if (i != fd)
+	    fcntl (i, F_SETFD, FD_CLOEXEC);
+    }
+    
+    /* /dev/null for stdin, stdout, stderr */
+    fd = open ("/dev/null", O_RDONLY);
+    if (fd != -1)
+    {
+	dup2 (fd, 0);
+	close (fd);
+    }
+    fd = open ("/dev/null", O_WRONLY);
+    if (fd != -1)
+    {
+	dup2 (fd, 1);
+	dup2 (fd, 2);
+	close (fd);
+    }
+
     signal(SIGHUP, terminate);
     signal(SIGINT, terminate);
     signal(SIGQUIT, terminate);
@@ -756,7 +776,7 @@ int main(int argc, char** argv)
     signal(SIGKILL, terminate);
     signal(SIGPIPE, SIG_IGN);
 
-    ch = g_io_channel_unix_new(fd);
+    ch = g_io_channel_unix_new(server_fd);
     if(!ch)
         return 1;
     g_io_channel_set_close_on_unref(ch, TRUE);

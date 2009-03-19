@@ -794,7 +794,6 @@ retry:
         if(retries == 0)
         {
             close(fd);
-            unlink(addr.sun_path); /* remove previous socket file */
             fork_server();
             ++retries;
             goto retry;
