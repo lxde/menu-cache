@@ -671,20 +671,19 @@ static void get_socket_name( char* buf, int len )
 
 static gboolean fork_server()
 {
-    const char *server_path = g_find_program_in_path("menu-cached");
     int ret, pid, status;
 
-    if (!server_path)
+    if (!g_file_test (MENUCACHED_LIBEXECDIR "/menu-cached", G_FILE_TEST_IS_EXECUTABLE))
     {
-        g_print("failed to find menu-cached\n");
+        g_error("failed to find menu-cached");
     }
 
     /* Start daemon */
     pid = fork();
     if (pid == 0)
     {
-        execl( server_path, server_path, NULL);
-        g_print("failed to exec %s\n", server_path);
+        execl( MENUCACHED_LIBEXECDIR "/menu-cached", MENUCACHED_LIBEXECDIR "/menu-cached", NULL);
+        g_print("failed to exec %s\n", MENUCACHED_LIBEXECDIR "/menu-cached");
     }
 
     /*

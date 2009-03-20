@@ -10,7 +10,7 @@ INCLUDES =				\
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
-bin_PROGRAMS = menu-cached
+libexec_PROGRAMS = menu-cached
 
 menu_cached_SOURCES =		\
 	menu-cached.c			\

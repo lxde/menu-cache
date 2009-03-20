@@ -4,6 +4,7 @@ INCLUDES =				\
 	$(GLIB_CFLAGS)			\
 	$(MONITOR_CFLAGS)		\
 	-Werror-implicit-function-declaration \
+	-DMENUCACHED_LIBEXECDIR="\"$(libexecdir)\"" \
 	$(NULL)
 
 lib_LTLIBRARIES = libmenu-cache.la
