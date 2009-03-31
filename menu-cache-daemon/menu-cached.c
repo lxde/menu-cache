@@ -53,14 +53,15 @@ typedef struct _Cache
     int n_files;
     char** files;
     GFileMonitor** mons;
-    GFileMonitor* cache_mon;
+    /* GFileMonitor* cache_mon; */
+
+    guint delayed_reload_handler;
 
     /* clients requesting this menu cache */
     GSList* clients;
 }Cache;
 
 static GHashTable* hash = NULL;
-guint delayed_reload_handler = 0;
 
 static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                              GFileMonitorEvent evt, Cache* cache );
@@ -80,26 +81,23 @@ static void cache_unref(Cache* cache)
             g_file_monitor_cancel( cache->mons[i] );
             g_object_unref( cache->mons[i] );
         }
+/*
         g_file_monitor_cancel(cache->cache_mon);
         g_object_unref(cache->cache_mon);
-
+*/
         g_free( cache->mons );
         g_strfreev( cache->env );
         g_strfreev( cache->files );
+
+		if( cache->delayed_reload_handler )
+			g_source_remove( cache->delayed_reload_handler );
+
         g_slice_free( Cache, cache );
     }
     else if( cache->n_ref == 1 ) /* the last ref count is held by hash table */
     {
         /* g_debug("menu cache removed from hash"); */
         g_hash_table_remove( hash, cache->md5 );
-        if( g_hash_table_size(hash) == 0 ) /* no menu cache is in use. */
-        {
-            if( delayed_reload_handler )
-            {
-                g_source_remove( delayed_reload_handler );
-                delayed_reload_handler = 0;
-            }
-        }
     }
 }
 
@@ -155,7 +153,8 @@ static void set_env( char* penv, const char* name )
 static void pre_exec( gpointer user_data )
 {
     char** env = (char*)user_data;
-    set_env(*env, "XDG_CONFIG_DIRS");
+    set_env(*env, "XDG_CACHE_HOME");
+    set_env(*++env, "XDG_CONFIG_DIRS");
     set_env(*++env, "XDG_MENU_PREFIX");
     set_env(*++env, "XDG_DATA_DIRS");
     set_env(*++env, "XDG_CONFIG_HOME");
@@ -237,9 +236,10 @@ static gboolean delayed_reload( Cache* cache )
         g_signal_handlers_disconnect_by_func( cache->mons[i], on_file_changed, cache );
         g_object_unref( cache->mons[i] );
     }
+/*
     g_file_monitor_cancel(cache->cache_mon);
     g_object_unref(cache->cache_mon);
-
+*/
     if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache_file,
                             cache->env, &cache->n_files, &cache->files ) )
     {
@@ -258,11 +258,12 @@ static gboolean delayed_reload( Cache* cache )
         g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
         g_object_unref(gf);
     }
+/*
     gf = g_file_new_for_path( cache_file );
     cache->cache_mon = g_file_monitor_file( gf, 0, NULL, NULL );
     g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
     g_object_unref(gf);
-
+*/
     g_free(cache_file);
 
     /* notify the clients that reload is needed. */
@@ -271,7 +272,7 @@ static gboolean delayed_reload( Cache* cache )
         GIOChannel* ch = (GIOChannel*)l->data;
         write(g_io_channel_unix_get_fd(ch), buf, 37 );
     }
-    delayed_reload_handler = 0;
+    cache->delayed_reload_handler = 0;
     return FALSE;
 }
 
@@ -333,7 +334,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, Cache* cache )
 {
     /* g_debug("file %s is changed (%d).", g_file_get_path(gf), evt); */
-    if( mon != cache->cache_mon )
+    /* if( mon != cache->cache_mon ) */
     {
         /* Optimization: Some files in the dir are changed, but it
          * won't affect the content of the menu. So, just omit them,
@@ -404,18 +405,22 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 
                     ut.actime = ut.modtime = time(NULL);
                     /* stop monitor of cache file. */
+					/*
                     g_file_monitor_cancel( cache->cache_mon );
                     g_object_unref( cache->cache_mon );
                     cache->cache_mon = NULL;
+					*/
                     /* update the mtime of the cache file. */
                     utime( cache_file, &ut );
-                    /* restart the monitor */
 
-                    gf = g_file_new_for_path( cache_file );
+                    /* restart the monitor */
+                    /* gf = g_file_new_for_path( cache_file ); */
                     g_free(cache_file);
+					/*
                     cache->cache_mon = g_file_monitor_file(gf, 0, NULL, NULL);
                     g_object_unref(gf);
                     g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
+					*/
                     g_debug("files are changed, but no re-generation is needed.");
                     return;
                 }
@@ -424,10 +429,10 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
         }
     }
 
-    if( delayed_reload_handler )
-        g_source_remove(delayed_reload_handler);
+    if( cache->delayed_reload_handler )
+        g_source_remove(cache->delayed_reload_handler);
 
-    delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
+    cache->delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
 
 static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files, char** used_files )
@@ -539,7 +544,7 @@ retry:
         GChecksum *sum;
         int status = 0, n_files, i;
         char *pline = line + 4;
-        char *sep, *menu_name, *lang_name, *cache_file;
+        char *sep, *menu_name, *lang_name, *cache_dir, *cache_file;
         char **files;
         char **env;
         len -= 4;
@@ -547,6 +552,7 @@ retry:
         /* Format of received string, separated by '\t'.
          * Menu Name
          * Language Name
+		  * XDG_CACHE_HOME
          * XDG_CONFIG_DIRS
          * XDG_MENU_PREFIX
          * XDG_DATA_DIRS
@@ -571,8 +577,10 @@ retry:
 
             env = g_strsplit(pline, "\t", 0);
 
-            /* FIXME: should obtain cache dir from client's env */
-            cache_file = g_build_filename(g_get_user_cache_dir(), "menus", md5, NULL );
+			cache_dir = env[0]; /* XDG_CACHE_HOME */
+            /* obtain cache dir from client's env */
+
+            cache_file = g_build_filename(*cache_dir ? cache_dir : g_get_user_cache_dir(), "menus", md5, NULL );
             if( ! cache_file_is_updated(cache_file, &n_files, &files) )
             {
                 /* run menu-cache-gen */
@@ -602,11 +610,12 @@ retry:
                 g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
                 g_object_unref(gf);
             }
+			/*
             gf = g_file_new_for_path( cache_file );
             cache->cache_mon = g_file_monitor_file( gf, 0, NULL, NULL );
             g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
             g_object_unref(gf);
-
+			*/
             g_free(cache_file);
 
             g_hash_table_insert(hash, cache->md5, cache);

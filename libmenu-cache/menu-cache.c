@@ -824,6 +824,7 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     const char* xdg_data = g_getenv("XDG_DATA_DIRS");
     const char* xdg_cfg_home = g_getenv("XDG_CONFIG_HOME");
     const char* xdg_data_home = g_getenv("XDG_DATA_HOME");
+    const char* xdg_cache_home = g_getenv("XDG_CACHE_HOME");
     char* buf;
     char md5[36];
     char* file_name;
@@ -839,14 +840,17 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
         xdg_cfg_home = "";
     if( ! xdg_data_home )
         xdg_data_home = "";
+    if( ! xdg_cache_home )
+        xdg_cache_home = "";
 
     /* get rid of the encoding part of locale name. */
     while( strchr(langs[0], '.') )
         ++langs;
 
-    buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+    buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
                             menu_name,
                             *langs,
+							xdg_cache_home,
                             xdg_cfg,
                             xdg_prefix,
                             xdg_data,

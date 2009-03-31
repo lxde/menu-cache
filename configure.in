@@ -1,4 +1,4 @@
-AC_INIT([menu-cache], [0.2.2],
+AC_INIT([menu-cache], [0.2.3],
         [http://lxde.org/])
 AC_CONFIG_SRCDIR(menu-cache-gen/gmenu-tree.h)
 
