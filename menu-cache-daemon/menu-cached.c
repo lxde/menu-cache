@@ -36,6 +36,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 #include <signal.h>
 #include <utime.h>
