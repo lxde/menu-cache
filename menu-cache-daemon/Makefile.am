@@ -1,5 +1,7 @@
 NULL = 
 
+SUBDIRS = man
+
 INCLUDES =				\
 	-I$(top_srcdir)/libmenu-cache	\
 	$(GLIB_CFLAGS)			\
