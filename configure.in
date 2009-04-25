@@ -41,5 +41,4 @@ libmenu-cache/libmenu-cache.pc
 libmenu-cache/libmenu-cache-uninstalled.pc
 menu-cache-gen/Makefile
 menu-cache-daemon/Makefile
-menu-cache-daemon/man/Makefile
 ])

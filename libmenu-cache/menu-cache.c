@@ -800,7 +800,7 @@ retry:
         if (retries < MAX_RETRIES)
         {
             close(fd);
-            usleep(5000);
+            usleep(50000);
             ++retries;
             goto retry;
         }
