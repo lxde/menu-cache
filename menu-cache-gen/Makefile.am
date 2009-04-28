@@ -1,4 +1,4 @@
-NULL = 
+NULL =
 
 INCLUDES =				\
 	-I$(top_srcdir)/libmenu-cache	\

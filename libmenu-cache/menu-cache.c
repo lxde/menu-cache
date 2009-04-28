@@ -1,18 +1,18 @@
 /*
  *      menu-cache.c
- *      
+ *
  *      Copyright 2008 PCMan <pcman.tw@gmail.com>
- *      
+ *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
  *      the Free Software Foundation; either version 2 of the License, or
  *      (at your option) any later version.
- *      
+ *
  *      This program is distributed in the hope that it will be useful,
  *      but WITHOUT ANY WARRANTY; without even the implied warranty of
  *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *      GNU General Public License for more details.
- *      
+ *
  *      You should have received a copy of the GNU General Public License
  *      along with this program; if not, write to the Free Software
  *      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
@@ -471,7 +471,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     fclose( f );
 
     reload_notify(cache);
-    
+
     return TRUE;
 }
 
@@ -673,7 +673,7 @@ static gboolean fork_server()
 {
     int ret, pid, status;
 
-    if (!g_file_test (MENUCACHED_LIBEXECDIR "/menu-cached", G_FILE_TEST_IS_EXECUTABLE))
+    if (!g_file_test (MENUCACHE_LIBEXECDIR "/menu-cached", G_FILE_TEST_IS_EXECUTABLE))
     {
         g_error("failed to find menu-cached");
     }
@@ -682,8 +682,8 @@ static gboolean fork_server()
     pid = fork();
     if (pid == 0)
     {
-        execl( MENUCACHED_LIBEXECDIR "/menu-cached", MENUCACHED_LIBEXECDIR "/menu-cached", NULL);
-        g_print("failed to exec %s\n", MENUCACHED_LIBEXECDIR "/menu-cached");
+        execl( MENUCACHE_LIBEXECDIR "/menu-cached", MENUCACHE_LIBEXECDIR "/menu-cached", NULL);
+        g_print("failed to exec %s\n", MENUCACHE_LIBEXECDIR "/menu-cached");
     }
 
     /*
@@ -722,7 +722,7 @@ reconnect:
             g_debug("successfully restart server.\nre-register menus.");
             /* re-register all menu caches */
             g_hash_table_iter_init(&it, hash);
-            while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache)) 
+            while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
                 register_menu_to_server( menu_name, TRUE );
         }
         return FALSE;

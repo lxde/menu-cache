@@ -1,4 +1,4 @@
-NULL = 
+NULL =
 
 INCLUDES =				\
 	-I$(top_srcdir)/libmenu-cache	\
@@ -6,7 +6,7 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
-        -DBINDIR=\"$(bindir)\"          \
+	-DMENUCACHE_LIBEXECDIR="\"$(libexecdir)\"" \
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
