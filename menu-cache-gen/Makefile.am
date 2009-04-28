@@ -10,7 +10,7 @@ INCLUDES =				\
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
-bin_PROGRAMS = menu-cache-gen
+libexec_PROGRAMS = menu-cache-gen
 
 menu_cache_gen_SOURCES =		\
 	menu-cache-gen.c		\
