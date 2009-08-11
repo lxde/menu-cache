@@ -663,7 +663,9 @@ char* menu_cache_dir_make_path( MenuCacheDir* dir )
 
 static void get_socket_name( char* buf, int len )
 {
-    char* dpy = g_getenv("DISPLAY");
+    const char* dpy = g_getenv("DISPLAY");
+    if( !dpy )
+        dpy = ":0.0";
     g_snprintf( buf, len, "/tmp/.menu-cached-%s-%s", dpy, g_get_user_name() );
 }
 
@@ -707,7 +709,7 @@ static gboolean on_server_io(GIOChannel* ch, GIOCondition cond, gpointer user_da
     if( cond & (G_IO_ERR|G_IO_HUP) )
     {
 reconnect:
-        g_debug("IO error, try to re-connect.");
+        g_debug("IO error %d, try to re-connect.", cond);
         g_io_channel_unref(ch);
         server_fd = -1;
         if( ! connect_server() )
@@ -721,9 +723,12 @@ reconnect:
             MenuCache* cache;
             g_debug("successfully restart server.\nre-register menus.");
             /* re-register all menu caches */
-            g_hash_table_iter_init(&it, hash);
-            while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
-                register_menu_to_server( menu_name, TRUE );
+            if(hash)
+            {
+                g_hash_table_iter_init(&it, hash);
+                while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
+                    register_menu_to_server( menu_name, TRUE );
+            }
         }
         return FALSE;
     }
