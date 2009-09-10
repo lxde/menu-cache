@@ -746,10 +746,6 @@ int main(int argc, char** argv)
 	exit(0);
     }
 
-    /* child (daemon process) != process group leader continues and
-     * becomes a session leader  */
-    setsid();
-
     /* change working directory to root, so previous working directory
      * can be unmounted */
     if (chdir("/") < 0) {
