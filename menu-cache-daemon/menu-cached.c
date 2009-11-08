@@ -478,8 +478,17 @@ _out:
 
 static void get_socket_name( char* buf, int len )
 {
-    char* dpy = g_getenv("DISPLAY");
-    g_snprintf( buf, len, "/tmp/.menu-cached-%s-%s", dpy, g_get_user_name() );
+    char* dpy = g_strdup(g_getenv("DISPLAY"));
+    if(dpy && *dpy)
+    {
+        char* p = strchr(dpy, ':');
+        for(++p; *p && *p != '.';)
+            ++p;
+        if(*p)
+            *p = '\0';
+    }
+    g_snprintf( buf, len, "/tmp/.menu-cached-%s-%s", dpy ? dpy : ":0", g_get_user_name() );
+    g_free(dpy);
 }
 
 static int create_socket()
@@ -521,6 +530,38 @@ static int create_socket()
     return fd;
 }
 
+static void on_client_closed(GIOChannel* ch, gpointer user_data)
+{
+    GHashTableIter it;
+    char* md5;
+    Cache* cache;
+    GSList *l, *to_remove = NULL;
+    g_debug("client closed: %p", ch);
+    g_hash_table_iter_init (&it, hash);
+    while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
+    {
+        if( l = g_slist_find( cache->clients, ch ) )
+        {
+            /* FIXME: some clients are closed accidentally without
+             * unregister the menu first due to crashes.
+             * We need to do unref for them to prevent memory leaks.
+             *
+             * The behavior is not currently well-defined.
+             * if a client do unregister first, and then was closed,
+             * unref will be called twice and incorrect ref. counting
+             * will happen.
+             */
+            to_remove = g_slist_prepend( to_remove, cache );
+            cache->clients = g_slist_delete_link( cache->clients, l );
+            g_debug("remove channel from cache");
+            g_io_channel_unref(ch);
+        }
+    }
+    /* g_debug("client closed"); */
+    g_slist_foreach( to_remove, (GFunc)cache_unref, NULL );
+    g_slist_free( to_remove );
+}
+
 static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer user_data)
 {
     char *line;
@@ -529,6 +570,12 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     const char* md5;
     Cache* cache;
     GFile* gf;
+
+    if(cond & (G_IO_HUP|G_IO_ERR) )
+    {
+        on_client_closed(ch, user_data);
+        return FALSE; /* remove the watch */
+    }
 
 retry:
     st = g_io_channel_read_line( ch, &line, &len, NULL, NULL );
@@ -539,6 +586,8 @@ retry:
 
     --len;
     line[len] = 0;
+
+    g_debug("line(%d) = %s", len, line);
 
     if( memcmp(line, "REG:", 4) == 0 )
     {
@@ -553,7 +602,7 @@ retry:
         /* Format of received string, separated by '\t'.
          * Menu Name
          * Language Name
-		  * XDG_CACHE_HOME
+         * XDG_CACHE_HOME
          * XDG_CONFIG_DIRS
          * XDG_MENU_PREFIX
          * XDG_DATA_DIRS
@@ -625,7 +674,7 @@ retry:
         }
         /* g_debug("menu %s requested by client %d", md5, g_io_channel_unix_get_fd(ch)); */
         ++cache->n_ref;
-        cache->clients = g_slist_prepend( cache->clients, ch );
+        cache->clients = g_slist_prepend( cache->clients, g_io_channel_ref(ch) );
         if( status  == 0 )
             write( g_io_channel_unix_get_fd(ch), md5, 32 );
         else
@@ -638,43 +687,18 @@ retry:
         g_debug("unregister: %s", md5);
         cache = (Cache*)g_hash_table_lookup(hash, md5);
         if( cache )
+        {
+            /* remove the IO channel from the cache */
+            cache->clients = g_slist_remove(cache->clients, ch);
             cache_unref(cache);
+            g_io_channel_unref(ch);
+        }
         else
             g_debug("bug! client is not found.");
     }
     g_free( line );
 
     return TRUE;
-}
-
-static gboolean on_client_closed(GIOChannel* ch, GIOCondition cond, gpointer user_data)
-{
-    GHashTableIter it;
-    char* md5;
-    Cache* cache;
-    GSList *l, *to_remove = NULL;
-    g_hash_table_iter_init (&it, hash);
-    while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
-    {
-        if( l = g_slist_find( cache->clients, ch ) )
-        {
-            /* FIXME: some clients are closed accidentally without
-             * unregister the menu first due to crashes.
-             * We need to do unref for them to prevent memory leaks.
-             *
-             * The behavior is not currently well-defined.
-             * if a client do unregister first, and then was closed,
-             * unref will be called twice and incorrect ref. counting
-             * will happen.
-             */
-            to_remove = g_slist_prepend( to_remove, cache );
-            cache->clients = g_slist_delete_link( cache->clients, l );
-        }
-    }
-    /* g_debug("client closed"); */
-    g_slist_foreach( to_remove, (GFunc)cache_unref, NULL );
-    g_slist_free( to_remove );
-    return FALSE;
 }
 
 static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer user_data)
@@ -695,8 +719,7 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     }
 
     child = g_io_channel_unix_new(client);
-    g_io_add_watch( child, G_IO_PRI|G_IO_IN, on_client_data_in, NULL );
-    g_io_add_watch( child, G_IO_HUP|G_IO_ERR, on_client_closed, NULL );
+    g_io_add_watch( child, G_IO_PRI|G_IO_IN|G_IO_HUP|G_IO_ERR, on_client_data_in, NULL );
     g_io_channel_set_close_on_unref( child, TRUE );
 
     /* g_debug("new client accepted"); */
@@ -736,8 +759,8 @@ int main(int argc, char** argv)
     if( server_fd < 0 )
         return 1;
 
+#ifndef _DEBUG
     /* Become a daemon */
-
     if ((pid = fork()) < 0) {
 	g_error("can't fork");
     }
@@ -774,12 +797,12 @@ int main(int argc, char** argv)
 	dup2 (fd, 2);
 	close (fd);
     }
+#endif
 
     signal(SIGHUP, terminate);
     signal(SIGINT, terminate);
     signal(SIGQUIT, terminate);
     signal(SIGTERM, terminate);
-    signal(SIGKILL, terminate);
     signal(SIGPIPE, SIG_IGN);
 
     ch = g_io_channel_unix_new(server_fd);
