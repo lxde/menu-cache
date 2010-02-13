@@ -850,6 +850,8 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     char md5[36];
     char* file_name;
     int len = 0, r;
+    GCond* cond;
+    GMutex* mutex;
 
     if( !xdg_cfg )
         xdg_cfg = "";
@@ -877,10 +879,27 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
                             xdg_data,
                             xdg_cfg_home,
                             xdg_data_home );
+
+    /* acquire main loop context to prevent race condition in MT */
+    cond = g_cond_new();
+    mutex = g_mutex_new();
+
+    for(;;)
+    {
+        if(g_main_context_wait(NULL, cond, mutex))
+            break;
+    }
+    /* got main context ownership */
+
     write( server_fd, buf, strlen(buf) );
 
     while( (r=read(server_fd, md5 + len, 32 - len)) > 0 && len < 32 )
         len += r;
+
+    /* release main context ownership */
+    g_main_context_release(NULL);
+    g_cond_free(cond);
+    g_mutex_free(mutex);
 
     md5[32] = '\0';
 
