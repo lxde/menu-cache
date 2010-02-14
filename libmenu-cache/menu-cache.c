@@ -358,9 +358,10 @@ MenuCache* menu_cache_ref(MenuCache* cache)
 void menu_cache_unref(MenuCache* cache)
 {
     /* DEBUG("cache_unref: %d", cache->n_ref); */
-    if( g_atomic_int_dec_and_test( &cache->n_ref ) )
+    G_LOCK(hash);
+    --cache->n_ref;
+    if( cache->n_ref == 0 )
     {
-        G_LOCK(hash);
         unregister_menu_from_server( cache );
         /* DEBUG("unregister to server"); */
         g_hash_table_remove( hash, cache->menu_name );
@@ -376,7 +377,6 @@ void menu_cache_unref(MenuCache* cache)
             server_ch = NULL;
             hash = NULL;
         }
-        G_UNLOCK(hash);
 
         if( G_LIKELY(cache->root_dir) )
         {
@@ -390,6 +390,7 @@ void menu_cache_unref(MenuCache* cache)
         g_strfreev( cache->all_used_files );
         g_slice_free( MenuCache, cache );
     }
+    G_UNLOCK(hash);
 }
 
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
@@ -947,7 +948,10 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     {
         cache = (MenuCache*)g_hash_table_lookup(hash, menu_name);
         if( cache )
+        {
+            G_UNLOCK(hash);
             return menu_cache_ref(cache);
+        }
     }
     G_UNLOCK(hash);
 
