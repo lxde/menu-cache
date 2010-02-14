@@ -602,8 +602,9 @@ retry:
         char *sep, *menu_name, *lang_name, *cache_dir, *cache_file;
         char **files;
         char **env;
-        len -= 4;
+        char reload_cmd[38] = "REL:";
 
+        len -= 4;
         /* Format of received string, separated by '\t'.
          * Menu Name
          * Language Name
@@ -681,18 +682,14 @@ retry:
         cache->clients = g_slist_prepend( cache->clients, g_io_channel_ref(ch) );
 
         /* generate a fake reload notification */
-        if( status  == 0 )
-        {
-            char reload_cmd[38] = "REL:";
-            DEBUG("fake reload!");
-            memcpy(reload_cmd + 4, md5, 32);
+        DEBUG("fake reload!");
+        memcpy(reload_cmd + 4, md5, 32);
 
-            reload_cmd[36] = '\n';
-            reload_cmd[37] = '\0';
+        reload_cmd[36] = '\n';
+        reload_cmd[37] = '\0';
 
-            DEBUG("reload command: %s", reload_cmd);
-            write(g_io_channel_unix_get_fd(ch), reload_cmd, 37);
-        }
+        DEBUG("reload command: %s", reload_cmd);
+        write(g_io_channel_unix_get_fd(ch), reload_cmd, 37);
     }
     else if( memcmp(line, "UNR:", 4) == 0 )
     {
