@@ -1,7 +1,7 @@
 /*
  *      menu-cached.c
  *
- *      Copyright 2008 PCMan <pcman.tw@gmail.com>
+ *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -41,6 +41,12 @@
 #include <signal.h>
 #include <utime.h>
 
+#ifdef G_ENABLE_DEBUG
+#define DEBUG(...)  g_debug(__VA_ARGS__)
+#else
+#define DEBUG(...)
+#endif
+
 typedef struct _Cache
 {
     int n_ref;
@@ -70,11 +76,11 @@ static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 static void cache_unref(Cache* cache)
 {
     --cache->n_ref;
-    /* g_debug("menu cache unrefed: ref_count=%d", cache->n_ref); */
+    /* DEBUG("menu cache unrefed: ref_count=%d", cache->n_ref); */
     if( cache->n_ref == 0 )
     {
         int i;
-        /* g_debug("menu cache freed"); */
+        /* DEBUG("menu cache freed"); */
         g_slist_foreach( cache->clients, (GFunc)g_io_channel_unref, NULL );
         g_slist_free( cache->clients );
         for(i = 0; i < cache->n_files; ++i)
@@ -97,7 +103,7 @@ static void cache_unref(Cache* cache)
     }
     else if( cache->n_ref == 1 ) /* the last ref count is held by hash table */
     {
-        /* g_debug("menu cache removed from hash"); */
+        /* DEBUG("menu cache removed from hash"); */
         g_hash_table_remove( hash, cache->md5 );
     }
 }
@@ -182,15 +188,15 @@ static gboolean regenerate_cache( const char* menu_name,
     argv[4] = menu_name;
     argv[6] = cache_file;
 
-    /* g_debug("cmd: %s", g_strjoinv(" ", argv)); */
+    /* DEBUG("cmd: %s", g_strjoinv(" ", argv)); */
 
     /* run menu-cache-gen */
     if( !g_spawn_sync(NULL, argv, NULL, 0,
                     pre_exec, env, NULL, NULL, &status, NULL ))
     {
-        g_debug("error executing menu-cache-gen");
+        DEBUG("error executing menu-cache-gen");
     }
-    /* g_debug("exit status of menu-cache-gen: %d", status); */
+    /* DEBUG("exit status of menu-cache-gen: %d", status); */
     if( status != 0 )
         return FALSE;
 
@@ -201,7 +207,7 @@ static gboolean regenerate_cache( const char* menu_name,
         {
             n_files = 0;
             files = NULL;
-            /* g_debug("error: read_all_used_files"); */
+            /* DEBUG("error: read_all_used_files"); */
         }
         fclose(f);
     }
@@ -220,8 +226,8 @@ static gboolean delayed_reload( Cache* cache )
     int i;
     GFile* gf;
 
-    /* g_debug("Re-generation of cache is needed!"); */
-    /* g_debug("call menu-cache-gen to re-generate the cache"); */
+    /* DEBUG("Re-generation of cache is needed!"); */
+    /* DEBUG("call menu-cache-gen to re-generate the cache"); */
     memcpy( buf, "REL:", 4 );
     memcpy( buf + 4, cache->md5, 32 );
     buf[36] = '\n';
@@ -244,7 +250,7 @@ static gboolean delayed_reload( Cache* cache )
     if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache_file,
                             cache->env, &cache->n_files, &cache->files ) )
     {
-        g_debug("regeneration of cache failed.");
+        DEBUG("regeneration of cache failed.");
     }
 
     cache->mons = g_realloc( cache->mons, sizeof(GFileMonitor*)*(cache->n_files+1) );
@@ -334,7 +340,7 @@ static gboolean is_desktop_file_in_cache(Cache* cache, int dir_idx, const char* 
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, Cache* cache )
 {
-    /* g_debug("file %s is changed (%d).", g_file_get_path(gf), evt); */
+    /* DEBUG("file %s is changed (%d).", g_file_get_path(gf), evt); */
     /* if( mon != cache->cache_mon ) */
     {
         /* Optimization: Some files in the dir are changed, but it
@@ -370,7 +376,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                      * affect the content of our menu.
                      */
                     gboolean in_cache = is_desktop_file_in_cache(cache, idx, base_name);
-                    /* g_debug("in_cache = %d", in_cache); */
+                    /* DEBUG("in_cache = %d", in_cache); */
                     if( ! in_cache ) /* means this is a new file or previously hidden */
                     {
                         GKeyFile* kf = g_key_file_new();
@@ -422,7 +428,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                     g_object_unref(gf);
                     g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
 					*/
-                    g_debug("files are changed, but no re-generation is needed.");
+                    DEBUG("files are changed, but no re-generation is needed.");
                     return;
                 }
             }
@@ -513,17 +519,17 @@ static int create_socket()
     }
     /* remove of previous socket file successful */
     else
-	g_warning("removed previous socket file %s");
+	    g_warning("removed previous socket file %s", addr.sun_path);
 
     if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
-        g_debug("Failed to bind to socket");
+        DEBUG("Failed to bind to socket");
         close(fd);
         return -1;
     }
     if(listen(fd, 30) < 0)
     {
-        g_debug( "Failed to listen to socket" );
+        DEBUG( "Failed to listen to socket" );
         close(fd);
         return -1;
     }
@@ -536,7 +542,7 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
     char* md5;
     Cache* cache;
     GSList *l, *to_remove = NULL;
-    g_debug("client closed: %p", ch);
+    DEBUG("client closed: %p", ch);
     g_hash_table_iter_init (&it, hash);
     while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
     {
@@ -553,11 +559,11 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
              */
             to_remove = g_slist_prepend( to_remove, cache );
             cache->clients = g_slist_delete_link( cache->clients, l );
-            g_debug("remove channel from cache");
+            DEBUG("remove channel from cache");
             g_io_channel_unref(ch);
         }
     }
-    /* g_debug("client closed"); */
+    /* DEBUG("client closed"); */
     g_slist_foreach( to_remove, (GFunc)cache_unref, NULL );
     g_slist_free( to_remove );
 }
@@ -587,17 +593,17 @@ retry:
     --len;
     line[len] = 0;
 
-    g_debug("line(%d) = %s", len, line);
+    DEBUG("line(%d) = %s", len, line);
 
     if( memcmp(line, "REG:", 4) == 0 )
     {
-        GChecksum *sum;
         int status = 0, n_files, i;
         char *pline = line + 4;
         char *sep, *menu_name, *lang_name, *cache_dir, *cache_file;
         char **files;
         char **env;
         len -= 4;
+        char reload_cmd[38] = "REL:";
 
         /* Format of received string, separated by '\t'.
          * Menu Name
@@ -608,9 +614,8 @@ retry:
          * XDG_DATA_DIRS
          * XDG_CONFIG_HOME
          * XDG_DATA_HOME */
-        sum = g_checksum_new(G_CHECKSUM_MD5);
-        g_checksum_update(sum, pline, len);
-        md5 = g_checksum_get_string(sum);
+
+        md5 = pline + len - 32; /* the md5 hash of this menu */
 
         cache = (Cache*)g_hash_table_lookup(hash, md5);
         if( !cache )
@@ -636,7 +641,7 @@ retry:
                 /* run menu-cache-gen */
                 if(! regenerate_cache( menu_name, lang_name, cache_file, env, &n_files, &files ) )
                 {
-                    g_debug("regeneration of cache failed!!");
+                    DEBUG("regeneration of cache failed!!");
                 }
             }
             cache = g_slice_new0( Cache );
@@ -648,7 +653,7 @@ retry:
             cache->env = env;
             cache->mons = g_new0(GFileMonitor*, n_files+1);
             /* create required file monitors */
-            g_debug("%d files/dirs are monitored.", n_files);
+            DEBUG("%d files/dirs are monitored.", n_files);
             for( i = 0; i < n_files; ++i )
             {
                 gf = g_file_new_for_path( files[i] + 1 );
@@ -656,7 +661,7 @@ retry:
                     cache->mons[i] = g_file_monitor_directory( gf, 0, NULL, NULL );
                 else
                     cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
-                /* g_debug("monitor: %s", g_file_get_path(gf)); */
+                DEBUG("monitor: %s", g_file_get_path(gf));
                 g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
                 g_object_unref(gf);
             }
@@ -669,22 +674,30 @@ retry:
             g_free(cache_file);
 
             g_hash_table_insert(hash, cache->md5, cache);
-            g_debug("new menu cache added to hash");
+            DEBUG("new menu cache added to hash");
             cache->n_ref = 1;
         }
-        /* g_debug("menu %s requested by client %d", md5, g_io_channel_unix_get_fd(ch)); */
+        /* DEBUG("menu %s requested by client %d", md5, g_io_channel_unix_get_fd(ch)); */
         ++cache->n_ref;
         cache->clients = g_slist_prepend( cache->clients, g_io_channel_ref(ch) );
+
+        DEBUG("fake reload!");
+        /* generate a fake reload notification */
         if( status  == 0 )
-            write( g_io_channel_unix_get_fd(ch), md5, 32 );
+            memcpy(reload_cmd + 4, md5, 32);
         else
-            write( g_io_channel_unix_get_fd(ch), "", 0 );
-        g_checksum_free( sum );
+            memset(reload_cmd + 4, '0', 32);
+
+        reload_cmd[36] = '\n';
+        reload_cmd[37] = '\0';
+
+        DEBUG("reload command: %s", reload_cmd);
+        write(g_io_channel_unix_get_fd(ch), reload_cmd, 37);
     }
     else if( memcmp(line, "UNR:", 4) == 0 )
     {
         md5 = line + 4;
-        g_debug("unregister: %s", md5);
+        DEBUG("unregister: %s", md5);
         cache = (Cache*)g_hash_table_lookup(hash, md5);
         if( cache )
         {
@@ -694,7 +707,7 @@ retry:
             g_io_channel_unref(ch);
         }
         else
-            g_debug("bug! client is not found.");
+            DEBUG("bug! client is not found.");
     }
     g_free( line );
 
@@ -714,7 +727,7 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     client = accept(server, &client_addr, &client_addrlen);
     if( client == -1 )
     {
-        g_debug("accept error");
+        DEBUG("accept error");
         return TRUE;
     }
 
@@ -722,7 +735,7 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     g_io_add_watch( child, G_IO_PRI|G_IO_IN|G_IO_HUP|G_IO_ERR, on_client_data_in, NULL );
     g_io_channel_set_close_on_unref( child, TRUE );
 
-    /* g_debug("new client accepted"); */
+    /* DEBUG("new client accepted"); */
     return TRUE;
 }
 
@@ -759,43 +772,43 @@ int main(int argc, char** argv)
     if( server_fd < 0 )
         return 1;
 
-#ifndef _DEBUG
+#ifndef G_ENABLE_DEBUG
     /* Become a daemon */
     if ((pid = fork()) < 0) {
-	g_error("can't fork");
+    	g_error("can't fork");
     }
     else if (pid != 0) {
 	/* exit parent */
-	exit(0);
+    	exit(0);
     }
 
     /* change working directory to root, so previous working directory
      * can be unmounted */
     if (chdir("/") < 0) {
-	g_error("can't change directory to /");
+    	g_error("can't change directory to /");
     }
 
     open_max = sysconf (_SC_OPEN_MAX);
     for (i = 0; i < open_max; i++)
     {
-	/* don't hold open fd opened besides server socket */
-	if (i != fd)
-	    fcntl (i, F_SETFD, FD_CLOEXEC);
+        /* don't hold open fd opened besides server socket */
+        if (i != fd)
+            fcntl (i, F_SETFD, FD_CLOEXEC);
     }
 
     /* /dev/null for stdin, stdout, stderr */
     fd = open ("/dev/null", O_RDONLY);
     if (fd != -1)
     {
-	dup2 (fd, 0);
-	close (fd);
+        dup2 (fd, 0);
+        close (fd);
     }
     fd = open ("/dev/null", O_WRONLY);
     if (fd != -1)
     {
-	dup2 (fd, 1);
-	dup2 (fd, 2);
-	close (fd);
+        dup2 (fd, 1);
+        dup2 (fd, 2);
+        close (fd);
     }
 #endif
 
