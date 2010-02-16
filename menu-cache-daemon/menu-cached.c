@@ -769,7 +769,7 @@ int main(int argc, char** argv)
     if( server_fd < 0 )
         return 1;
 
-#ifndef G_ENABLE_DEBUG
+#ifndef DISABLE_DAEMONIZE
     /* Become a daemon */
     if ((pid = fork()) < 0) {
     	g_error("can't fork");
