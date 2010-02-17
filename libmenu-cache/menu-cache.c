@@ -908,6 +908,27 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     return register_menu_to_server( menu_name, FALSE );
 }
 
+static void on_menu_cache_reload(MenuCache* mc, gpointer user_data)
+{
+    GMainLoop* mainloop = (GMainLoop*)user_data;
+    g_main_loop_quit(mainloop);
+}
+
+MenuCache* menu_cache_lookup_sync( const char* menu_name )
+{
+    MenuCache* mc = menu_cache_lookup(menu_name);
+    /* ensure that the menu cache is loaded */
+    if(! menu_cache_get_root_dir(mc)) /* if it's not yet loaded */
+    {
+        GMainLoop* mainloop = g_main_loop_new(NULL, FALSE);
+        gpointer notify_id = menu_cache_add_reload_notify(mc, on_menu_cache_reload, mainloop);
+        g_main_loop_run(mainloop);
+        g_main_loop_unref(mainloop);
+        menu_cache_remove_reload_notify(mc, notify_id);
+    }
+    return mc;
+}
+
 static GSList* list_app_in_dir(MenuCacheDir* dir, GSList* list)
 {
     GSList* l;
