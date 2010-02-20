@@ -1,0 +1,46 @@
+menu-cache (0.3.1-1) unstable; urgency=low
+
+  * New upstream release
+    - Fixed a bug to prevent lxpanel hangs
+  * debian/control:
+    - Added conflicts on lxpanel ( =< 0.5.4.1-1 ) to avoid crash
+    - Added Vcs-Git and Vcs-Browser tags
+  * Apply libtool-fix.patch (Closes:#558582)
+  * Switch to dpkg-source 3.0 (quilt) format
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sat, 20 Feb 2010 19:26:20 +0100
+
+menu-cache (0.3.0-1) unstable; urgency=low
+
+  * New upstream release
+    - Bug fixes for libfm and lxpanel 0.5.5
+  * Bumped Standard-Version 3.8.4
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Mon, 15 Feb 2010 18:39:41 +0800
+
+menu-cache (0.2.6-1) unstable; urgency=high
+
+  * New upstream release
+    - Fixed invalid pointers
+    - Fixed memory leaks
+  * Marked urgency=high
+  * Fix debian/watch file
+  * Bumped Standard-Version to 3.8.3
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Mon, 09 Nov 2009 18:38:57 +0800
+
+menu-cache (0.2.5-2) unstable; urgency=low
+
+  * Applied 01_fix_infinite_loop.dpatch
+  * debian/control:
+    - Build-depends on intltool, dpatch
+  * debian/rules:
+    - autoreconf -fiv
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sat, 15 Aug 2009 21:54:17 +0800
+
+menu-cache (0.2.5-1) unstable; urgency=low
+
+  * Initial release (Closes: #525811)
+
+ -- Andrew Lee <andrew@linux.org.tw>  Tue, 28 Apr 2009 23:55:28 +0800

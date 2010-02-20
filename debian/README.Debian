@@ -1,0 +1,8 @@
+menu-cache for Debian
+---------------------
+
+The libmenu-cache is a cache mechanism for freedesktop.org Desktop Menu
+Specification. It can be used together with other freedesktop.org menu
+standard implementation such as gnome-menus and others.
+
+ -- Andrew Lee <andrew@linux.org.tw>  Mon, 27 Apr 2009 15:13:10 +0800

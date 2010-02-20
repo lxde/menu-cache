@@ -1,0 +1,84 @@
+This package was debianized by:
+
+    Andrew Lee <andrew@linux.org.tw> on Mon, 27 Apr 2009 15:13:10 +0800
+
+It was downloaded from:
+
+    http://sourceforge.net/projects/lxde/
+
+Upstream Authors and Copyright Holders:
+
+    Copyright (C) 2009 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+
+Files under menu-cache-gen/ was taken from libmenu of gnome-menus:
+    Written by:
+        Mark McLoughlin <mark@skynet.ie>
+        Havoc Pennington <hp@redhat.com>
+    Modified by:
+        Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+
+menu-cache-gen/canonicalize.c:
+   Copyright (C) 1996-2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002 Red Hat, Inc. (trivial port to GLib)
+menu-cache-gen/canonicalize.h:
+   Copyright (C) 1996-2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 2002 Red Hat, Inc. (trivial port to GLib)
+menu-cache-gen/desktop-entries.c:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/desktop-entries.h:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/entry-directories.c:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/entry-directories.h:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/gmenu-tree.c:
+   Copyright (C) 2003, 2004 Red Hat, Inc.
+menu-cache-gen/gmenu-tree.h:
+   Copyright (C) 2004 Red Hat, Inc.
+menu-cache-gen/menu-cache-gen.c:
+   Copyright 2008 Hong Jen Yee (PCMan)
+menu-cache-gen/menu-layout.c:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/menu-layout.h:
+   Copyright (C) 2002 - 2004 Red Hat, Inc.
+menu-cache-gen/menu-monitor.c:
+   Copyright (C) 2005 Red Hat, Inc.
+menu-cache-gen/menu-monitor.c:
+   Copyright (C) 2006 Mark McLoughlin
+menu-cache-gen/menu-monitor.c:
+   Copyright (C) 2007 Sebastian Dröge
+menu-cache-gen/menu-monitor.c:
+   Copyright (C) 2008 Vincent Untz
+menu-cache-gen/menu-monitor.h:
+   Copyright (C) 2005 Red Hat, Inc.
+menu-cache-gen/menu-util.c:
+   Copyright (C) 2003 Red Hat, Inc.
+menu-cache-gen/menu-util.h:
+   Copyright (C) 2003 Red Hat, Inc.   
+
+License:
+
+    This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+On Debian systems, the complete text of the GNU General
+Public License version 2 can be found in `/usr/share/common-licenses/GPL-2'.
+
+The Debian packaging is:
+
+    Copyright (C) 2009 Andrew Lee <andrew@linux.org.tw>
+
+and is licensed under the GPL version 3, 
+see `/usr/share/common-licenses/GPL-3'.
+

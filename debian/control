@@ -1,0 +1,42 @@
+Source: menu-cache
+Priority: extra
+Maintainer: Andrew Lee (李健秋) <ajqlee@debian.org>
+Build-Depends: debhelper (>= 7), autotools-dev, libglib2.0-dev, intltool
+Standards-Version: 3.8.4
+Section: libs
+Homepage: http://lxde.org
+Vcs-Git: git://lxde.git.sourceforge.net/gitroot/lxde/menu-cache
+Vcs-Browser: http://lxde.git.sourceforge.net/git/gitweb.cgi?p=lxde;a=summary
+
+Package: libmenu-cache-dev
+Section: libdevel
+Architecture: any
+Depends: libmenu-cache0 (= ${binary:Version}), ${misc:Depends}
+Description: an implementation of the freedesktop menu specification for LXDE
+ Libmenu-cache is a library creating and utilizing caches to speed up
+ the manipulation for freedesktop.org defined application menus.
+ It can be used as a replacement of libgnome-menu of gnome-menus.
+ .
+  * Shorten time for loading menu entries.
+  * Ease of use. (API is very similar to that of libgnome-menu)
+  * Lightweight runtime library. (Parsing of the menu definition files 
+    are done by menu-cache-gen when the menus are really changed.)
+  * Less unnecessary and complicated file monitoring.
+  * Heavily reduced disk I/O.
+
+Package: libmenu-cache0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: lxpanel ( <= 0.5.4.1-1 )
+Description: an implementation of the freedesktop menu specification for LXDE
+ Libmenu-cache is a library creating and utilizing caches to speed up
+ the manipulation for freedesktop.org defined application menus.
+ It can be used as a replacement of libgnome-menu of gnome-menus.
+ .
+  * Shorten time for loading menu entries.
+  * Ease of use. (API is very similar to that of libgnome-menu)
+  * Lightweight runtime library. (Parsing of the menu definition files 
+    are done by menu-cache-gen when the menus are really changed.)
+  * Less unnecessary and complicated file monitoring.
+  * Heavily reduced disk I/O.
