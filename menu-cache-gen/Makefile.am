@@ -7,6 +7,7 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
+    $(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
 	$(NULL)
 

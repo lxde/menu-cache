@@ -3,6 +3,7 @@ NULL =
 INCLUDES =				\
 	$(GLIB_CFLAGS)			\
 	$(MONITOR_CFLAGS)		\
+    $(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
 	-DMENUCACHE_LIBEXECDIR="\"$(libexecdir)\"" \
 	$(NULL)

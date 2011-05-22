@@ -6,6 +6,7 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
+    $(ADDITIONAL_FLAGS) \
 	-DMENUCACHE_LIBEXECDIR="\"$(libexecdir)\"" \
 	-Werror-implicit-function-declaration \
 	$(NULL)
