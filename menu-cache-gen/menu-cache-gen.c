@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <locale.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -306,6 +307,8 @@ int main(int argc, char** argv)
     const gchar* const * pdir;
     char* menu_prefix;
     char* menu_file;
+
+    setlocale (LC_ALL, "");
 
     opt_ctx = g_option_context_new("Generate cache for freedeskotp.org compliant menus.");
     g_option_context_add_main_entries( opt_ctx, opt_entries, NULL );
