@@ -46,10 +46,10 @@ const char       *desktop_entry_get_basename (DesktopEntry *entry);
 
 const char *desktop_entry_get_name               (DesktopEntry *entry);
 const char *desktop_entry_get_generic_name       (DesktopEntry *entry);
+const char *desktop_entry_get_full_name          (DesktopEntry *entry);
 const char *desktop_entry_get_comment            (DesktopEntry *entry);
 const char *desktop_entry_get_icon               (DesktopEntry *entry);
 const char *desktop_entry_get_exec               (DesktopEntry *entry);
-const GQuark *desktop_entry_get_categories       (DesktopEntry *entry);
 gboolean    desktop_entry_get_launch_in_terminal (DesktopEntry *entry);
 gboolean    desktop_entry_get_use_startup_notify (DesktopEntry *entry);
 

@@ -256,8 +256,6 @@ static MenuMonitor *
 lookup_monitor (const char *path,
 		gboolean    is_directory)
 {
-  return NULL;
-#if 0
   MenuMonitor *retval;
   char        *registry_key;
 
@@ -290,7 +288,6 @@ lookup_monitor (const char *path,
 
       return menu_monitor_ref (retval);
     }
-#endif
 }
 
 MenuMonitor *
@@ -416,7 +413,6 @@ menu_monitor_add_notify (MenuMonitor           *monitor,
 			 MenuMonitorNotifyFunc  notify_func,
 			 gpointer               user_data)
 {
-#if 0
   MenuMonitorNotify *notify;
   GSList            *tmp;
 
@@ -444,7 +440,6 @@ menu_monitor_add_notify (MenuMonitor           *monitor,
 
       monitor->notifies = g_slist_append (monitor->notifies, notify);
     }
-#endif
 }
 
 void
@@ -452,7 +447,6 @@ menu_monitor_remove_notify (MenuMonitor           *monitor,
 			    MenuMonitorNotifyFunc  notify_func,
 			    gpointer               user_data)
 {
-#if 0
   GSList *tmp;
 
   tmp = monitor->notifies;
@@ -473,5 +467,4 @@ menu_monitor_remove_notify (MenuMonitor           *monitor,
 
       tmp = next;
     }
-#endif
 }

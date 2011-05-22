@@ -52,6 +52,9 @@ EntryDirectoryList *entry_directory_list_ref   (EntryDirectoryList *list);
 void                entry_directory_list_unref (EntryDirectoryList *list);
 
 int  entry_directory_list_get_length  (EntryDirectoryList *list);
+gboolean _entry_directory_list_compare (const EntryDirectoryList *a,
+                                        const EntryDirectoryList *b);
+
 void entry_directory_list_prepend     (EntryDirectoryList *list,
                                        EntryDirectory     *ed);
 void entry_directory_list_append_list (EntryDirectoryList *list,
@@ -67,8 +70,8 @@ void entry_directory_list_remove_monitors (EntryDirectoryList        *list,
 DesktopEntry* entry_directory_list_get_directory (EntryDirectoryList *list,
                                                   const char         *relative_path);
 
-void entry_directory_list_get_all_desktops (EntryDirectoryList *list,
-                                            DesktopEntrySet    *set);
+DesktopEntrySet *_entry_directory_list_get_all_desktops (EntryDirectoryList *list);
+void             _entry_directory_list_empty_desktop_cache (void);
 
 G_END_DECLS
 

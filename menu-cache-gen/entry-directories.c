@@ -454,6 +454,12 @@ handle_cached_dir_changed (MenuMonitor      *monitor,
 
   if (handled)
     {
+      /* CHANGED events don't change the set of desktop entries */
+      if (event == MENU_MONITOR_EVENT_CREATED || event == MENU_MONITOR_EVENT_DELETED)
+        {
+          _entry_directory_list_empty_desktop_cache ();
+        }
+
       cached_dir_invoke_monitors (dir);
     }
 }
@@ -1078,6 +1084,31 @@ entry_directory_list_get_directory (EntryDirectoryList *list,
   return retval;
 }
 
+gboolean
+_entry_directory_list_compare (const EntryDirectoryList *a,
+                               const EntryDirectoryList *b)
+{
+  GList *al, *bl;
+
+  if (a == NULL && b == NULL)
+    return TRUE;
+
+  if ((a == NULL || b == NULL))
+    return FALSE;
+
+  if (a->length != b->length)
+    return FALSE;
+
+  al = a->dirs; bl = b->dirs;
+  while (al && bl && al->data == bl->data)
+    {
+      al = al->next;
+      bl = bl->next;
+    }
+
+  return (al == NULL && bl == NULL);
+}
+
 static gboolean
 get_all_func (EntryDirectory   *ed,
               DesktopEntry     *entry,
@@ -1101,14 +1132,26 @@ get_all_func (EntryDirectory   *ed,
   return TRUE;
 }
 
+static DesktopEntrySet    *entry_directory_last_set = NULL;
+static EntryDirectoryList *entry_directory_last_list = NULL;
+
 void
-entry_directory_list_get_all_desktops (EntryDirectoryList *list,
-                                       DesktopEntrySet    *set)
+_entry_directory_list_empty_desktop_cache (void)
+{
+  if (entry_directory_last_set != NULL)
+    desktop_entry_set_unref (entry_directory_last_set);
+  entry_directory_last_set = NULL;
+
+  if (entry_directory_last_list != NULL)
+    entry_directory_list_unref (entry_directory_last_list);
+  entry_directory_last_list = NULL;
+}
+
+DesktopEntrySet *
+_entry_directory_list_get_all_desktops (EntryDirectoryList *list)
 {
   GList *tmp;
-
-  menu_verbose (" Storing all of list %p in set %p\n",
-                list, set);
+  DesktopEntrySet *set;
 
   /* The only tricky thing here is that desktop files later
    * in the search list with the same relative path
@@ -1123,6 +1166,23 @@ entry_directory_list_get_all_desktops (EntryDirectoryList *list,
    * entry)
    */
 
+  /* This method is -extremely- slow, so we have a simple
+     one-entry cache here */
+  if (_entry_directory_list_compare (list, entry_directory_last_list))
+    {
+      menu_verbose (" Hit desktop list (%p) cache\n", list);
+      return desktop_entry_set_ref (entry_directory_last_set);
+    }
+
+  if (entry_directory_last_set != NULL)
+    desktop_entry_set_unref (entry_directory_last_set);
+  if (entry_directory_last_list != NULL)
+    entry_directory_list_unref (entry_directory_last_list);
+
+  set = desktop_entry_set_new ();
+  menu_verbose (" Storing all of list %p in set %p\n",
+                list, set);
+
   tmp = g_list_last (list->dirs);
   while (tmp != NULL)
     {
@@ -1130,6 +1190,11 @@ entry_directory_list_get_all_desktops (EntryDirectoryList *list,
 
       tmp = tmp->prev;
     }
+
+  entry_directory_last_list = entry_directory_list_ref (list);
+  entry_directory_last_set = desktop_entry_set_ref (set);
+
+  return set;
 }
 
 void

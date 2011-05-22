@@ -179,8 +179,8 @@ static void write_entry( FILE* of, GMenuTreeEntry* item )
         fprintf( of, "\n-1\n" );
     }
 
-    /* GenericName */
-    str = gmenu_tree_entry_get_generic_name( item );
+    /* DisplayName */
+    str = gmenu_tree_entry_get_display_name( item );
     fprintf( of, "%s\n", str ? str : "" );
 
     /* Exec */

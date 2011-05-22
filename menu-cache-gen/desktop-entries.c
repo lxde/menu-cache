@@ -45,10 +45,11 @@ struct DesktopEntry
 
   char     *name;
   char     *generic_name;
+  char     *full_name;
   char     *comment;
   char     *icon;
   char     *exec;
-  gboolean terminal : 1;
+  gboolean terminal;
   gboolean startup_notify : 1;
 
   guint32 show_in_flags;
@@ -64,12 +65,12 @@ struct DesktopEntrySet
   GHashTable *hash;
 };
 
-/* defined in menu-cache-gen.c */
-guint32 menu_cache_get_de_flag( const char* de_name );
-
 /*
  * Desktop entries
  */
+
+/* defined in menu-cache-gen.c */
+guint32 menu_cache_get_de_flag( const char* de_name );
 
 static guint
 get_flags_from_key_file (DesktopEntry *entry,
@@ -156,7 +157,7 @@ get_flags_from_key_file (DesktopEntry *entry,
         }
     }
   g_strfreev (strv);
-  /* printf( "DE flag of %s is %d\n", entry->name, entry->show_in_flags); */
+
   tryexec_failed = FALSE;
   tryexec = g_key_file_get_string (key_file,
                                    desktop_entry_group,
@@ -302,6 +303,16 @@ desktop_entry_load (DesktopEntry *entry)
 
   retval->name         = GET_LOCALE_STRING ("Name");
   retval->generic_name = GET_LOCALE_STRING ("GenericName");
+  retval->full_name    = GET_LOCALE_STRING ("X-GNOME-FullName");
+/*
+  GError *err;
+  err = NULL;
+  g_print("Display : %s\n", g_key_file_get_locale_string (key_file, desktop_entry_group, "X-GNOME-FullName", NULL, &err));
+  if (err) {
+    g_print("Error : %s\n", err->message);
+    g_error_free (err);
+  }
+*/
   retval->comment      = GET_LOCALE_STRING ("Comment");
   retval->icon         = GET_LOCALE_STRING ("Icon");
   retval->flags        = get_flags_from_key_file (retval, key_file, desktop_entry_group);
@@ -316,9 +327,11 @@ desktop_entry_load (DesktopEntry *entry)
   
 #undef GET_LOCALE_STRING
 
-  menu_verbose ("Desktop entry \"%s\" (%s, %s, %s) flags: NoDisplay=%s, Hidden=%s, ShowInGNOME=%s, TryExecFailed=%s\n",
+  menu_verbose ("Desktop entry \"%s\" (%s, %s, %s, %s, %s) flags: NoDisplay=%s, Hidden=%s, ShowInGNOME=%s, TryExecFailed=%s\n",
                 retval->basename,
                 retval->name,
+                retval->generic_name ? retval->generic_name : "(null)",
+                retval->full_name ? retval->full_name : "(null)",
                 retval->comment ? retval->comment : "(null)",
                 retval->icon ? retval->icon : "(null)",
                 retval->flags & DESKTOP_ENTRY_NO_DISPLAY     ? "(true)" : "(false)",
@@ -384,6 +397,9 @@ desktop_entry_reload (DesktopEntry *entry)
   g_free (entry->generic_name);
   entry->generic_name = NULL;
 
+  g_free (entry->full_name);
+  entry->full_name = NULL;
+
   g_free (entry->comment);
   entry->comment = NULL;
 
@@ -422,16 +438,17 @@ desktop_entry_copy (DesktopEntry *entry)
 
   retval = g_new0 (DesktopEntry, 1);
 
-  retval->refcount = 1;
-  retval->type     = entry->type;
-  retval->basename = g_strdup (entry->basename);
-  retval->path     = g_strdup (entry->path);
-  retval->name     = g_strdup (entry->name);
+  retval->refcount     = 1;
+  retval->type         = entry->type;
+  retval->basename     = g_strdup (entry->basename);
+  retval->path         = g_strdup (entry->path);
+  retval->name         = g_strdup (entry->name);
   retval->generic_name = g_strdup (entry->generic_name);
-  retval->comment  = g_strdup (entry->comment);
-  retval->icon     = g_strdup (entry->icon);
-  retval->exec     = g_strdup (entry->exec);
-  retval->terminal = entry->terminal;
+  retval->full_name    = g_strdup (entry->full_name);
+  retval->comment      = g_strdup (entry->comment);
+  retval->icon         = g_strdup (entry->icon);
+  retval->exec         = g_strdup (entry->exec);
+  retval->terminal     = entry->terminal;
   retval->startup_notify = entry->startup_notify;
   retval->flags    = entry->flags;
 
@@ -470,6 +487,9 @@ desktop_entry_unref (DesktopEntry *entry)
 
       g_free (entry->generic_name);
       entry->generic_name = NULL;
+
+      g_free (entry->full_name);
+      entry->full_name = NULL;
 
       g_free (entry->comment);
       entry->comment = NULL;
@@ -521,6 +541,12 @@ desktop_entry_get_generic_name (DesktopEntry *entry)
 }
 
 const char *
+desktop_entry_get_full_name (DesktopEntry *entry)
+{
+  return entry->full_name;
+}
+
+const char *
 desktop_entry_get_comment (DesktopEntry *entry)
 {
   return entry->comment;
@@ -536,12 +562,6 @@ const char *
 desktop_entry_get_exec (DesktopEntry *entry)
 {
   return entry->exec;
-}
-
-const GQuark *
-desktop_entry_get_categories (DesktopEntry *entry)
-{
-  return entry->categories;
 }
 
 gboolean
