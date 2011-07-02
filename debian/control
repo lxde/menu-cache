@@ -2,7 +2,16 @@ Source: menu-cache
 Priority: extra
 Maintainer: Debian LXDE Packaging Team <pkg-lxde-maintainers@lists.alioth.debian.org>
 Uploaders: Andrew Lee (李健秋) <ajqlee@debian.org>
-Build-Depends: debhelper (>= 7), autotools-dev, libglib2.0-dev, intltool
+Build-Depends: debhelper (>= 7),
+# needed by autogen.sh
+               autotools-dev,
+               docbook-xml,
+               intltool,
+               docbook-xsl,
+               xsltproc,
+               libtool,
+# real build-depends
+               libglib2.0-dev
 Standards-Version: 3.8.4
 Section: libs
 Homepage: http://lxde.org
