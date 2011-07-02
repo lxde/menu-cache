@@ -1,3 +1,0 @@
-debian/tmp/usr/lib/lib*.so.*
-debian/tmp/usr/lib/libmenu-cache/libexec/menu-cache-gen
-debian/tmp/usr/lib/libmenu-cache/libexec/menu-cached

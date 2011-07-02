@@ -1,14 +1,34 @@
-menu-cache (0.3.1-1) unstable; urgency=low
+menu-cache (0.3.2-2) unstable; urgency=low
+
+  * Added soname in libexec dir path. (Closes:#573119)
+  * Added soname for -dev binary package name
+  * Enable team maintenance:
+    - mailing list on alioth: Debian LXDE Packaging Team 
+        <pkg-lxde-maintainers@lists.alioth.debian.org>
+    - git repo on collab-maint:
+        http://git.debian.org/?p=collab-maint/lxsession.git;a=summary
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sun, 14 Mar 2010 17:58:12 +0700
+
+menu-cache (0.3.2-1) unstable; urgency=low
 
   * New upstream release
     - Fixed a bug to prevent lxpanel hangs
+    - Bumped soname
   * debian/control:
     - Added conflicts on lxpanel ( =< 0.5.4.1-1 ) to avoid crash
     - Added Vcs-Git and Vcs-Browser tags
   * Apply libtool-fix.patch (Closes:#558582)
   * Switch to dpkg-source 3.0 (quilt) format
 
- -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sat, 20 Feb 2010 19:26:20 +0100
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Sun, 07 Mar 2010 19:30:20 +0800
+
+menu-cache (0.3.1-1) unstable; urgency=low
+
+  * New upstream release
+    - Fixed a problem that cause lxpanel to hang
+
+ -- Andrew Lee (李健秋) <ajqlee@debian.org>  Tue, 16 Feb 2010 22:55:10 +0800
 
 menu-cache (0.3.0-1) unstable; urgency=low
 
