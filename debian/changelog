@@ -1,9 +1,46 @@
+menu-cache (0.3.2-3) unstable; urgency=low
+
+  * Updating maintainer field.
+  * Adding myself to uploaders.
+  * Updating vcs fields.
+  * Removing whitespaces at EOL and EOF.
+  * Updating package to debhelper version 9.
+  * Updating package to standards version 3.9.3.
+  * Sorting source fields.
+  * Sorting build-depends.
+  * Sorting depends.
+  * Sorting packages.
+  * Updating homepage field.
+  * Rewriting copyright file machine-readable format version 1.0.
+  * Prefixing debhelper files with package name.
+  * Rediffing binutils-gold.patch with common diff options.
+  * Minimizing rules file.
+  * Switching to xz compression for both the source and the binary
+    packages.
+  * Updating.
+  * Updating package descriptions.
+  * Simplyfing debhelper install files.
+  * Removing debian readme, does only repeat what package description
+    already contains.
+  * Decrufting watch file.
+  * Adding pre-depends to multiarch-support.
+
+ -- Daniel Baumann <daniel@debian.org>  Sun, 15 Apr 2012 16:11:59 +0000
+
+menu-cache (0.3.2-2.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Don't ship .la files (Closes: #620586).
+  * Rename debian/source/option to the recognised options.
+
+ -- Luk Claes <luk@debian.org>  Mon, 27 Jun 2011 07:22:23 +0200
+
 menu-cache (0.3.2-2) unstable; urgency=low
 
   * Added soname in libexec dir path. (Closes:#573119)
   * Added soname for -dev binary package name
   * Enable team maintenance:
-    - mailing list on alioth: Debian LXDE Packaging Team 
+    - mailing list on alioth: Debian LXDE Packaging Team
         <pkg-lxde-maintainers@lists.alioth.debian.org>
     - git repo on collab-maint:
         http://git.debian.org/?p=collab-maint/lxsession.git;a=summary

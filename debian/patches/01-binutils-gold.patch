@@ -1,14 +1,12 @@
-Description: Add libtool missing check to fix 554821 or similar bugs in the future
-
 Author: Andrew Lee (李健秋) <ajqlee@debian.org>
-Bug-Debian: http://bugs.debian.org/558582
-Origin: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=554821
-Reviewed-By: Jonas Smedegaard <dr@jones.dk>, Hector Oron <zumbi@debian.org>
-Last-Update: <2010-02-20>
+Description:
+ Fixing FTBFS with binutils-gold (Closes: #554821), thanks to
+ Jonas Smedegaard <dr@jones.dk> and Hector Oron <zumbi@debian.org>.
 
---- menu-cache-0.3.1.orig/aclocal.m4
-+++ menu-cache-0.3.1/aclocal.m4
-@@ -4282,6 +4282,7 @@ dnl Note also adjust exclude_expsyms for
+diff -Naurp menu-cache.orig/aclocal.m4 menu-cache/aclocal.m4
+--- menu-cache.orig/aclocal.m4	2012-04-15 15:39:53.847190170 +0000
++++ menu-cache/aclocal.m4	2012-04-15 15:56:03.261702682 +0000
+@@ -4300,6 +4300,7 @@ dnl Note also adjust exclude_expsyms for
      fi
      supports_anon_versioning=no
      case `$LD -v 2>&1` in
@@ -16,9 +14,10 @@ Last-Update: <2010-02-20>
        *\ [[01]].* | *\ 2.[[0-9]].* | *\ 2.10.*) ;; # catch versions < 2.11
        *\ 2.11.93.0.2\ *) supports_anon_versioning=yes ;; # RH7.3 ...
        *\ 2.11.92.0.12\ *) supports_anon_versioning=yes ;; # Mandrake 8.2 ...
---- menu-cache-0.3.1.orig/configure
-+++ menu-cache-0.3.1/configure
-@@ -8642,6 +8642,7 @@ $as_echo_n "checking whether the $compil
+diff -Naurp menu-cache.orig/configure menu-cache/configure
+--- menu-cache.orig/configure	2012-04-15 15:39:53.851190205 +0000
++++ menu-cache/configure	2012-04-15 15:56:03.269702552 +0000
+@@ -8618,6 +8618,7 @@ $as_echo_n "checking whether the $compil
      fi
      supports_anon_versioning=no
      case `$LD -v 2>&1` in

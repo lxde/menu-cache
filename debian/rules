@@ -1,27 +1,23 @@
 #!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
-# These are used for cross-compiling and for saving the configure script
-# from having to guess our platform (since we know it already)
-DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
-CROSS= --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
-else
-CROSS= --build $(DEB_BUILD_GNU_TYPE)
-endif
+# menu-cache does not build (yet) with hardening
+export DEB_BUILD_MAINT_OPTIONS = hardening=-all
 
 %:
-	dh $@
+	dh ${@} --with autoreconf
 
 override_dh_auto_configure:
-	./autogen.sh
-	dh_auto_configure
+	dh_auto_configure -- --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)/libmenu-cache1/libexec
+
+override_dh_auto_install:
+	dh_auto_install
+
+	rm -f debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/*.la
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz -z9
+
+override_dh_install:
+	dh_install --fail-missing
