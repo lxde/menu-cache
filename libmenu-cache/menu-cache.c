@@ -117,6 +117,12 @@ static gboolean connect_server();
 static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register );
 static void unregister_menu_from_server( MenuCache* cache );
 
+/* keep them for backward compatibility */
+#ifdef G_DISABLE_DEPRECATED
+MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache );
+MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
+MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path );
+#endif
 
 void menu_cache_init(int flags)
 {
@@ -359,6 +365,26 @@ MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
     return cache->root_dir;
 }
 
+/**
+ * menu_cache_dup_root_dir
+ * @cache: a menu cache instance
+ *
+ * Retrieves root directory for @cache. Returned data should be freed
+ * with menu_cache_item_unref() after usage.
+ *
+ * Returns: (transfer full): root item or %NULL in case of error.
+ *
+ * Since: 0.3.4
+ */
+MenuCacheDir* menu_cache_dup_root_dir( MenuCache* cache )
+{
+    MenuCacheItem* dir = NULL;
+    MENU_CACHE_LOCK;
+    if(G_LIKELY(cache->root_dir))
+        dir = menu_cache_item_ref(MENU_CACHE_ITEM(cache->root_dir));
+    MENU_CACHE_UNLOCK;
+    return MENU_CACHE_DIR(dir);
+}
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 {
@@ -565,6 +591,27 @@ MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item )
     return item->parent;
 }
 
+/**
+ * menu_cache_item_dup_parent
+ * @item: a menu item
+ *
+ * Retrieves parent (directory) for @item. Returned data should be freed
+ * with menu_cache_item_unref() after usage.
+ *
+ * Returns: (transfer full): parent item or %NULL in case of error.
+ *
+ * Since: 0.3.4
+ */
+MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item )
+{
+    MenuCacheItem* dir = NULL;
+    MENU_CACHE_LOCK;
+    if(G_LIKELY(item->parent))
+        dir = menu_cache_item_ref(MENU_CACHE_ITEM(item->parent));
+    MENU_CACHE_UNLOCK;
+    return MENU_CACHE_DIR(dir);
+}
+
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
 {
     return dir->children;
@@ -658,6 +705,68 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
     }
     MENU_CACHE_UNLOCK;
     return dir;
+}
+
+/**
+ * menu_cache_item_from_path
+ * @cache: cache to inspect
+ * @path: item path
+ *
+ * Searches item @path in the @cache. Returned data should be freed with
+ * menu_cache_item_unref() after usage.
+ *
+ * Returns: (transfer full): found item or %NULL if no item found.
+ *
+ * Since: 0.3.4
+ */
+MenuCacheItem* menu_cache_item_from_path( MenuCache* cache, const char* path )
+{
+    char** names = g_strsplit( path + 1, "/", -1 );
+    int i;
+    MenuCacheDir* dir;
+    MenuCacheItem* item = NULL;
+
+    if( !names )
+        return NULL;
+
+    if( G_UNLIKELY(!names[0]) )
+    {
+        g_strfreev(names);
+        return NULL;
+    }
+    /* the topmost dir of the path should be the root menu dir. */
+    MENU_CACHE_LOCK;
+    dir = cache->root_dir;
+    if( G_UNLIKELY(!dir) || strcmp(names[0], MENU_CACHE_ITEM(dir)->id) != 0 )
+        goto _end;
+
+    for( i = 1; names[i]; ++i )
+    {
+        GSList* l;
+        item = NULL;
+        if( !dir )
+            break;
+        l = dir->children;
+        dir = NULL;
+        for( ; l; l = l->next )
+        {
+            item = MENU_CACHE_ITEM(l->data);
+            if( strcmp( item->id, names[i] ) == 0 )
+            {
+                if( item->type == MENU_CACHE_TYPE_DIR )
+                    dir = MENU_CACHE_DIR(item);
+                break;
+            }
+        }
+        if( !item )
+            break;
+    }
+    if(item)
+        menu_cache_item_ref(item);
+_end:
+    MENU_CACHE_UNLOCK;
+    g_strfreev(names);
+    return item;
 }
 
 char* menu_cache_dir_make_path( MenuCacheDir* dir )
@@ -969,8 +1078,11 @@ static void on_menu_cache_reload(gpointer mc, gpointer user_data)
 MenuCache* menu_cache_lookup_sync( const char* menu_name )
 {
     MenuCache* mc = menu_cache_lookup(menu_name);
+    MenuCacheDir* root_dir = menu_cache_dup_root_dir(mc);
     /* ensure that the menu cache is loaded */
-    if(! menu_cache_get_root_dir(mc)) /* if it's not yet loaded */
+    if(root_dir)
+        menu_cache_item_unref(MENU_CACHE_ITEM(root_dir));
+    else /* if it's not yet loaded */
     {
         /* FIXME: is using mainloop the efficient way to do it? */
         GMainLoop* mainloop = g_main_loop_new(NULL, FALSE);

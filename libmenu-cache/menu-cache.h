@@ -77,8 +77,12 @@ void menu_cache_unref(MenuCache* cache);
 
 gboolean menu_cache_reload( MenuCache* cache );
 
+#ifndef G_DISABLE_DEPRECATED
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache );
 MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path );
+#endif
+MenuCacheDir* menu_cache_dup_root_dir( MenuCache* cache );
+MenuCacheItem* menu_cache_item_from_path( MenuCache* cache, const char* path );
 
 gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data);
 void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id);
@@ -99,8 +103,10 @@ const char* menu_cache_item_get_file_basename( MenuCacheItem* item );
 const char* menu_cache_item_get_file_dirname( MenuCacheItem* item );
 char* menu_cache_item_get_file_path( MenuCacheItem* item );
 
+#ifndef G_DISABLE_DEPRECATED
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
-
+#endif
+MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item );
 
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
