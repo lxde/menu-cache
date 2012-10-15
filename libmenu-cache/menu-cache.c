@@ -116,12 +116,10 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache );
 
 static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
 {
-    char line[4096];
-    int len;
     MenuCacheItem* item;
 
     /* load child items in the dir */
-    while( item = read_item( f, cache ) )
+    while( (item = read_item( f, cache )) )
     {
         /* menu_cache_ref shouldn't be called here for dir.
          * Otherwise, circular reference will happen. */
@@ -280,9 +278,8 @@ static gboolean read_all_used_files( FILE* f, int* n_all_used_files, char*** all
     return TRUE;
 }
 
-static gboolean read_all_known_des( FILE* f, char** des )
+static gboolean read_all_known_des( FILE* f, char*** des )
 {
-    GSList* list = NULL;
     char line[ 4096 ];
     if( ! fgets( line, G_N_ELEMENTS(line), f ) )
         return FALSE;
@@ -330,7 +327,7 @@ void menu_cache_unref(MenuCache* cache)
         if( G_LIKELY(cache->root_dir) )
         {
             /* DEBUG("unref root dir"); */
-            menu_cache_item_unref( cache->root_dir );
+            menu_cache_item_unref( MENU_CACHE_ITEM(cache->root_dir) );
             /* DEBUG("unref root dir finished"); */
         }
         g_free( cache->cache_file );
@@ -438,7 +435,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     }
 
     if(cache->root_dir)
-        menu_cache_item_unref( cache->root_dir );
+        menu_cache_item_unref( MENU_CACHE_ITEM(cache->root_dir) );
 
     cache->root_dir = (MenuCacheDir*)read_item( f, cache );
     fclose( f );
@@ -481,13 +478,13 @@ void menu_cache_item_unref(MenuCacheItem* item)
                 menu_cache_item_unref(child);
             }
             g_slist_free( dir->children );
-            g_slice_free( MenuCacheDir, item );
+            g_slice_free( MenuCacheDir, dir );
         }
         else
         {
             MenuCacheApp* app = MENU_CACHE_APP(item);
             g_free( app->exec );
-            g_slice_free( MenuCacheApp, item );
+            g_slice_free( MenuCacheApp, app );
         }
     }
 }
@@ -556,10 +553,12 @@ const char* menu_cache_app_get_working_dir( MenuCacheApp* app )
     return app->working_dir;
 }
 
+/*
 char** menu_cache_app_get_categories( MenuCacheApp* app )
 {
     return NULL;
 }
+*/
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app )
 {
@@ -581,11 +580,12 @@ gboolean menu_cache_app_get_is_visible( MenuCacheApp* app, guint32 de_flags )
     return !app->show_in_flags || (app->show_in_flags & de_flags);
 }
 
-
+/*
 MenuCacheApp* menu_cache_find_app_by_exec( const char* exec )
 {
     return NULL;
 }
+*/
 
 MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
 {
@@ -613,7 +613,7 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
         {
             MenuCacheItem* item = MENU_CACHE_ITEM(l->data);
             if( item->type == MENU_CACHE_TYPE_DIR && 0 == strcmp( item->id, names[i] ) )
-                dir = item;
+                dir = MENU_CACHE_DIR(item);
         }
         if( ! dir )
             return NULL;
@@ -624,12 +624,13 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
 char* menu_cache_dir_make_path( MenuCacheDir* dir )
 {
     GString* path = g_string_sized_new(1024);
+    MenuCacheItem* it;
 
-    while( dir ) /* this is not top dir */
+    while( (it = MENU_CACHE_ITEM(dir)) ) /* this is not top dir */
     {
-        g_string_prepend( path, menu_cache_item_get_id(dir) );
+        g_string_prepend( path, menu_cache_item_get_id(it) );
         g_string_prepend_c( path, '/' );
-        dir = MENU_CACHE_ITEM(dir)->parent;
+        dir = it->parent;
     }
     return g_string_free( path, FALSE );
 }
@@ -816,7 +817,7 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     char* buf;
     const char* md5;
     char* file_name;
-    int len = 0, r;
+    int len = 0;
     GChecksum *sum;
 
     if( !xdg_cfg )
@@ -839,7 +840,7 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t00000000000000000000000000000000\n",
                             menu_name,
                             *langs,
-							xdg_cache_home,
+                            xdg_cache_home,
                             xdg_cfg,
                             xdg_prefix,
                             xdg_data,
@@ -849,10 +850,11 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     /* calculate the md5 sum of menu name + lang + all environment variables */
     sum = g_checksum_new(G_CHECKSUM_MD5);
     len = strlen(buf);
-    g_checksum_update(sum, buf + 4, len - 38);
+    g_checksum_update(sum, (guchar*)buf + 4, len - 38);
     md5 = g_checksum_get_string(sum);
     memcpy(buf + len - 33, md5, 32);
-    write( server_fd, buf, len );
+    if(write( server_fd, buf, len ) < len)
+        re_register = TRUE; /* socket write failed */
     g_free( buf );
 
     if( re_register )
@@ -879,13 +881,15 @@ void unregister_menu_from_server( MenuCache* cache )
 {
     char buf[38];
     g_snprintf( buf, 38, "UNR:%s\n", cache->md5 );
-    write( server_fd, buf, 37 );
+    if(write( server_fd, buf, 37 ) <= 0)
+    {
+        DEBUG("unregister_menu_from_server: sending failed");
+    }
 }
 
 MenuCache* menu_cache_lookup( const char* menu_name )
 {
     MenuCache* cache;
-    char* file_name;
 
     /* lookup in a hash table for already loaded menus */
     if( G_UNLIKELY( ! hash ) )
@@ -895,7 +899,6 @@ MenuCache* menu_cache_lookup( const char* menu_name )
         cache = (MenuCache*)g_hash_table_lookup(hash, menu_name);
         if( cache )
         {
-            
             return menu_cache_ref(cache);
         }
     }
@@ -908,7 +911,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     return register_menu_to_server( menu_name, FALSE );
 }
 
-static void on_menu_cache_reload(MenuCache* mc, gpointer user_data)
+static void on_menu_cache_reload(gpointer mc, gpointer user_data)
 {
     GMainLoop* mainloop = (GMainLoop*)user_data;
     g_main_loop_quit(mainloop);
@@ -938,10 +941,13 @@ static GSList* list_app_in_dir(MenuCacheDir* dir, GSList* list)
         switch( menu_cache_item_get_type(item) )
         {
         case MENU_CACHE_TYPE_DIR:
-            list = list_app_in_dir( item, list );
+            list = list_app_in_dir( MENU_CACHE_DIR(item), list );
             break;
         case MENU_CACHE_TYPE_APP:
             list = g_slist_prepend(list, menu_cache_item_ref(item));
+            break;
+        case MENU_CACHE_TYPE_NONE:
+        case MENU_CACHE_TYPE_SEP:
             break;
         }
     }
