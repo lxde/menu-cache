@@ -50,6 +50,17 @@
 #define DEBUG(...)
 #endif
 
+#if GLIB_CHECK_VERSION(2, 32, 0)
+GRecMutex _cache_lock;
+#  define MENU_CACHE_LOCK       g_rec_mutex_lock(&_cache_lock)
+#  define MENU_CACHE_UNLOCK     g_rec_mutex_unlock(&_cache_lock)
+#else
+/* before 2.32 GLib had another entity for statically allocated mutexes */
+GStaticRecMutex _cache_lock = G_STATIC_REC_MUTEX_INIT;
+#  define MENU_CACHE_LOCK       g_static_rec_mutex_lock(&_cache_lock)
+#  define MENU_CACHE_UNLOCK     g_static_rec_mutex_unlock(&_cache_lock)
+#endif
+
 struct _MenuCacheItem
 {
     guint n_ref;
@@ -114,6 +125,8 @@ void menu_cache_init(int flags)
 
 static MenuCacheItem* read_item(  FILE* f, MenuCache* cache );
 
+/* functions read_dir(), read_app(), and read_item() should be called for
+   items that aren't accessible yet, therefore no lock is required */
 static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
 {
     MenuCacheItem* item;
@@ -305,11 +318,11 @@ MenuCache* menu_cache_ref(MenuCache* cache)
 void menu_cache_unref(MenuCache* cache)
 {
     /* DEBUG("cache_unref: %d", cache->n_ref); */
-    --cache->n_ref;
-    if( cache->n_ref == 0 )
+    if( g_atomic_int_dec_and_test(&cache->n_ref) )
     {
         unregister_menu_from_server( cache );
         /* DEBUG("unregister to server"); */
+        MENU_CACHE_LOCK;
         g_hash_table_remove( hash, cache->menu_name );
         if( g_hash_table_size(hash) == 0 )
         {
@@ -323,6 +336,7 @@ void menu_cache_unref(MenuCache* cache)
             server_ch = NULL;
             hash = NULL;
         }
+        MENU_CACHE_UNLOCK;
 
         if( G_LIKELY(cache->root_dir) )
         {
@@ -336,9 +350,10 @@ void menu_cache_unref(MenuCache* cache)
         g_strfreev( cache->all_used_files );
         g_slice_free( MenuCache, cache );
     }
-    
 }
 
+/* FIXME: this is thread-unsafe so should be deprecated in favor
+   to some other API which will return referenced data! */
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
 {
     return cache->root_dir;
@@ -365,14 +380,18 @@ gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer use
     n->func = func;
     n->user_data = user_data;
     l->data = n;
+    MENU_CACHE_LOCK;
     cache->notifiers = g_slist_concat( cache->notifiers, l );
+    MENU_CACHE_UNLOCK;
     return l;
 }
 
 void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id)
 {
+    MENU_CACHE_LOCK;
     g_slice_free( CacheReloadNotifier, ((GSList*)notify_id)->data );
     cache->notifiers = g_slist_delete_link( cache->notifiers, (GSList*)notify_id );
+    MENU_CACHE_UNLOCK;
 }
 
 static void reload_notify( MenuCache* cache )
@@ -415,12 +434,15 @@ gboolean menu_cache_reload( MenuCache* cache )
     if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
         return FALSE;
 
+    /* FIXME: this may lock other threads for some time */
+    MENU_CACHE_LOCK;
     g_strfreev( cache->all_used_files );
 
     /* get all used files */
     if( ! read_all_used_files( f, &cache->n_all_used_files, &cache->all_used_files ) )
     {
         cache->all_used_files = NULL;
+        MENU_CACHE_UNLOCK;
         fclose(f);
         return FALSE;
     }
@@ -430,6 +452,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     if( ! read_all_known_des( f, &cache->known_des ) )
     {
         cache->known_des = NULL;
+        MENU_CACHE_UNLOCK;
         fclose(f);
         return FALSE;
     }
@@ -441,6 +464,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     fclose( f );
 
     reload_notify(cache);
+    MENU_CACHE_UNLOCK;
 
     return TRUE;
 }
@@ -459,6 +483,7 @@ void menu_cache_item_unref(MenuCacheItem* item)
         if( item->file_name && item->file_name != item->id )
             g_free( item->file_name );
 
+        MENU_CACHE_LOCK; /* lock may be recursive here */
         if( item->parent )
         {
             /* DEBUG("remove %s from parent %s", item->id, MENU_CACHE_ITEM(item->parent)->id); */
@@ -470,11 +495,12 @@ void menu_cache_item_unref(MenuCacheItem* item)
         {
             MenuCacheDir* dir = MENU_CACHE_DIR(item);
             GSList* l;
-            for(l = dir->children; l; l = l->next )
+            for(l = dir->children; l; )
             {
                 MenuCacheItem* child = MENU_CACHE_ITEM(l->data);
                 /* remove ourselve from the children. */
                 child->parent = NULL;
+                l = l->next;
                 menu_cache_item_unref(child);
             }
             g_slist_free( dir->children );
@@ -486,6 +512,7 @@ void menu_cache_item_unref(MenuCacheItem* item)
             g_free( app->exec );
             g_slice_free( MenuCacheApp, app );
         }
+        MENU_CACHE_UNLOCK;
     }
 }
 
@@ -531,7 +558,8 @@ char* menu_cache_item_get_file_path( MenuCacheItem* item )
     return g_build_filename( item->file_dir, item->file_name, NULL );
 }
 
-
+/* FIXME: this is thread-unsafe so should be deprecated in favor
+   to some other API which will return referenced data! */
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item )
 {
     return item->parent;
@@ -562,12 +590,12 @@ char** menu_cache_app_get_categories( MenuCacheApp* app )
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app )
 {
-    return !!(app->flags & FLAG_USE_TERMINAL);
+    return ( (app->flags & FLAG_USE_TERMINAL) != 0 );
 }
 
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app )
 {
-    return !!(app->flags & FLAG_USE_SN);
+    return ( (app->flags & FLAG_USE_SN) != 0 );
 }
 
 guint32 menu_cache_app_get_show_flags( MenuCacheApp* app )
@@ -602,8 +630,12 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
         return NULL;
     }
     /* the topmost dir of the path should be the root menu dir. */
+    MENU_CACHE_LOCK;
     if( strcmp(names[0], MENU_CACHE_ITEM(cache->root_dir)->id) )
+    {
+        MENU_CACHE_UNLOCK;
         return NULL;
+    }
 
     dir = cache->root_dir;
     for( ++i; names[i]; ++i )
@@ -615,9 +647,16 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
             if( item->type == MENU_CACHE_TYPE_DIR && 0 == strcmp( item->id, names[i] ) )
                 dir = MENU_CACHE_DIR(item);
         }
+        /* FIXME: we really should ref it on return since other thread may
+           destroy the parent at this time and returned data become invalid.
+           Therefore this call isn't thread-safe! */
         if( ! dir )
+        {
+            MENU_CACHE_UNLOCK;
             return NULL;
+        }
     }
+    MENU_CACHE_UNLOCK;
     return dir;
 }
 
@@ -626,12 +665,16 @@ char* menu_cache_dir_make_path( MenuCacheDir* dir )
     GString* path = g_string_sized_new(1024);
     MenuCacheItem* it;
 
+    MENU_CACHE_LOCK;
     while( (it = MENU_CACHE_ITEM(dir)) ) /* this is not top dir */
     {
         g_string_prepend( path, menu_cache_item_get_id(it) );
         g_string_prepend_c( path, '/' );
+        /* FIXME: if parent is already unref'd by another thread then
+           path being made will be broken. Is there any way to avoid that? */
         dir = it->parent;
     }
+    MENU_CACHE_UNLOCK;
     return g_string_free( path, FALSE );
 }
 
@@ -704,14 +747,15 @@ reconnect:
             MenuCache* cache;
             DEBUG("successfully restart server.\nre-register menus.");
             /* re-register all menu caches */
-            
+
+            MENU_CACHE_LOCK;
             if(hash)
             {
                 g_hash_table_iter_init(&it, hash);
                 while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
                     register_menu_to_server( menu_name, TRUE );
             }
-            
+            MENU_CACHE_UNLOCK;
         }
         return FALSE;
     }
@@ -738,7 +782,7 @@ reconnect:
             char* menu_cache_id = line + 4;
             DEBUG("server ask us to reload cache: %s", menu_cache_id);
 
-            
+            MENU_CACHE_LOCK;
             g_hash_table_iter_init(&it, hash);
             while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
             {
@@ -749,7 +793,7 @@ reconnect:
                     break;
                 }
             }
-            
+            MENU_CACHE_UNLOCK;
         }
         g_free( line );
     }
@@ -872,7 +916,9 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
 
     g_checksum_free(sum); /* md5 is also freed here */
 
+    MENU_CACHE_LOCK;
     g_hash_table_insert( hash, g_strdup(menu_name), cache );
+    MENU_CACHE_UNLOCK;
 
     return cache;
 }
@@ -892,6 +938,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     MenuCache* cache;
 
     /* lookup in a hash table for already loaded menus */
+    MENU_CACHE_LOCK;
     if( G_UNLIKELY( ! hash ) )
         hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL );
     else
@@ -899,9 +946,11 @@ MenuCache* menu_cache_lookup( const char* menu_name )
         cache = (MenuCache*)g_hash_table_lookup(hash, menu_name);
         if( cache )
         {
+            MENU_CACHE_UNLOCK;
             return menu_cache_ref(cache);
         }
     }
+    MENU_CACHE_UNLOCK;
 
     if( !connect_server() )
     {
@@ -923,6 +972,7 @@ MenuCache* menu_cache_lookup_sync( const char* menu_name )
     /* ensure that the menu cache is loaded */
     if(! menu_cache_get_root_dir(mc)) /* if it's not yet loaded */
     {
+        /* FIXME: is using mainloop the efficient way to do it? */
         GMainLoop* mainloop = g_main_loop_new(NULL, FALSE);
         gpointer notify_id = menu_cache_add_reload_notify(mc, on_menu_cache_reload, mainloop);
         g_main_loop_run(mainloop);
@@ -956,21 +1006,31 @@ static GSList* list_app_in_dir(MenuCacheDir* dir, GSList* list)
 
 GSList* menu_cache_list_all_apps(MenuCache* cache)
 {
-    return list_app_in_dir(cache->root_dir, NULL);
+    GSList* list;
+    MENU_CACHE_LOCK;
+    list = list_app_in_dir(cache->root_dir, NULL);
+    MENU_CACHE_UNLOCK;
+    return list;
 }
 
 guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_env )
 {
-    char** de = cache->known_des;
+    char** de;
+    MENU_CACHE_LOCK;
+    de = cache->known_des;
     if( de )
     {
         int i;
         for( i = 0; de[i]; ++i )
         {
             if( strcmp( desktop_env, de[i] ) == 0 )
+            {
+                MENU_CACHE_UNLOCK;
                 return 1 << (i + N_KNOWN_DESKTOPS);
+            }
         }
     }
+    MENU_CACHE_UNLOCK;
     if( strcmp(desktop_env, "GNOME") == 0 )
         return SHOW_IN_GNOME;
     if( strcmp(desktop_env, "KDE") == 0 )
