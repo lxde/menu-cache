@@ -395,11 +395,16 @@ MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
 
 typedef struct _CacheReloadNotifier
 {
-    GFunc func;
+    MenuCacheReloadNotify func;
     gpointer user_data;
 }CacheReloadNotifier;
 
-gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data)
+struct _MenuCacheNotifyId
+{
+    GSList l;
+};
+
+MenuCacheNotifyId menu_cache_add_reload_notify(MenuCache* cache, MenuCacheReloadNotify func, gpointer user_data)
 {
     GSList* l = g_slist_alloc();
     CacheReloadNotifier* n = g_slice_new(CacheReloadNotifier);
@@ -409,10 +414,10 @@ gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer use
     MENU_CACHE_LOCK;
     cache->notifiers = g_slist_concat( cache->notifiers, l );
     MENU_CACHE_UNLOCK;
-    return l;
+    return (MenuCacheNotifyId)l;
 }
 
-void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id)
+void menu_cache_remove_reload_notify(MenuCache* cache, MenuCacheNotifyId notify_id)
 {
     MENU_CACHE_LOCK;
     g_slice_free( CacheReloadNotifier, ((GSList*)notify_id)->data );
@@ -1069,7 +1074,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
     return register_menu_to_server( menu_name, FALSE );
 }
 
-static void on_menu_cache_reload(gpointer mc, gpointer user_data)
+static void on_menu_cache_reload(MenuCache* mc, gpointer user_data)
 {
     GMainLoop* mainloop = (GMainLoop*)user_data;
     g_main_loop_quit(mainloop);

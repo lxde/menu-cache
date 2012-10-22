@@ -84,8 +84,13 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
 MenuCacheDir* menu_cache_dup_root_dir( MenuCache* cache );
 MenuCacheItem* menu_cache_item_from_path( MenuCache* cache, const char* path );
 
-gpointer menu_cache_add_reload_notify(MenuCache* cache, GFunc func, gpointer user_data);
-void menu_cache_remove_reload_notify(MenuCache* cache, gpointer notify_id);
+typedef struct _MenuCacheNotifyId* MenuCacheNotifyId;
+typedef void (*MenuCacheReloadNotify)(MenuCache* cache, gpointer user_data);
+
+MenuCacheNotifyId menu_cache_add_reload_notify(MenuCache* cache,
+                                               MenuCacheReloadNotify func,
+                                               gpointer user_data);
+void menu_cache_remove_reload_notify(MenuCache* cache, MenuCacheNotifyId notify_id);
 
 guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_env );
 
