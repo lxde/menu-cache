@@ -425,14 +425,19 @@ void menu_cache_remove_reload_notify(MenuCache* cache, MenuCacheNotifyId notify_
     MENU_CACHE_UNLOCK;
 }
 
-static void reload_notify( MenuCache* cache )
+static gboolean reload_notify(gpointer data)
 {
+    MenuCache* cache = (MenuCache*)data;
     GSList* l;
+    MENU_CACHE_LOCK;
+    /* we have it referenced and there is no source removal so no check */
     for( l = cache->notifiers; l; l = l->next )
     {
         CacheReloadNotifier* n = (CacheReloadNotifier*)l->data;
         n->func( cache, n->user_data );
     }
+    MENU_CACHE_UNLOCK;
+    return FALSE;
 }
 
 gboolean menu_cache_reload( MenuCache* cache )
@@ -494,7 +499,8 @@ gboolean menu_cache_reload( MenuCache* cache )
     cache->root_dir = (MenuCacheDir*)read_item( f, cache );
     fclose( f );
 
-    reload_notify(cache);
+    g_idle_add_full(G_PRIORITY_HIGH_IDLE, reload_notify, menu_cache_ref(cache),
+                    (GDestroyNotify)menu_cache_unref);
     MENU_CACHE_UNLOCK;
 
     return TRUE;
