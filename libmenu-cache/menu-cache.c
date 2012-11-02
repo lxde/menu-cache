@@ -51,12 +51,12 @@
 #endif
 
 #if GLIB_CHECK_VERSION(2, 32, 0)
-GRecMutex _cache_lock;
+static GRecMutex _cache_lock;
 #  define MENU_CACHE_LOCK       g_rec_mutex_lock(&_cache_lock)
 #  define MENU_CACHE_UNLOCK     g_rec_mutex_unlock(&_cache_lock)
 #else
 /* before 2.32 GLib had another entity for statically allocated mutexes */
-GStaticRecMutex _cache_lock = G_STATIC_REC_MUTEX_INIT;
+static GStaticRecMutex _cache_lock = G_STATIC_REC_MUTEX_INIT;
 #  define MENU_CACHE_LOCK       g_static_rec_mutex_lock(&_cache_lock)
 #  define MENU_CACHE_UNLOCK     g_static_rec_mutex_unlock(&_cache_lock)
 #endif
@@ -306,7 +306,7 @@ static gboolean read_all_known_des( FILE* f, char*** des )
     return TRUE;
 }
 
-MenuCache* menu_cache_new( const char* cache_file )
+static MenuCache* menu_cache_new( const char* cache_file )
 {
     MenuCache* cache;
     cache = g_slice_new0( MenuCache );
@@ -968,7 +968,7 @@ retry:
     return TRUE;
 }
 
-MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register )
+static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register )
 {
     MenuCache* cache;
     const gchar * const * langs = g_get_language_names();
@@ -1043,7 +1043,7 @@ MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register 
     return cache;
 }
 
-void unregister_menu_from_server( MenuCache* cache )
+static void unregister_menu_from_server( MenuCache* cache )
 {
     char buf[38];
     g_snprintf( buf, 38, "UNR:%s\n", cache->md5 );
