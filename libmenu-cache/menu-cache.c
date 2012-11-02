@@ -220,21 +220,21 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 
     /* name */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
-        return item;
+        goto _fail;
     len = strlen( line );
     if( G_LIKELY(len > 1) )
         item->name = g_strndup( line, len - 1 );
 
     /* comment */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
-        return item;
+        goto _fail;
     len = strlen( line );
     if( G_LIKELY(len > 1) )
         item->comment = g_strndup( line, len - 1 );
 
     /* icon */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
-        return item;
+        goto _fail;
     len = strlen( line );
     if( G_LIKELY(len > 1) )
         item->icon = g_strndup( line, len - 1 );
@@ -243,7 +243,7 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 
     /* file name */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
-        return NULL;
+        goto _fail;
     len = strlen( line );
     if( G_LIKELY(len > 1) )
         item->file_name = g_strndup( line, len - 1 );
@@ -257,7 +257,20 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
 
     /* desktop file dir */
     if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    {
+_fail:
+        g_free(item->id);
+        g_free(item->name);
+        g_free(item->comment);
+        g_free(item->icon);
+        if(item->file_name && item->file_name != item->id)
+            g_free(item->file_name);
+        if(item->type == MENU_CACHE_TYPE_DIR)
+            g_slice_free(MenuCacheDir, MENU_CACHE_DIR(item));
+        else
+            g_slice_free(MenuCacheApp, MENU_CACHE_APP(item));
         return NULL;
+    }
     idx = atoi( line );
     if( G_LIKELY( idx >=0 && idx < cache->n_all_used_files ) )
         item->file_dir = cache->all_used_files[ idx ] + 1;
