@@ -38,6 +38,8 @@
 #include <errno.h>
 #include <sys/wait.h>
 
+#include <gio/gio.h>
+
 #include "menu-cache.h"
 
 #ifdef G_ENABLE_DEBUG
@@ -93,12 +95,15 @@ struct _MenuCache
     guint n_ref;
     MenuCacheDir* root_dir;
     char* menu_name;
-    char md5[36];
+    char* reg; /* includes md5 sum */
+    char* md5; /* link inside of reg */
     char* cache_file;
     char** all_used_files;
     int n_all_used_files;
     char** known_des;
     GSList* notifiers;
+    GThread* thr;
+    GCancellable* cancellable;
 };
 
 static int server_fd = -1;
@@ -110,7 +115,7 @@ static GHashTable* hash = NULL;
 static MenuCache* menu_cache_new( const char* cache_file );
 
 static gboolean connect_server();
-static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register );
+static gboolean register_menu_to_server(MenuCache* cache);
 static void unregister_menu_from_server( MenuCache* cache );
 
 /* keep them for backward compatibility */
@@ -374,6 +379,12 @@ void menu_cache_unref(MenuCache* cache)
         }
         MENU_CACHE_UNLOCK;
 
+        if(G_LIKELY(cache->thr))
+        {
+            g_cancellable_cancel(cache->cancellable);
+            g_thread_join(cache->thr);
+        }
+        g_object_unref(cache->cancellable);
         if( G_LIKELY(cache->root_dir) )
         {
             /* DEBUG("unref root dir"); */
@@ -382,6 +393,7 @@ void menu_cache_unref(MenuCache* cache)
         }
         g_free( cache->cache_file );
         g_free( cache->menu_name );
+        g_free(cache->reg);
         /* g_free( cache->menu_file_path ); */
         g_strfreev( cache->all_used_files );
         g_slice_free( MenuCache, cache );
@@ -1165,7 +1177,8 @@ reconnect:
             {
                 g_hash_table_iter_init(&it, hash);
                 while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
-                    register_menu_to_server( menu_name, TRUE );
+                    register_menu_to_server(cache);
+                    /* FIXME: need we remove it from hash if failed? */
             }
             MENU_CACHE_UNLOCK;
         }
@@ -1260,7 +1273,7 @@ retry:
     return TRUE;
 }
 
-static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_register )
+static MenuCache* menu_cache_create(const char* menu_name)
 {
     MenuCache* cache;
     const gchar * const * langs = g_get_language_names();
@@ -1308,20 +1321,11 @@ static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_re
     len = strlen(buf);
     g_checksum_update(sum, (guchar*)buf + 4, len - 38);
     md5 = g_checksum_get_string(sum);
-    memcpy(buf + len - 33, md5, 32);
-    if(write( server_fd, buf, len ) < len)
-        re_register = TRUE; /* socket write failed */
-    g_free( buf );
-
-    if( re_register )
-    {
-        g_checksum_free(sum);
-        return NULL;
-    }
-
     file_name = g_build_filename( g_get_user_cache_dir(), "menus", md5, NULL );
     DEBUG("cache file_name = %s", file_name);
     cache = menu_cache_new( file_name );
+    cache->reg = buf;
+    cache->md5 = buf + len - 33;
     memcpy( cache->md5, md5, 32 );
     cache->menu_name = g_strdup(menu_name);
     g_free( file_name );
@@ -1335,6 +1339,17 @@ static MenuCache* register_menu_to_server( const char* menu_name, gboolean re_re
     return cache;
 }
 
+static gboolean register_menu_to_server(MenuCache* cache)
+{
+    ssize_t len = strlen(cache->reg);
+    if(write(server_fd, cache->reg, len) < len)
+    {
+        DEBUG("register_menu_to_server: sending failed");
+        return FALSE; /* socket write failed */
+    }
+    return TRUE;
+}
+
 static void unregister_menu_from_server( MenuCache* cache )
 {
     char buf[38];
@@ -1343,6 +1358,21 @@ static void unregister_menu_from_server( MenuCache* cache )
     {
         DEBUG("unregister_menu_from_server: sending failed");
     }
+}
+
+static gpointer menu_cache_loader_thread(gpointer data)
+{
+    MenuCache* cache = (MenuCache*)data;
+
+    /* try to connect server now */
+    if(!connect_server())
+    {
+        g_print("unable to connect to menu-cached.\n");
+        return NULL;
+    }
+    /* and request update from server */
+    register_menu_to_server(cache);
+    return NULL;
 }
 
 /**
@@ -1372,18 +1402,21 @@ MenuCache* menu_cache_lookup( const char* menu_name )
         cache = (MenuCache*)g_hash_table_lookup(hash, menu_name);
         if( cache )
         {
+            menu_cache_ref(cache);
             MENU_CACHE_UNLOCK;
-            return menu_cache_ref(cache);
+            return cache;
         }
     }
     MENU_CACHE_UNLOCK;
 
-    if( !connect_server() )
-    {
-        g_print("unable to connect to menu-cached.\n");
-        return NULL;
-    }
-    return register_menu_to_server( menu_name, FALSE );
+    cache = menu_cache_create(menu_name);
+    cache->cancellable = g_cancellable_new();
+#if GLIB_CHECK_VERSION(2, 32, 0)
+    cache->thr = g_thread_new(menu_name, menu_cache_loader_thread, cache);
+#else
+    cache->thr = g_thread_create(menu_cache_loader_thread, cache, TRUE, NULL);
+#endif
+    return cache;
 }
 
 static void on_menu_cache_reload(MenuCache* mc, gpointer user_data)
