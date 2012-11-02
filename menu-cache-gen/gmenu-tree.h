@@ -94,6 +94,8 @@ GMenuTreeSortKey     gmenu_tree_get_sort_key (GMenuTree        *tree);
 void                 gmenu_tree_set_sort_key (GMenuTree        *tree,
 					      GMenuTreeSortKey  sort_key);
 
+GSList* all_used_dirs;
+GSList* all_used_files;
 
 
 gpointer gmenu_tree_item_ref   (gpointer item);

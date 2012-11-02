@@ -888,7 +888,7 @@ gmenu_tree_set_sort_key (GMenuTree        *tree,
 {
   g_return_if_fail (tree != NULL);
   g_return_if_fail (tree->refcount > 0);
-  g_return_if_fail (sort_key >= GMENU_TREE_SORT_FIRST);
+  /* g_return_if_fail (sort_key >= GMENU_TREE_SORT_FIRST); */
   g_return_if_fail (sort_key <= GMENU_TREE_SORT_LAST);
 
   if (sort_key == tree->sort_key)
@@ -3938,7 +3938,7 @@ preprocess_layout_info (GMenuTree          *tree,
    * Now process the subdirectories with no explicit layout
    */
   /* this is bogus data, but we just need the pointer anyway */
-  subdirs_sentinel = g_slist_prepend (directory->subdirs, PACKAGE);
+  subdirs_sentinel = g_slist_prepend (directory->subdirs, (gpointer)PACKAGE);
   directory->subdirs = subdirs_sentinel;
 
   tmp = directory->subdirs;

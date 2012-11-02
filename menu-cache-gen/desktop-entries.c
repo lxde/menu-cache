@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "menu-util.h"
+#include "menu-cache-gen.h"
 
 #define DESKTOP_ENTRY_GROUP     "Desktop Entry"
 #define KDE_DESKTOP_ENTRY_GROUP "KDE Desktop Entry"
@@ -68,9 +69,6 @@ struct DesktopEntrySet
 /*
  * Desktop entries
  */
-
-/* defined in menu-cache-gen.c */
-guint32 menu_cache_get_de_flag( const char* de_name );
 
 static guint
 get_flags_from_key_file (DesktopEntry *entry,

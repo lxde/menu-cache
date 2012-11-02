@@ -159,7 +159,7 @@ static void set_env( char* penv, const char* name )
 
 static void pre_exec( gpointer user_data )
 {
-    char** env = (char*)user_data;
+    char** env = (char**)user_data;
     set_env(*env, "XDG_CACHE_HOME");
     set_env(*++env, "XDG_CONFIG_DIRS");
     set_env(*++env, "XDG_MENU_PREFIX");
@@ -178,7 +178,7 @@ static gboolean regenerate_cache( const char* menu_name,
     FILE* f;
     int n_files, status = 0;
     char** files;
-    const char* const * argv[] = {
+    const char* argv[] = {
         MENUCACHE_LIBEXECDIR "/menu-cache-gen",
         "-l", NULL,
         "-i", NULL,
@@ -191,7 +191,8 @@ static gboolean regenerate_cache( const char* menu_name,
     /* DEBUG("cmd: %s", g_strjoinv(" ", argv)); */
 
     /* run menu-cache-gen */
-    if( !g_spawn_sync(NULL, argv, NULL, 0,
+    /* FIXME: is cast to (char**) valid here? */
+    if( !g_spawn_sync(NULL, (char **)argv, NULL, 0,
                     pre_exec, env, NULL, NULL, &status, NULL ))
     {
         DEBUG("error executing menu-cache-gen");
@@ -262,7 +263,8 @@ static gboolean delayed_reload( Cache* cache )
             cache->mons[i] = g_file_monitor_directory( gf, 0, NULL, NULL );
         else
             cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
-        g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
+        g_signal_connect(cache->mons[i], "changed",
+                         G_CALLBACK(on_file_changed), cache);
         g_object_unref(gf);
     }
 /*
@@ -277,7 +279,8 @@ static gboolean delayed_reload( Cache* cache )
     for( l = cache->clients; l; l = l->next )
     {
         GIOChannel* ch = (GIOChannel*)l->data;
-        write(g_io_channel_unix_get_fd(ch), buf, 37 );
+        if(write(g_io_channel_unix_get_fd(ch), buf, 37) < 0)
+            g_io_channel_shutdown(ch, FALSE, NULL);
     }
     cache->delayed_reload_handler = 0;
     return FALSE;
@@ -402,7 +405,6 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                     /* FIXME: temporarily disable monitor of the cached file before utime() */
                     /* without this, directory mtime will > mtime of cache file,
                      * and the menu will get re-generated unnecessarily the next time. */
-                    GFile* gf;
                     struct utimbuf ut;
                     char* cache_file;
 
@@ -412,22 +414,22 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 
                     ut.actime = ut.modtime = time(NULL);
                     /* stop monitor of cache file. */
-					/*
+                    /*
                     g_file_monitor_cancel( cache->cache_mon );
                     g_object_unref( cache->cache_mon );
                     cache->cache_mon = NULL;
-					*/
+                    */
                     /* update the mtime of the cache file. */
                     utime( cache_file, &ut );
 
                     /* restart the monitor */
                     /* gf = g_file_new_for_path( cache_file ); */
                     g_free(cache_file);
-					/*
+                    /*
                     cache->cache_mon = g_file_monitor_file(gf, 0, NULL, NULL);
                     g_object_unref(gf);
                     g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
-					*/
+                    */
                     DEBUG("files are changed, but no re-generation is needed.");
                     return;
                 }
@@ -442,15 +444,14 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
     cache->delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
 
-static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files, char** used_files )
+static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files, char*** used_files )
 {
     gboolean ret = FALSE;
     struct stat st;
     time_t cache_mtime;
     char** files;
-    int n, i, l;
+    int n, i;
     FILE* f;
-    char line[ 4096 ];
 
     f = fopen( cache_file, "r" );
     if( f )
@@ -476,7 +477,6 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
                 }
             }
         }
-_out:
         fclose( f );
     }
     return ret;
@@ -546,7 +546,7 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
     g_hash_table_iter_init (&it, hash);
     while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
     {
-        if( l = g_slist_find( cache->clients, ch ) )
+        if((l = g_slist_find( cache->clients, ch )) != NULL)
         {
             /* FIXME: some clients are closed accidentally without
              * unregister the menu first due to crashes.
@@ -576,6 +576,7 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
     const char* md5;
     Cache* cache;
     GFile* gf;
+    gboolean ret = TRUE;
 
     if(cond & (G_IO_HUP|G_IO_ERR) )
     {
@@ -597,7 +598,7 @@ retry:
 
     if( memcmp(line, "REG:", 4) == 0 )
     {
-        int status = 0, n_files, i;
+        int n_files, i;
         char *pline = line + 4;
         char *sep, *menu_name, *lang_name, *cache_dir, *cache_file;
         char **files;
@@ -632,7 +633,7 @@ retry:
 
             env = g_strsplit(pline, "\t", 0);
 
-			cache_dir = env[0]; /* XDG_CACHE_HOME */
+            cache_dir = env[0]; /* XDG_CACHE_HOME */
             /* obtain cache dir from client's env */
 
             cache_file = g_build_filename(*cache_dir ? cache_dir : g_get_user_cache_dir(), "menus", md5, NULL );
@@ -662,15 +663,16 @@ retry:
                 else
                     cache->mons[i] = g_file_monitor_file( gf, 0, NULL, NULL );
                 DEBUG("monitor: %s", g_file_get_path(gf));
-                g_signal_connect( cache->mons[i], "changed", on_file_changed, cache);
+                g_signal_connect(cache->mons[i], "changed",
+                                 G_CALLBACK(on_file_changed), cache);
                 g_object_unref(gf);
             }
-			/*
+            /*
             gf = g_file_new_for_path( cache_file );
             cache->cache_mon = g_file_monitor_file( gf, 0, NULL, NULL );
             g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
             g_object_unref(gf);
-			*/
+            */
             g_free(cache_file);
 
             g_hash_table_insert(hash, cache->md5, cache);
@@ -689,7 +691,7 @@ retry:
         reload_cmd[37] = '\0';
 
         DEBUG("reload command: %s", reload_cmd);
-        write(g_io_channel_unix_get_fd(ch), reload_cmd, 37);
+        ret = write(g_io_channel_unix_get_fd(ch), reload_cmd, 37) > 0;
     }
     else if( memcmp(line, "UNR:", 4) == 0 )
     {
@@ -708,7 +710,7 @@ retry:
     }
     g_free( line );
 
-    return TRUE;
+    return ret;
 }
 
 static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer user_data)
@@ -789,7 +791,7 @@ int main(int argc, char** argv)
     for (i = 0; i < open_max; i++)
     {
         /* don't hold open fd opened besides server socket */
-        if (i != fd)
+        if (i != server_fd)
             fcntl (i, F_SETFD, FD_CLOEXEC);
     }
 

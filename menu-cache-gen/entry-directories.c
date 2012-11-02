@@ -30,6 +30,8 @@
 #include "menu-monitor.h"
 #include "canonicalize.h"
 
+#include "gmenu-tree.h"
+
 typedef struct CachedDir CachedDir;
 typedef struct CachedDirMonitor CachedDirMonitor;
 
@@ -88,9 +90,6 @@ static void handle_cached_dir_changed (MenuMonitor      *monitor,
  */
 
 static CachedDir *dir_cache = NULL;
-
-/* defined in gmenu-tree.c: all used app dirs, required by menu-cache-gen */
-extern GSList* all_used_dirs;
 
 static CachedDir *
 cached_dir_new (const char *name)
