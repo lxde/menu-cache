@@ -130,11 +130,11 @@ void menu_cache_init(int flags)
 
 }
 
-static MenuCacheItem* read_item(  FILE* f, MenuCache* cache );
+static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache);
 
 /* functions read_dir(), read_app(), and read_item() should be called for
    items that aren't accessible yet, therefore no lock is required */
-static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
+static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache)
 {
     MenuCacheItem* item;
 
@@ -150,48 +150,57 @@ static void read_dir( FILE* f, MenuCacheDir* dir, MenuCache* cache )
     dir->children = g_slist_reverse( dir->children );
 }
 
-static void read_app( FILE* f, MenuCacheApp* app, MenuCache* cache )
+static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
 {
-    char line[4096];
-    int len;
+    char *line;
+    gsize len;
 
     /* generic name */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        app->generic_name = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        app->generic_name = line;
+    else
+        g_free(line);
 
     /* exec */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        app->exec = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        app->exec = line;
+    else
+        g_free(line);
 
     /* terminal / startup notify */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return;
     app->flags = (guint32)atoi(line);
+    g_free(line);
 
     /* ShowIn flags */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return;
     app->show_in_flags = (guint32)atol(line);
+    g_free(line);
 }
 
-static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
+static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache)
 {
     MenuCacheItem* item;
-    char line[4096];
-    int len, idx;
+    char *line;
+    gsize len;
+    gint idx;
 
     /* desktop/menu id */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return NULL;
-    len = strlen( line );
 
-    if( G_LIKELY(len >= 2) )
+    if( G_LIKELY(len >= 1) )
     {
         if( line[0] == '+' ) /* menu dir */
         {
@@ -214,50 +223,64 @@ static MenuCacheItem* read_item(  FILE* f, MenuCache* cache )
         else
             return NULL;
 
-        item->id = g_strndup( line + 1, len - 2 );
+        item->id = g_strndup( line + 1, len - 1 );
+        g_free(line);
     }
     else
+    {
+        g_free(line);
         return NULL;
+    }
 
     /* name */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         goto _fail;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        item->name = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        item->name = line;
+    else
+        g_free(line);
 
     /* comment */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         goto _fail;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        item->comment = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        item->comment = line;
+    else
+        g_free(line);
 
     /* icon */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         goto _fail;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        item->icon = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        item->icon = line;
+    else
+        g_free(line);
 
     /* file dir/basename */
 
     /* file name */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         goto _fail;
-    len = strlen( line );
-    if( G_LIKELY(len > 1) )
-        item->file_name = g_strndup( line, len - 1 );
+    if(G_LIKELY(len > 0))
+        item->file_name = line;
     else if( item->type == MENU_CACHE_TYPE_APP )
     {
         /* When file name is the same as desktop_id, which is
          * quite common in desktop files, we use this trick to
          * save memory usage. */
         item->file_name = item->id;
+        g_free(line);
     }
+    else
+        g_free(line);
 
     /* desktop file dir */
-    if( G_UNLIKELY( ! fgets( line, G_N_ELEMENTS(line) - 1, f ) ))
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
     {
 _fail:
         g_free(item->id);
@@ -273,6 +296,7 @@ _fail:
         return NULL;
     }
     idx = atoi( line );
+    g_free(line);
     if( G_LIKELY( idx >=0 && idx < cache->n_all_used_files ) )
         item->file_dir = cache->all_used_files[ idx ] + 1;
 
@@ -284,39 +308,46 @@ _fail:
     return item;
 }
 
-static gboolean read_all_used_files( FILE* f, int* n_all_used_files, char*** all_used_files )
+static gboolean read_all_used_files(GDataInputStream* f, MenuCache* cache)
 {
-    char line[ 4096 ];
+    char *line;
+    gsize len;
     int i, n;
     char** dirs;
 
-    if( ! fgets( line, G_N_ELEMENTS(line), f ) )
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return FALSE;
 
-    *n_all_used_files = n = atoi( line );
+    cache->n_all_used_files = n = atoi( line );
     dirs = g_new0( char*, n + 1 );
+    g_free(line);
 
     for( i = 0; i < n; ++i )
     {
-        int len;
-        if( ! fgets( line, G_N_ELEMENTS(line), f ) )
+        line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+        if(G_UNLIKELY(line == NULL))
+        {
+            g_strfreev(dirs);
+            cache->n_all_used_files = 0;
             return FALSE;
+        }
 
-        len = strlen( line );
-        if( len <= 1 )
-            return FALSE;
-        dirs[ i ] = g_strndup( line, len - 1 ); /* don't include \n */
+        dirs[i] = line; /* don't include \n */
     }
-    *all_used_files = dirs;
+    cache->all_used_files = dirs;
     return TRUE;
 }
 
-static gboolean read_all_known_des( FILE* f, char*** des )
+static gboolean read_all_known_des(GDataInputStream* f, MenuCache* cache)
 {
-    char line[ 4096 ];
-    if( ! fgets( line, G_N_ELEMENTS(line), f ) )
+    char *line;
+    gsize len;
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
         return FALSE;
-    *des = g_strsplit_set( line, ";\n", 0 );
+    cache->known_des = g_strsplit_set( line, ";\n", 0 );
+    g_free(line);
     return TRUE;
 }
 
@@ -538,54 +569,65 @@ static gboolean reload_notify(gpointer data)
  */
 gboolean menu_cache_reload( MenuCache* cache )
 {
-    struct stat st;
-    char line[4096];
-    FILE* f = fopen( cache->cache_file, "r" );
+    char* line;
+    gsize len;
+    GFile* file;
+    GFileInputStream* istr = NULL;
+    GDataInputStream* f;
+
+    file = g_file_new_for_path(cache->cache_file);
+    if(!file)
+        return FALSE;
+    istr = g_file_read(file, cache->cancellable, NULL);
+    g_object_unref(file);
+    if(!istr)
+        return FALSE;
+    f = g_data_input_stream_new(G_INPUT_STREAM(istr));
+    g_object_unref(istr);
     if( ! f )
         return FALSE;
 
-    if( fstat( fileno( f ), &st ) == -1 )
-    {
-        fclose( f );
-        return FALSE;
-    }
-
     /* the first line is version number */
-    if( fgets( line, G_N_ELEMENTS(line) ,f ) )
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_LIKELY(line))
     {
         int ver_maj, ver_min;
-        if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
-            return FALSE;
+        len = sscanf(line, "%d.%d", &ver_maj, &ver_min);
+        g_free(line);
+        if(len < 2)
+            goto _fail;
         if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
-            return FALSE;
+            goto _fail;
     }
     else
-        return FALSE;
+        goto _fail;
 
     /* the second line is menu name */
-    if( ! fgets( line, G_N_ELEMENTS(line) ,f ) )
-        return FALSE;
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if(G_UNLIKELY(line == NULL))
+        goto _fail;
+    g_free(line);
 
     /* FIXME: this may lock other threads for some time */
     MENU_CACHE_LOCK;
     g_strfreev( cache->all_used_files );
 
     /* get all used files */
-    if( ! read_all_used_files( f, &cache->n_all_used_files, &cache->all_used_files ) )
+    if( ! read_all_used_files( f, cache ) )
     {
         cache->all_used_files = NULL;
         MENU_CACHE_UNLOCK;
-        fclose(f);
-        return FALSE;
+        goto _fail;
     }
 
     /* read known DEs */
     g_strfreev( cache->known_des );
-    if( ! read_all_known_des( f, &cache->known_des ) )
+    if( ! read_all_known_des( f, cache ) )
     {
         cache->known_des = NULL;
         MENU_CACHE_UNLOCK;
-        fclose(f);
+_fail:
+        g_object_unref(f);
         return FALSE;
     }
 
@@ -593,7 +635,7 @@ gboolean menu_cache_reload( MenuCache* cache )
         menu_cache_item_unref( MENU_CACHE_ITEM(cache->root_dir) );
 
     cache->root_dir = (MenuCacheDir*)read_item( f, cache );
-    fclose( f );
+    g_object_unref(f);
 
     g_idle_add_full(G_PRIORITY_HIGH_IDLE, reload_notify, menu_cache_ref(cache),
                     (GDestroyNotify)menu_cache_unref);
