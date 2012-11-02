@@ -601,6 +601,9 @@ gboolean menu_cache_reload( MenuCache* cache )
 void menu_cache_item_unref(MenuCacheItem* item)
 {
     /* DEBUG("item_unref(%s): %d", item->id, item->n_ref); */
+    /* We need a lock here unfortunately since another thread may have access
+       to it via some child->parent which isn't protected by reference */
+    MENU_CACHE_LOCK; /* lock may be recursive here */
     if( g_atomic_int_dec_and_test( &item->n_ref ) )
     {
         /* DEBUG("free item: %s", item->id); */
@@ -612,7 +615,6 @@ void menu_cache_item_unref(MenuCacheItem* item)
         if( item->file_name && item->file_name != item->id )
             g_free( item->file_name );
 
-        MENU_CACHE_LOCK; /* lock may be recursive here */
         if( item->parent )
         {
             /* DEBUG("remove %s from parent %s", item->id, MENU_CACHE_ITEM(item->parent)->id); */
@@ -641,8 +643,8 @@ void menu_cache_item_unref(MenuCacheItem* item)
             g_free( app->exec );
             g_slice_free( MenuCacheApp, app );
         }
-        MENU_CACHE_UNLOCK;
     }
+    MENU_CACHE_UNLOCK;
 }
 
 /**
