@@ -37,6 +37,7 @@ config.log
 config.status
 config.sub
 libtool
+gtk-doc.make
 man/*.1
 po/LINGUAS
 po/Makefile
@@ -44,6 +45,7 @@ po/POTFILES
 po/*.gmo
 po/stamp-it
 stamp-h1
+*.stamp
 Makefile
 intltool-extract.in
 intltool-merge.in
@@ -53,3 +55,5 @@ libmenu-cache/libmenu-cache-uninstalled.pc
 libmenu-cache/libmenu-cache.pc
 menu-cache-daemon/menu-cached
 menu-cache-gen/menu-cache-gen
+docs/reference/libmenu-cache/libmenu-cache*
+docs/reference/libmenu-cache/*/*

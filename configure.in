@@ -50,6 +50,13 @@ else
 fi
 AC_SUBST(DEBUG_CFLAGS)
 
+dnl check for gtk-doc
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+],[
+AM_CONDITIONAL([ENABLE_GTK_DOC], false)
+])
+
 AC_OUTPUT([
 Makefile
 libmenu-cache/Makefile
@@ -57,4 +64,7 @@ libmenu-cache/libmenu-cache.pc
 libmenu-cache/libmenu-cache-uninstalled.pc
 menu-cache-gen/Makefile
 menu-cache-daemon/Makefile
+docs/Makefile
+docs/reference/Makefile
+docs/reference/libmenu-cache/Makefile
 ])
