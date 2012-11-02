@@ -1364,6 +1364,8 @@ static gpointer menu_cache_loader_thread(gpointer data)
 {
     MenuCache* cache = (MenuCache*)data;
 
+    /* reload existing file first so it will be ready right away */
+    menu_cache_reload(cache);
     /* try to connect server now */
     if(!connect_server())
     {
@@ -1447,7 +1449,9 @@ MenuCache* menu_cache_lookup_sync( const char* menu_name )
     {
         /* FIXME: is using mainloop the efficient way to do it? */
         GMainLoop* mainloop = g_main_loop_new(NULL, FALSE);
-        gpointer notify_id = menu_cache_add_reload_notify(mc, on_menu_cache_reload, mainloop);
+        MenuCacheNotifyId notify_id;
+        notify_id = menu_cache_add_reload_notify(mc, on_menu_cache_reload,
+                                                 mainloop);
         g_main_loop_run(mainloop);
         g_main_loop_unref(mainloop);
         menu_cache_remove_reload_notify(mc, notify_id);

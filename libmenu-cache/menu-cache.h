@@ -22,10 +22,6 @@
  *      MA 02110-1301, USA.
  */
 
-/* NOTICE: This library is not MT-safe and should only be called from main thread.
- *         If you really need to use it in another thread, using mutex is needed,
- *         but the correct way to do this is unknown. */
-
 #ifndef __MENU_CACHE_H__
 #define __MENU_CACHE_H__
 
