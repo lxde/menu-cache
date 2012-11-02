@@ -418,12 +418,13 @@ MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
  */
 MenuCacheDir* menu_cache_dup_root_dir( MenuCache* cache )
 {
-    MenuCacheItem* dir = NULL;
+    MenuCacheDir* dir;
     MENU_CACHE_LOCK;
-    if(G_LIKELY(cache->root_dir))
-        dir = menu_cache_item_ref(MENU_CACHE_ITEM(cache->root_dir));
+    dir = cache->root_dir;
+    if(G_LIKELY(dir))
+        menu_cache_item_ref(MENU_CACHE_ITEM(dir));
     MENU_CACHE_UNLOCK;
-    return MENU_CACHE_DIR(dir);
+    return dir;
 }
 
 /**
@@ -809,12 +810,13 @@ MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item )
  */
 MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item )
 {
-    MenuCacheItem* dir = NULL;
+    MenuCacheDir* dir;
     MENU_CACHE_LOCK;
-    if(G_LIKELY(item->parent))
-        dir = menu_cache_item_ref(MENU_CACHE_ITEM(item->parent));
+    dir = item->parent;
+    if(G_LIKELY(dir))
+        menu_cache_item_ref(MENU_CACHE_ITEM(dir));
     MENU_CACHE_UNLOCK;
-    return MENU_CACHE_DIR(dir);
+    return dir;
 }
 
 /**
