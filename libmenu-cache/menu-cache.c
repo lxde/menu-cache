@@ -19,10 +19,6 @@
  *      MA 02110-1301, USA.
  */
 
-/* NOTICE: This library is not MT-safe and should only be called from main thread.
- *         If you really need to use it in another thread, using mutex is needed,
- *         but the correct way to do this is unknown. */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -356,11 +352,13 @@ MenuCache* menu_cache_ref(MenuCache* cache)
 void menu_cache_unref(MenuCache* cache)
 {
     /* DEBUG("cache_unref: %d", cache->n_ref); */
+    /* we need a lock here unfortunately because item in hash isn't protected
+       by reference therefore another thread may get access to it right now */
+    MENU_CACHE_LOCK;
     if( g_atomic_int_dec_and_test(&cache->n_ref) )
     {
         unregister_menu_from_server( cache );
         /* DEBUG("unregister to server"); */
-        MENU_CACHE_LOCK;
         g_hash_table_remove( hash, cache->menu_name );
         if( g_hash_table_size(hash) == 0 )
         {
@@ -388,6 +386,8 @@ void menu_cache_unref(MenuCache* cache)
         g_strfreev( cache->all_used_files );
         g_slice_free( MenuCache, cache );
     }
+    else
+        MENU_CACHE_UNLOCK;
 }
 
 /**
