@@ -1235,14 +1235,14 @@ retry:
 
     if( connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
-        if(retries == 0)
+        if(errno == ECONNREFUSED && retries == 0)
         {
             close(fd);
             fork_server();
             ++retries;
             goto retry;
         }
-        if (retries < MAX_RETRIES)
+        if(retries < MAX_RETRIES)
         {
             close(fd);
             usleep(50000);
