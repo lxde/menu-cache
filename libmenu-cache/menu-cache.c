@@ -114,7 +114,7 @@ static GHashTable* hash = NULL;
 /* Don't call this API directly. Use menu_cache_lookup instead. */
 static MenuCache* menu_cache_new( const char* cache_file );
 
-static gboolean connect_server();
+static gboolean connect_server(GCancellable* cancellable);
 static gboolean register_menu_to_server(MenuCache* cache);
 static void unregister_menu_from_server( MenuCache* cache );
 
@@ -1202,7 +1202,7 @@ reconnect:
         DEBUG("IO error %d, try to re-connect.", cond);
         g_io_channel_unref(ch);
         server_fd = -1;
-        if( ! connect_server() )
+        if( ! connect_server(NULL) )
         {
             g_print("fail to re-connect to the server.\n");
         }
@@ -1269,14 +1269,14 @@ reconnect:
 
 G_LOCK_DEFINE(connect);
 
-static gboolean connect_server()
+static gboolean connect_server(GCancellable* cancellable)
 {
     int fd;
     struct sockaddr_un addr;
     int retries = 0;
 
     G_LOCK(connect);
-    if( server_fd != -1 )
+    if(server_fd != -1 || (cancellable && g_cancellable_is_cancelled(cancellable)))
     {
         G_UNLOCK(connect);
         return TRUE;
@@ -1298,6 +1298,11 @@ retry:
     if( connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
         close(fd);
+        if(cancellable && g_cancellable_is_cancelled(cancellable))
+        {
+            G_UNLOCK(connect);
+            return TRUE;
+        }
         if(errno == ECONNREFUSED && retries == 0)
         {
             fork_server();
@@ -1391,6 +1396,7 @@ static MenuCache* menu_cache_create(const char* menu_name)
 static gboolean register_menu_to_server(MenuCache* cache)
 {
     ssize_t len = strlen(cache->reg);
+    /* FIXME: do unblocking I/O */
     if(write(server_fd, cache->reg, len) < len)
     {
         DEBUG("register_menu_to_server: sending failed");
@@ -1403,6 +1409,7 @@ static void unregister_menu_from_server( MenuCache* cache )
 {
     char buf[38];
     g_snprintf( buf, 38, "UNR:%s\n", cache->md5 );
+    /* FIXME: do unblocking I/O */
     if(write( server_fd, buf, 37 ) <= 0)
     {
         DEBUG("unregister_menu_from_server: sending failed");
@@ -1416,13 +1423,14 @@ static gpointer menu_cache_loader_thread(gpointer data)
     /* reload existing file first so it will be ready right away */
     menu_cache_reload(cache);
     /* try to connect server now */
-    if(!connect_server())
+    if(!connect_server(cache->cancellable))
     {
         g_print("unable to connect to menu-cached.\n");
         return NULL;
     }
     /* and request update from server */
-    register_menu_to_server(cache);
+    if(!g_cancellable_is_cancelled(cache->cancellable))
+        register_menu_to_server(cache);
     return NULL;
 }
 
