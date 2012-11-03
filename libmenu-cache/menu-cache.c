@@ -1267,20 +1267,27 @@ reconnect:
     return TRUE;
 }
 
+G_LOCK_DEFINE(connect);
+
 static gboolean connect_server()
 {
     int fd;
     struct sockaddr_un addr;
     int retries = 0;
 
+    G_LOCK(connect);
     if( server_fd != -1 )
+    {
+        G_UNLOCK(connect);
         return TRUE;
+    }
 
 retry:
     fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
     {
         g_print("Failed to create socket\n");
+        G_UNLOCK(connect);
         return FALSE;
     }
     memset(&addr, 0, sizeof(addr));
@@ -1290,25 +1297,25 @@ retry:
 
     if( connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
+        close(fd);
         if(errno == ECONNREFUSED && retries == 0)
         {
-            close(fd);
             fork_server();
             ++retries;
             goto retry;
         }
         if(retries < MAX_RETRIES)
         {
-            close(fd);
             usleep(50000);
             ++retries;
             goto retry;
         }
         g_print("Unable to connect\n");
-        close(fd);
+        G_UNLOCK(connect);
         return FALSE;
     }
     server_fd = fd;
+    G_UNLOCK(connect);
     server_ch = g_io_channel_unix_new(fd);
     g_io_channel_set_close_on_unref(server_ch, TRUE);
     server_watch = g_io_add_watch(server_ch, G_IO_IN|G_IO_PRI|G_IO_ERR|G_IO_HUP, on_server_io, NULL);
