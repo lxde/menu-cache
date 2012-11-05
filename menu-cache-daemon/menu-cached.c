@@ -292,7 +292,7 @@ static gboolean delayed_reload( Cache* cache )
     for( l = cache->clients; l; l = l->next )
     {
         GIOChannel* ch = (GIOChannel*)l->data;
-        if(write(g_io_channel_unix_get_fd(ch), buf, 37) < 0)
+        if(write(g_io_channel_unix_get_fd(ch), buf, 37) < 37)
             g_io_channel_shutdown(ch, FALSE, NULL);
     }
     cache->delayed_reload_handler = 0;
@@ -549,8 +549,9 @@ static int create_socket()
     return fd;
 }
 
-static void on_client_closed(GIOChannel* ch, gpointer user_data)
+static void on_client_closed(gpointer user_data)
 {
+    GIOChannel* ch = user_data;
     GHashTableIter it;
     char* md5;
     Cache* cache;
@@ -577,6 +578,7 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
         }
     }
     /* DEBUG("client closed"); */
+    g_io_channel_unref(ch);
 }
 
 static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer user_data)
@@ -591,7 +593,6 @@ static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer us
 
     if(cond & (G_IO_HUP|G_IO_ERR) )
     {
-        on_client_closed(ch, user_data);
         return FALSE; /* remove the watch */
     }
 
@@ -746,10 +747,12 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     }
 
     child = g_io_channel_unix_new(client);
-    g_io_add_watch( child, G_IO_PRI|G_IO_IN|G_IO_HUP|G_IO_ERR, on_client_data_in, NULL );
     g_io_channel_set_close_on_unref( child, TRUE );
+    g_io_add_watch_full(child, G_PRIORITY_DEFAULT, G_IO_PRI|G_IO_IN|G_IO_HUP|G_IO_ERR,
+                        on_client_data_in, child, on_client_closed);
+    g_io_channel_unref(child);
 
-    /* DEBUG("new client accepted"); */
+    DEBUG("new client accepted: %p", child);
     return TRUE;
 }
 
@@ -767,6 +770,7 @@ static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer
 {
     /* FIXME: is this possible? */
     /* the server socket is accidentally closed. terminate the server. */
+    g_io_channel_unref(ch);
     terminate(SIGTERM);
     return TRUE;
 }
@@ -837,6 +841,7 @@ int main(int argc, char** argv)
     g_io_channel_set_close_on_unref(ch, TRUE);
     g_io_add_watch(ch, G_IO_IN|G_IO_PRI, on_new_conn_incoming, NULL);
     g_io_add_watch(ch, G_IO_ERR, on_server_conn_close, NULL);
+    g_io_channel_unref(ch);
 
     g_type_init();
 
