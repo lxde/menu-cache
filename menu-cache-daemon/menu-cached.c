@@ -237,6 +237,9 @@ static gboolean delayed_reload( Cache* cache )
     int i;
     GFile* gf;
 
+    if(g_source_is_destroyed(g_main_current_source()))
+        return FALSE;
+
     /* DEBUG("Re-generation of cache is needed!"); */
     /* DEBUG("call menu-cache-gen to re-generate the cache"); */
     memcpy( buf, "REL:", 4 );
