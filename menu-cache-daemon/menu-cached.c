@@ -78,30 +78,30 @@ static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 static gboolean delayed_cache_free(gpointer data)
 {
     Cache* cache = data;
-        int i;
+    int i;
 
     if(g_source_is_destroyed(g_main_current_source()))
         return FALSE;
 
     g_hash_table_remove( hash, cache->md5 );
-        /* DEBUG("menu cache freed"); */
-        for(i = 0; i < cache->n_files; ++i)
-        {
-            g_file_monitor_cancel( cache->mons[i] );
-            g_object_unref( cache->mons[i] );
-        }
+    /* DEBUG("menu cache freed"); */
+    for(i = 0; i < cache->n_files; ++i)
+    {
+        g_file_monitor_cancel( cache->mons[i] );
+        g_object_unref( cache->mons[i] );
+    }
 /*
-        g_file_monitor_cancel(cache->cache_mon);
-        g_object_unref(cache->cache_mon);
+    g_file_monitor_cancel(cache->cache_mon);
+    g_object_unref(cache->cache_mon);
 */
-        g_free( cache->mons );
-        g_strfreev( cache->env );
-        g_strfreev( cache->files );
+    g_free( cache->mons );
+    g_strfreev( cache->env );
+    g_strfreev( cache->files );
 
-		if( cache->delayed_reload_handler )
-			g_source_remove( cache->delayed_reload_handler );
+    if( cache->delayed_reload_handler )
+        g_source_remove( cache->delayed_reload_handler );
 
-        g_slice_free( Cache, cache );
+    g_slice_free( Cache, cache );
 
     if(g_hash_table_size(hash) == 0)
         g_main_loop_quit(main_loop);
@@ -515,7 +515,7 @@ static int create_socket()
     fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
     {
-        g_print("Failed to create socket\n");
+        DEBUG("Failed to create socket");
         return -1;
     }
     memset(&addr, 0, sizeof(addr));
@@ -524,12 +524,12 @@ static int create_socket()
 
     /* remove previous socket file */
     if (unlink(addr.sun_path) < 0) {
-	if (errno != ENOENT)
-	    g_error("Couldn't remove previous socket file %s", addr.sun_path);
+        if (errno != ENOENT)
+            g_error("Couldn't remove previous socket file %s", addr.sun_path);
     }
     /* remove of previous socket file successful */
     else
-	    g_warning("removed previous socket file %s", addr.sun_path);
+        g_warning("removed previous socket file %s", addr.sun_path);
 
     if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
@@ -785,17 +785,17 @@ int main(int argc, char** argv)
 #ifndef DISABLE_DAEMONIZE
     /* Become a daemon */
     if ((pid = fork()) < 0) {
-    	g_error("can't fork");
+        g_error("can't fork");
     }
     else if (pid != 0) {
-	/* exit parent */
-    	exit(0);
+        /* exit parent */
+        exit(0);
     }
 
     /* change working directory to root, so previous working directory
      * can be unmounted */
     if (chdir("/") < 0) {
-    	g_error("can't change directory to /");
+        g_error("can't change directory to /");
     }
 
     open_max = sysconf (_SC_OPEN_MAX);
