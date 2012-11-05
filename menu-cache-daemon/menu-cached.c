@@ -49,7 +49,6 @@
 
 typedef struct _Cache
 {
-    int n_ref;
     char md5[33]; /* cache id */
     /* environment */
     char* menu_name;
@@ -63,26 +62,29 @@ typedef struct _Cache
     /* GFileMonitor* cache_mon; */
 
     guint delayed_reload_handler;
+    guint delayed_free_handler;
 
     /* clients requesting this menu cache */
     GSList* clients;
 }Cache;
+
+GMainLoop* main_loop = NULL;
 
 static GHashTable* hash = NULL;
 
 static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                              GFileMonitorEvent evt, Cache* cache );
 
-static void cache_unref(Cache* cache)
+static gboolean delayed_cache_free(gpointer data)
 {
-    --cache->n_ref;
-    /* DEBUG("menu cache unrefed: ref_count=%d", cache->n_ref); */
-    if( cache->n_ref == 0 )
-    {
+    Cache* cache = data;
         int i;
+
+    if(g_source_is_destroyed(g_main_current_source()))
+        return FALSE;
+
+    g_hash_table_remove( hash, cache->md5 );
         /* DEBUG("menu cache freed"); */
-        g_slist_foreach( cache->clients, (GFunc)g_io_channel_unref, NULL );
-        g_slist_free( cache->clients );
         for(i = 0; i < cache->n_files; ++i)
         {
             g_file_monitor_cancel( cache->mons[i] );
@@ -100,12 +102,20 @@ static void cache_unref(Cache* cache)
 			g_source_remove( cache->delayed_reload_handler );
 
         g_slice_free( Cache, cache );
-    }
-    else if( cache->n_ref == 1 ) /* the last ref count is held by hash table */
-    {
-        /* DEBUG("menu cache removed from hash"); */
-        g_hash_table_remove( hash, cache->md5 );
-    }
+
+    if(g_hash_table_size(hash) == 0)
+        g_main_loop_quit(main_loop);
+    return FALSE;
+}
+
+static void cache_free(Cache* cache)
+{
+    /* shutdown cache in 10 minutes of inactivity */
+    if(!cache->delayed_free_handler)
+        cache->delayed_free_handler = g_timeout_add_seconds(600,
+                                                            delayed_cache_free,
+                                                            cache);
+    DEBUG("menu %p cache unused, removing in 600s", cache);
 }
 
 static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
@@ -541,12 +551,12 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
     GHashTableIter it;
     char* md5;
     Cache* cache;
-    GSList *l, *to_remove = NULL;
+    GSList *l;
     DEBUG("client closed: %p", ch);
     g_hash_table_iter_init (&it, hash);
     while( g_hash_table_iter_next (&it, (gpointer*)&md5, (gpointer*)&cache) )
     {
-        if((l = g_slist_find( cache->clients, ch )) != NULL)
+        while((l = g_slist_find( cache->clients, ch )) != NULL)
         {
             /* FIXME: some clients are closed accidentally without
              * unregister the menu first due to crashes.
@@ -557,15 +567,13 @@ static void on_client_closed(GIOChannel* ch, gpointer user_data)
              * unref will be called twice and incorrect ref. counting
              * will happen.
              */
-            to_remove = g_slist_prepend( to_remove, cache );
             cache->clients = g_slist_delete_link( cache->clients, l );
-            DEBUG("remove channel from cache");
-            g_io_channel_unref(ch);
+            DEBUG("remove channel from cache %p", cache);
+            if(cache->clients == NULL)
+                cache_free(cache);
         }
     }
     /* DEBUG("client closed"); */
-    g_slist_foreach( to_remove, (GFunc)cache_unref, NULL );
-    g_slist_free( to_remove );
 }
 
 static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer user_data)
@@ -676,12 +684,16 @@ retry:
             g_free(cache_file);
 
             g_hash_table_insert(hash, cache->md5, cache);
-            DEBUG("new menu cache added to hash");
-            cache->n_ref = 1;
+            DEBUG("new menu cache %p added to hash", cache);
         }
         /* DEBUG("menu %s requested by client %d", md5, g_io_channel_unix_get_fd(ch)); */
-        ++cache->n_ref;
-        cache->clients = g_slist_prepend( cache->clients, g_io_channel_ref(ch) );
+        cache->clients = g_slist_prepend(cache->clients, ch);
+        if(cache->delayed_free_handler)
+        {
+            g_source_remove(cache->delayed_free_handler);
+            cache->delayed_free_handler = 0;
+        }
+        DEBUG("client %p added to cache %p", ch, cache);
 
         /* generate a fake reload notification */
         DEBUG("fake reload!");
@@ -698,12 +710,12 @@ retry:
         md5 = line + 4;
         DEBUG("unregister: %s", md5);
         cache = (Cache*)g_hash_table_lookup(hash, md5);
-        if( cache )
+        if(cache && cache->clients)
         {
             /* remove the IO channel from the cache */
             cache->clients = g_slist_remove(cache->clients, ch);
-            cache_unref(cache);
-            g_io_channel_unref(ch);
+            if(cache->clients == NULL)
+                cache_free(cache);
         }
         else
             DEBUG("bug! client is not found.");
@@ -759,7 +771,6 @@ static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer
 
 int main(int argc, char** argv)
 {
-    GMainLoop* main_loop = g_main_loop_new( NULL, TRUE );
     GIOChannel* ch;
     int fd, pid, server_fd;
 
@@ -826,8 +837,9 @@ int main(int argc, char** argv)
 
     g_type_init();
 
-    hash = g_hash_table_new_full(g_str_hash, g_str_equal,NULL,(GDestroyNotify)cache_unref);
+    hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
+    main_loop = g_main_loop_new( NULL, TRUE );
     g_main_loop_run( main_loop );
     g_main_loop_unref( main_loop );
 
