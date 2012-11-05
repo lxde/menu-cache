@@ -779,10 +779,13 @@ static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer
 int main(int argc, char** argv)
 {
     GIOChannel* ch;
-    int fd, pid, server_fd;
+    int server_fd;
+#ifndef DISABLE_DAEMONIZE
+    int fd, pid;
 
     long open_max;
     long i;
+#endif
 
     server_fd = create_socket();
 
