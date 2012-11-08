@@ -406,6 +406,7 @@ void menu_cache_unref(MenuCache* cache)
             g_io_channel_unref(server_ch);
             server_fd = -1;
             server_ch = NULL;
+            server_watch = 0;
             hash = NULL;
         }
         MENU_CACHE_UNLOCK;
@@ -1273,6 +1274,16 @@ reconnect:
     return TRUE;
 }
 
+static gboolean update_watch_on_idle(gpointer unused)
+{
+    MENU_CACHE_LOCK;
+    /* always do server interaction in default main loop */
+    if(!server_watch)
+        server_watch = g_io_add_watch(server_ch, G_IO_IN|G_IO_PRI|G_IO_ERR|G_IO_HUP, on_server_io, NULL);
+    MENU_CACHE_UNLOCK;
+    return FALSE;
+}
+
 G_LOCK_DEFINE(connect);
 
 static gboolean connect_server(GCancellable* cancellable)
@@ -1327,10 +1338,10 @@ retry:
         return FALSE;
     }
     server_fd = fd;
-    G_UNLOCK(connect);
     server_ch = g_io_channel_unix_new(fd);
+    G_UNLOCK(connect);
     g_io_channel_set_close_on_unref(server_ch, TRUE);
-    server_watch = g_io_add_watch(server_ch, G_IO_IN|G_IO_PRI|G_IO_ERR|G_IO_HUP, on_server_io, NULL);
+    g_idle_add(update_watch_on_idle, NULL);
     return TRUE;
 }
 
@@ -1427,8 +1438,6 @@ static gpointer menu_cache_loader_thread(gpointer data)
 {
     MenuCache* cache = (MenuCache*)data;
 
-    /* reload existing file first so it will be ready right away */
-    menu_cache_reload(cache);
     /* try to connect server now */
     if(!connect_server(cache->cancellable))
     {
@@ -1477,6 +1486,8 @@ MenuCache* menu_cache_lookup( const char* menu_name )
 
     cache = menu_cache_create(menu_name);
     cache->cancellable = g_cancellable_new();
+    /* reload existing file first so it will be ready right away */
+    menu_cache_reload(cache);
 #if GLIB_CHECK_VERSION(2, 32, 0)
     cache->thr = g_thread_new(menu_name, menu_cache_loader_thread, cache);
 #else
