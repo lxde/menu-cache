@@ -123,6 +123,7 @@ static void unregister_menu_from_server( MenuCache* cache );
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache );
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
 MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path );
+GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 #endif
 
 void menu_cache_init(int flags)
@@ -886,16 +887,43 @@ MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item )
  *
  * Retrieves list of items contained in @dir. Returned data are owned by
  * menu cache and should be not freed by caller.
+ * This API is thread unsafe and should be never called from outside of
+ * default main loop.
  *
  * Returns: (transfer none) (element-type MenuCacheItem): list of items.
  *
  * Since: 0.1.0
+ *
+ * Deprecated: 0.4.0: Use menu_cache_dir_list_children() instead.
  */
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
 {
     return dir->children;
 }
 
+/**
+ * menu_cache_dir_list_children
+ * @dir: a menu cache item
+ *
+ * Retrieves list of items contained in @dir. Returned data should be
+ * freed with g_slist_free_full(list, menu_cache_item_unref) after usage.
+ *
+ * Returns: (transfer full) (element-type MenuCacheItem): list of items.
+ *
+ * Since: 0.4.0
+ */
+GSList* menu_cache_dir_list_children(MenuCacheDir* dir)
+{
+    GSList *children, *l;
+
+    g_return_val_if_fail(MENU_CACHE_ITEM(dir)->type == MENU_CACHE_TYPE_DIR, NULL);
+    MENU_CACHE_LOCK;
+    children = g_slist_copy(dir->children);
+    for(l = children; l; l = l->next)
+        menu_cache_item_ref(l->data);
+    MENU_CACHE_UNLOCK;
+    return children;
+}
 
 /**
  * menu_cache_app_get_exec
@@ -1323,6 +1351,7 @@ retry:
         }
         if((rc == ECONNREFUSED || rc == ENOENT) && retries == 0)
         {
+            DEBUG("no running server found, starting it");
             fork_server();
             ++retries;
             goto retry;

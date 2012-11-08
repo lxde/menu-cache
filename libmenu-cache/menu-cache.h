@@ -106,10 +106,11 @@ char* menu_cache_item_get_file_path( MenuCacheItem* item );
 
 #ifndef G_DISABLE_DEPRECATED
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item );
+GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 #endif
 MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item );
+GSList* menu_cache_dir_list_children( MenuCacheDir* dir );
 
-GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
 
 
