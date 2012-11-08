@@ -212,7 +212,7 @@ static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache)
         {
             item = (MenuCacheItem*)g_slice_new0( MenuCacheApp );
             item->n_ref = 1;
-            if( G_LIKELY( line[1] != '\n' ) ) /* application item */
+            if( G_LIKELY( len > 1 ) ) /* application item */
                 item->type = MENU_CACHE_TYPE_APP;
             else /* separator */
             {
