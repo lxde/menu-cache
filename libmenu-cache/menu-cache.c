@@ -1271,7 +1271,7 @@ G_LOCK_DEFINE(connect);
 
 static gboolean connect_server(GCancellable* cancellable)
 {
-    int fd;
+    int fd, rc;
     struct sockaddr_un addr;
     int retries = 0;
 
@@ -1297,13 +1297,14 @@ retry:
 
     if( connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
     {
+        rc = errno;
         close(fd);
         if(cancellable && g_cancellable_is_cancelled(cancellable))
         {
             G_UNLOCK(connect);
             return TRUE;
         }
-        if(errno == ECONNREFUSED && retries == 0)
+        if((rc == ECONNREFUSED || rc == ENOENT) && retries == 0)
         {
             fork_server();
             ++retries;
