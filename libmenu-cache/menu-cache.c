@@ -610,6 +610,12 @@ gboolean menu_cache_reload( MenuCache* cache )
 
     /* FIXME: this may lock other threads for some time */
     MENU_CACHE_LOCK;
+    if(cache->notifiers == NULL)
+    {
+        /* nobody aware of reloads, stupid clients may think root is forever */
+        MENU_CACHE_UNLOCK;
+        goto _fail;
+    }
     g_strfreev( cache->all_used_files );
 
     /* get all used files */
