@@ -429,6 +429,8 @@ void menu_cache_unref(MenuCache* cache)
         g_free(cache->reg);
         /* g_free( cache->menu_file_path ); */
         g_strfreev( cache->all_used_files );
+        g_strfreev(cache->known_des);
+        g_slist_free(cache->notifiers);
         g_slice_free( MenuCache, cache );
     }
     else
