@@ -38,7 +38,16 @@ typedef struct _MenuCacheDir MenuCacheDir;
 typedef struct _MenuCacheApp MenuCacheApp;
 typedef struct _MenuCache MenuCache;
 
-typedef enum _MenuCacheType
+/**
+ * MenuCacheType:
+ * @MENU_CACHE_TYPE_NONE: invalid type
+ * @MENU_CACHE_TYPE_DIR: item #MenuCacheDir
+ * @MENU_CACHE_TYPE_APP: item #MenuCacheApp
+ * @MENU_CACHE_TYPE_SEP: menu separator
+ *
+ * type of #MenuCacheItem.
+ */
+typedef enum
 {
     MENU_CACHE_TYPE_NONE,
     MENU_CACHE_TYPE_DIR,
@@ -46,17 +55,35 @@ typedef enum _MenuCacheType
     MENU_CACHE_TYPE_SEP
 }MenuCacheType;
 
-typedef enum _MenuCacheShowFlag
+/**
+ * MenuCacheShowFlag:
+ * @SHOW_IN_LXDE: show in LXDE
+ * @SHOW_IN_GNOME: show in GNOME
+ * @SHOW_IN_KDE: show in KDE
+ * @SHOW_IN_XFCE: show in XFCE
+ * @SHOW_IN_ROX: show in ROX
+ *
+ * bitmask of desktop environments where the item should be visible.
+ */
+typedef enum
 {
     SHOW_IN_LXDE = 1 << 0,
     SHOW_IN_GNOME = 1 << 1,
     SHOW_IN_KDE = 1 << 2,
     SHOW_IN_XFCE = 1 << 3,
     SHOW_IN_ROX = 1 << 4,
+    /*< private >*/
     N_KNOWN_DESKTOPS = 5
 }MenuCacheShowFlag;
 
-typedef enum _MenuCacheItemFlag
+/**
+ * MenuCacheItemFlag:
+ * @FLAG_USE_TERMINAL: run this application in terminal
+ * @FLAG_USE_SN: use Startup Notify for this application
+ *
+ * flags for application run.
+ */
+typedef enum
 {
     FLAG_USE_TERMINAL = 1 << 0,
     FLAG_USE_SN = 1 << 1
