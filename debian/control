@@ -4,7 +4,8 @@ Priority: extra
 Maintainer: Debian LXDE Maintainers <lxde-debian@lists.lxde.org>
 Uploaders:
  Andrew Lee (李健秋) <ajqlee@debian.org>, Daniel Baumann <daniel@debian.org>
-Build-Depends: debhelper (>= 9), autotools-dev, intltool, libglib2.0-dev, dh-autoreconf, gtk-doc-tools
+Build-Depends: debhelper (>= 9), autotools-dev, intltool, libglib2.0-dev,
+ gtk-doc-tools, libglib2.0-doc
 Standards-Version: 3.9.3
 Homepage: http://www.lxde.org/
 Vcs-Browser: http://git.lxde.org/gitweb/?p=debian/menu-cache.git
@@ -45,3 +46,14 @@ Description: LXDE implementation of the freedesktop Menu specification (devel)
  the manipulation for freedesktop.org defined application menus.
  .
  This package contains the development files.
+
+Package: libmenu-cache-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Recommends: libglib2.0-doc
+Description: LXDE implementation of the freedesktop Menu specification (docs)
+ Libmenu-cache is a library creating and utilizing caches to speed up
+ the manipulation for freedesktop.org defined application menus.
+ .
+ This package contains the development documentation.
