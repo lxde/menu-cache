@@ -58,3 +58,14 @@ Description: LXDE implementation of the freedesktop Menu specification (docs)
  the manipulation for freedesktop.org defined application menus.
  .
  This package contains the development documentation.
+
+Package: libmenu-cache-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: ${misc:Depends}, libmenu-cache2 (= ${binary:Version})
+Description: LXDE implementation of the freedesktop Menu specification (debug)
+ Libmenu-cache is a library creating and utilizing caches to speed up
+ the manipulation for freedesktop.org defined application menus.
+ .
+ This package contains the debug symbols.
