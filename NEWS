@@ -1,0 +1,22 @@
+Changes in 0.4.0 since 0.3.3:
+
+* The libmenu-cache is made thread-safe. Thread-unsafe APIs are marked
+    as deprecated now and should be never used in any multithreaded
+    application.
+
+* Added creation of HTML developers documentation. It is triggered by
+    configure script option --enable-gtk-doc.
+
+* The libfm-cache is made more responsible by moving some time-critical
+    operations into thread. Also it preloads saved cache file if it
+    exists so it is available near instantly after menu_cache_lookup().
+    Caller still will get updates by adding notifier to the cache.
+
+* Added automatic shutdown of menu-cached server after some inactivity
+    timeout (i.e. all clients were unregistered).
+
+* Fixed few memory problems (referencing errors and memory leaks).
+
+* Fix for bug #3501347: use g_get_tmp_dir() instead of hardcoded "/tmp".
+
+* The libfm-cache ABI bumped to 2.
