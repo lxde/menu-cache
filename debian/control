@@ -4,13 +4,13 @@ Priority: extra
 Maintainer: Debian LXDE Maintainers <lxde-debian@lists.lxde.org>
 Uploaders:
  Andrew Lee (李健秋) <ajqlee@debian.org>, Daniel Baumann <daniel@debian.org>
-Build-Depends: debhelper (>= 9), autotools-dev, intltool, libglib2.0-dev, dh-autoreconf
+Build-Depends: debhelper (>= 9), autotools-dev, intltool, libglib2.0-dev, dh-autoreconf, gtk-doc-tools
 Standards-Version: 3.9.3
 Homepage: http://www.lxde.org/
 Vcs-Browser: http://git.lxde.org/gitweb/?p=debian/menu-cache.git
 Vcs-Git: git://git.lxde.org/git/debian/menu-cache.git
 
-Package: libmenu-cache1
+Package: libmenu-cache2
 Section: libs
 Architecture: any
 Pre-Depends: multiarch-support
@@ -31,7 +31,7 @@ Description: LXDE implementation of the freedesktop Menu specification
 Package: libmenu-cache1-dev
 Section: libdevel
 Architecture: any
-Depends: ${misc:Depends}, libmenu-cache1 (= ${binary:Version})
+Depends: ${misc:Depends}, libmenu-cache2 (= ${binary:Version})
 Description: LXDE implementation of the freedesktop Menu specification (devel)
  Libmenu-cache is a library creating and utilizing caches to speed up
  the manipulation for freedesktop.org defined application menus.

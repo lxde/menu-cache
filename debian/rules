@@ -9,7 +9,7 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=-all
 	dh ${@} --with autoreconf
 
 override_dh_auto_configure:
-	dh_auto_configure -- --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)/libmenu-cache1/libexec
+	dh_auto_configure -- --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)/libmenu-cache2/libexec
 
 override_dh_auto_install:
 	dh_auto_install
