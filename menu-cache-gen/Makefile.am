@@ -15,6 +15,7 @@ libexec_PROGRAMS = menu-cache-gen
 
 menu_cache_gen_SOURCES =		\
 	menu-cache-gen.c		\
+	menu-cache-gen.h		\
 	canonicalize.c			\
 	canonicalize.h			\
 	desktop-entries.c		\
