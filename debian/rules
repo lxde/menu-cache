@@ -6,9 +6,10 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 export DEB_BUILD_MAINT_OPTIONS = hardening=-all
 
 %:
-	dh ${@} --with autoreconf
+	dh ${@}
 
 override_dh_auto_configure:
+	./autogen.sh
 	dh_auto_configure -- --libexecdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)/libmenu-cache2/libexec
 
 override_dh_auto_install:
