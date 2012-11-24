@@ -130,8 +130,8 @@ static void write_entry( FILE* of, GMenuTreeEntry* item )
     char* str;
     int flags = 0;
 
-    if( gmenu_tree_entry_get_is_nodisplay(item) /* || gmenu_tree_entry_get_is_excluded(item) */ )
-        return;
+//    if( gmenu_tree_entry_get_is_nodisplay(item) /* || gmenu_tree_entry_get_is_excluded(item) */ )
+//        return;
 
     /* dekstop id, not necessarily the same as file basename */
     fprintf( of, "-%s\n", gmenu_tree_entry_get_desktop_file_id( item ) );
@@ -187,6 +187,8 @@ static void write_entry( FILE* of, GMenuTreeEntry* item )
         flags |= FLAG_USE_TERMINAL;
     if( gmenu_tree_entry_get_use_startup_notify( item ) )
         flags |= FLAG_USE_SN;
+    if( gmenu_tree_entry_get_is_nodisplay( item ) )
+        flags |= FLAG_IS_NODISPLAY;
     fprintf( of, "%u\n", flags );
 
     /* ShowIn info */
@@ -303,6 +305,7 @@ int main(int argc, char** argv)
     const gchar* const * pdir;
     const char* menu_prefix;
     char* menu_file;
+    char* plus_ptr = NULL;
 
     setlocale (LC_ALL, "");
 
@@ -334,7 +337,20 @@ int main(int argc, char** argv)
     g_hash_table_insert( de_hash, (gpointer)"XFCE", (gpointer)SHOW_IN_XFCE );
     g_hash_table_insert( de_hash, (gpointer)"ROX", (gpointer)SHOW_IN_ROX );
 
-    menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_NONE | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
+    if(ifile)
+        plus_ptr = strrchr(ifile, '+');
+
+    if(plus_ptr != NULL && strcmp(plus_ptr, "+hidden") != 0)
+        plus_ptr = NULL;
+
+    if(plus_ptr)
+    {
+        *plus_ptr = '\0';
+        menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_INCLUDE_NODISPLAY | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
+        *plus_ptr = '+';
+    }
+    else
+        menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
     if( ! menu_tree )
     {
         g_print("Error loading source menu file: %s\n", ifile);
@@ -373,6 +389,8 @@ int main(int argc, char** argv)
     root_dir = gmenu_tree_get_root_directory( menu_tree );
 
     /* add the source menu file itself to the list of files requiring monitor */
+    if(plus_ptr)
+        *plus_ptr = '\0';
     if( g_path_is_absolute(ifile) )
     {
         if( ! g_slist_find_custom(all_used_files, ifile, (GCompareFunc)strcmp ) )
@@ -401,7 +419,7 @@ int main(int argc, char** argv)
         else
             g_free(menu_file);
     }
-    
+
     /* write a list of all files which need to be monitored for changes. */
     /* write number of files first */
     fprintf( of, "%d\n", g_slist_length(all_used_dirs) + g_slist_length(all_used_files) );

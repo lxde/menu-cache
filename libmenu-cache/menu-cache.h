@@ -86,7 +86,8 @@ typedef enum
 typedef enum
 {
     FLAG_USE_TERMINAL = 1 << 0,
-    FLAG_USE_SN = 1 << 1
+    FLAG_USE_SN = 1 << 1,
+    FLAG_IS_NODISPLAY = 1 << 2
 }MenuCacheItemFlag;
 
 void menu_cache_init(int flags);
