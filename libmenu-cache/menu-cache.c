@@ -52,11 +52,27 @@
 static GRecMutex _cache_lock;
 #  define MENU_CACHE_LOCK       g_rec_mutex_lock(&_cache_lock)
 #  define MENU_CACHE_UNLOCK     g_rec_mutex_unlock(&_cache_lock)
+/* for sync lookup */
+static GMutex sync_run_mutex;
+static GCond sync_run_cond;
+#define SET_CACHE_READY(_cache_) do { \
+    g_mutex_lock(&sync_run_mutex); \
+    _cache_->ready = TRUE; \
+    g_cond_broadcast(&sync_run_cond); \
+    g_mutex_unlock(&sync_run_mutex); } while(0)
 #else
 /* before 2.32 GLib had another entity for statically allocated mutexes */
 static GStaticRecMutex _cache_lock = G_STATIC_REC_MUTEX_INIT;
 #  define MENU_CACHE_LOCK       g_static_rec_mutex_lock(&_cache_lock)
 #  define MENU_CACHE_UNLOCK     g_static_rec_mutex_unlock(&_cache_lock)
+/* for sync lookup */
+static GMutex *sync_run_mutex = NULL;
+static GCond *sync_run_cond = NULL;
+#define SET_CACHE_READY(_cache_) do { \
+    g_mutex_lock(sync_run_mutex); \
+    _cache_->ready = TRUE; \
+    if(sync_run_cond) g_cond_broadcast(sync_run_cond); \
+    g_mutex_unlock(sync_run_mutex); } while(0)
 #endif
 
 struct _MenuCacheItem
@@ -104,11 +120,12 @@ struct _MenuCache
     GSList* notifiers;
     GThread* thr;
     GCancellable* cancellable;
+    gboolean ready : 1; /* used for sync access */
 };
 
 static int server_fd = -1;
-static GIOChannel* server_ch = NULL;
-static guint server_watch = 0;
+G_LOCK_DEFINE(connect); /* for server_fd */
+
 static GHashTable* hash = NULL;
 
 /* Don't call this API directly. Use menu_cache_lookup instead. */
@@ -403,11 +420,10 @@ void menu_cache_unref(MenuCache* cache)
             g_hash_table_destroy(hash);
 
             /* DEBUG("disconnect from server"); */
-            g_source_remove(server_watch);
-            g_io_channel_unref(server_ch);
+            G_LOCK(connect);
+            shutdown(server_fd, SHUT_RDWR); /* the IO thread will terminate itself */
             server_fd = -1;
-            server_ch = NULL;
-            server_watch = 0;
+            G_UNLOCK(connect);
             hash = NULL;
         }
         MENU_CACHE_UNLOCK;
@@ -445,11 +461,14 @@ void menu_cache_unref(MenuCache* cache)
  *
  * Deprecated: 0.3.4: Use menu_cache_dup_root_dir() instead.
  */
-/* FIXME: this is thread-unsafe so should be deprecated in favor
-   to some other API which will return referenced data! */
 MenuCacheDir* menu_cache_get_root_dir( MenuCache* cache )
 {
-    return cache->root_dir;
+    MenuCacheDir* dir = menu_cache_dup_root_dir(cache);
+    /* NOTE: this is very ugly hack but cache->root_dir may be changed by
+       cache reload in server-io thread, so we should keep it alive :( */
+    if(dir)
+        g_timeout_add_seconds(10, (GSourceFunc)menu_cache_item_unref, dir);
+    return dir;
 }
 
 /**
@@ -519,12 +538,17 @@ MenuCacheNotifyId menu_cache_add_reload_notify(MenuCache* cache, MenuCacheReload
 {
     GSList* l = g_slist_alloc();
     CacheReloadNotifier* n = g_slice_new(CacheReloadNotifier);
+    gboolean is_first;
     n->func = func;
     n->user_data = user_data;
     l->data = n;
     MENU_CACHE_LOCK;
+    is_first = (cache->root_dir == NULL && cache->notifiers == NULL);
     cache->notifiers = g_slist_concat( cache->notifiers, l );
     MENU_CACHE_UNLOCK;
+    /* reload existing file first so it will be ready right away */
+    if(is_first)
+        menu_cache_reload(cache);
     return (MenuCacheNotifyId)l;
 }
 
@@ -555,7 +579,8 @@ static gboolean reload_notify(gpointer data)
     for( l = cache->notifiers; l; l = l->next )
     {
         CacheReloadNotifier* n = (CacheReloadNotifier*)l->data;
-        n->func( cache, n->user_data );
+        if(n->func)
+            n->func( cache, n->user_data );
     }
     MENU_CACHE_UNLOCK;
     return FALSE;
@@ -854,11 +879,14 @@ char* menu_cache_item_get_file_path( MenuCacheItem* item )
  *
  * Deprecated: 0.3.4: Use menu_cache_item_dup_parent() instead.
  */
-/* FIXME: this is thread-unsafe so should be deprecated in favor
-   to some other API which will return referenced data! */
 MenuCacheDir* menu_cache_item_get_parent( MenuCacheItem* item )
 {
-    return item->parent;
+    MenuCacheDir* dir = menu_cache_item_dup_parent(item);
+    /* NOTE: this is very ugly hack but parent may be changed by item freeing
+       so we should keep it alive :( */
+    if(dir)
+        g_timeout_add_seconds(10, (GSourceFunc)menu_cache_item_unref, dir);
+    return dir;
 }
 
 /**
@@ -900,6 +928,10 @@ MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item )
  */
 GSList* menu_cache_dir_get_children( MenuCacheDir* dir )
 {
+    /* NOTE: this is very ugly hack but dir may be freed by cache reload
+       in server-io thread, so we should keep it alive :( */
+    g_timeout_add_seconds(10, (GSourceFunc)menu_cache_item_unref,
+                          menu_cache_item_ref(MENU_CACHE_ITEM(dir)));
     return dir->children;
 }
 
@@ -1230,30 +1262,48 @@ retry_wait:
     return TRUE;
 }
 
-static gboolean on_server_io(GIOChannel* ch, GIOCondition cond, gpointer user_data)
+static gpointer server_io_thread(gpointer _unused)
 {
-    GIOStatus st;
-    char* line;
-    gsize len;
+    char buf[1024]; /* protocol has a lot shorter strings */
+    ssize_t sz;
+    size_t ptr = 0;
+    int fd;
+    GHashTableIter it;
+    char* menu_name;
+    MenuCache* cache;
 
-    if( cond & (G_IO_ERR|G_IO_HUP) )
+    G_LOCK(connect);
+    fd = server_fd;
+    G_UNLOCK(connect);
+    while(fd >= 0)
     {
-reconnect:
-        DEBUG("IO error %d, try to re-connect.", cond);
-        g_io_channel_unref(ch);
-        server_fd = -1;
-        if( ! connect_server(NULL) )
+        sz = read(fd, &buf[ptr], sizeof(buf) - ptr);
+        if(sz <= 0) /* socket error or EOF */
         {
-            g_print("fail to re-connect to the server.\n");
-        }
-        else
-        {
-            GHashTableIter it;
-            char* menu_name;
-            MenuCache* cache;
+            G_LOCK(connect);
+            if(fd != server_fd) /* someone replaced us?! go out immediately! */
+            {
+                G_UNLOCK(connect);
+                break;
+            }
+            server_fd = -1;
+            G_UNLOCK(connect);
+            DEBUG("connect failed, trying reconnect");
+            if( ! connect_server(NULL) )
+            {
+                g_print("fail to re-connect to the server.\n");
+                MENU_CACHE_LOCK;
+                if(hash)
+                {
+                    g_hash_table_iter_init(&it, hash);
+                    while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
+                        SET_CACHE_READY(cache);
+                }
+                MENU_CACHE_UNLOCK;
+                break;
+            }
             DEBUG("successfully restart server.\nre-register menus.");
             /* re-register all menu caches */
-
             MENU_CACHE_LOCK;
             if(hash)
             {
@@ -1263,61 +1313,63 @@ reconnect:
                     /* FIXME: need we remove it from hash if failed? */
             }
             MENU_CACHE_UNLOCK;
+            continue;
         }
-        return FALSE;
-    }
-
-    if( cond & (G_IO_IN|G_IO_PRI) )
-    {
-    retry:
-        st = g_io_channel_read_line( ch, &line, &len, NULL, NULL );
-        if( st == G_IO_STATUS_AGAIN )
-            goto retry;
-        if ( st != G_IO_STATUS_NORMAL || len < 4 )
+        while(sz > 0)
         {
-            DEBUG("server IO error!!");
-            goto reconnect;
-            return FALSE;
-        }
-        DEBUG("server line: %s", line);
-        if( 0 == memcmp( line, "REL:", 4 ) ) /* reload */
-        {
-            GHashTableIter it;
-            char* menu_name;
-            MenuCache* cache;
-            line[len - 1] = '\0';
-            char* menu_cache_id = line + 4;
-            DEBUG("server ask us to reload cache: %s", menu_cache_id);
-
-            MENU_CACHE_LOCK;
-            g_hash_table_iter_init(&it, hash);
-            while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
+            while(sz > 0)
             {
-                if(0 == memcmp(cache->md5, menu_cache_id, 32))
-                {
-                    DEBUG("RELOAD!");
-                    menu_cache_reload(cache);
+                if(buf[ptr] == '\n')
                     break;
-                }
+                sz--;
+                ptr++;
             }
-            MENU_CACHE_UNLOCK;
+            if(ptr == sizeof(buf)) /* EOB reached, seems we got garbage */
+            {
+                g_warning("menu cache: got garbage from server, break connect");
+                shutdown(fd, SHUT_RDWR); /* drop connection */
+                break; /* we handle it above */
+            }
+            else if(sz == 0) /* incomplete line, wait for data again */
+                break;
+            /* we got a line, let check what we got */
+            buf[ptr] = '\0';
+            if(memcmp(buf, "REL:", 4) == 0) /* reload */
+            {
+                DEBUG("server ask us to reload cache: %s", &buf[4]);
+                MENU_CACHE_LOCK;
+                if(hash)
+                {
+                    g_hash_table_iter_init(&it, hash);
+                    while(g_hash_table_iter_next(&it, (gpointer*)&menu_name, (gpointer*)&cache))
+                    {
+                        if(memcmp(cache->md5, &buf[4], 32) == 0)
+                        {
+                            DEBUG("RELOAD!");
+                            menu_cache_reload(cache);
+                            SET_CACHE_READY(cache);
+                            break;
+                        }
+                    }
+                }
+                MENU_CACHE_UNLOCK;
+                /* DEBUG("cache reloaded"); */
+            }
+            else
+                g_warning("menu cache: unrecognized input: %s", buf);
+            /* go to next line */
+            sz--;
+            if(sz > 0)
+                memmove(buf, &buf[ptr+1], sz);
+            ptr = 0;
         }
-        g_free( line );
     }
-    return TRUE;
+    /* DEBUG("server io thread terminated"); */
+#if GLIB_CHECK_VERSION(2, 32, 0)
+    g_thread_unref(g_thread_self());
+#endif
+    return NULL;
 }
-
-static gboolean update_watch_on_idle(gpointer unused)
-{
-    MENU_CACHE_LOCK;
-    /* always do server interaction in default main loop */
-    if(!server_watch)
-        server_watch = g_io_add_watch(server_ch, G_IO_IN|G_IO_PRI|G_IO_ERR|G_IO_HUP, on_server_io, NULL);
-    MENU_CACHE_UNLOCK;
-    return FALSE;
-}
-
-G_LOCK_DEFINE(connect);
 
 static gboolean connect_server(GCancellable* cancellable)
 {
@@ -1372,10 +1424,12 @@ retry:
         return FALSE;
     }
     server_fd = fd;
-    server_ch = g_io_channel_unix_new(fd);
     G_UNLOCK(connect);
-    g_io_channel_set_close_on_unref(server_ch, TRUE);
-    g_idle_add(update_watch_on_idle, NULL);
+#if GLIB_CHECK_VERSION(2, 32, 0)
+    g_thread_new("menu-cache-io", server_io_thread, NULL);
+#else
+    g_thread_create(server_io_thread, NULL, FALSE, NULL);
+#endif
     return TRUE;
 }
 
@@ -1476,11 +1530,14 @@ static gpointer menu_cache_loader_thread(gpointer data)
     if(!connect_server(cache->cancellable))
     {
         g_print("unable to connect to menu-cached.\n");
+        SET_CACHE_READY(cache);
         return NULL;
     }
     /* and request update from server */
-    if(!g_cancellable_is_cancelled(cache->cancellable))
+    if(!cache->cancellable || !g_cancellable_is_cancelled(cache->cancellable))
         register_menu_to_server(cache);
+    else
+        SET_CACHE_READY(cache);
     return NULL;
 }
 
@@ -1504,6 +1561,13 @@ MenuCache* menu_cache_lookup( const char* menu_name )
 
     /* lookup in a hash table for already loaded menus */
     MENU_CACHE_LOCK;
+#if !GLIB_CHECK_VERSION(2, 32, 0)
+    /* FIXME: destroy them on application exit? */
+    if(!sync_run_mutex)
+        sync_run_mutex = g_mutex_new();
+    if(!sync_run_cond)
+        sync_run_cond = g_cond_new();
+#endif
     if( G_UNLIKELY( ! hash ) )
         hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL );
     else
@@ -1520,20 +1584,12 @@ MenuCache* menu_cache_lookup( const char* menu_name )
 
     cache = menu_cache_create(menu_name);
     cache->cancellable = g_cancellable_new();
-    /* reload existing file first so it will be ready right away */
-    menu_cache_reload(cache);
 #if GLIB_CHECK_VERSION(2, 32, 0)
     cache->thr = g_thread_new(menu_name, menu_cache_loader_thread, cache);
 #else
     cache->thr = g_thread_create(menu_cache_loader_thread, cache, TRUE, NULL);
 #endif
     return cache;
-}
-
-static void on_menu_cache_reload(MenuCache* mc, gpointer user_data)
-{
-    GMainLoop* mainloop = (GMainLoop*)user_data;
-    g_main_loop_quit(mainloop);
 }
 
 /**
@@ -1556,13 +1612,22 @@ MenuCache* menu_cache_lookup_sync( const char* menu_name )
         menu_cache_item_unref(MENU_CACHE_ITEM(root_dir));
     else /* if it's not yet loaded */
     {
-        /* FIXME: is using mainloop the efficient way to do it? */
-        GMainLoop* mainloop = g_main_loop_new(NULL, FALSE);
         MenuCacheNotifyId notify_id;
-        notify_id = menu_cache_add_reload_notify(mc, on_menu_cache_reload,
-                                                 mainloop);
-        g_main_loop_run(mainloop);
-        g_main_loop_unref(mainloop);
+        /* add stub */
+        notify_id = menu_cache_add_reload_notify(mc, NULL, NULL);
+#if GLIB_CHECK_VERSION(2, 32, 0)
+        g_mutex_lock(&sync_run_mutex);
+        while(!mc->ready)
+            g_cond_wait(&sync_run_cond, &sync_run_mutex);
+        g_mutex_unlock(&sync_run_mutex);
+#else
+        g_mutex_lock(sync_run_mutex);
+        g_debug("menu_cache_lookup_sync: enter wait %p", mc);
+        while(!mc->ready)
+            g_cond_wait(sync_run_cond, sync_run_mutex);
+        g_debug("menu_cache_lookup_sync: leave wait");
+        g_mutex_unlock(sync_run_mutex);
+#endif
         menu_cache_remove_reload_notify(mc, notify_id);
     }
     return mc;
