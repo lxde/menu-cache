@@ -803,6 +803,9 @@ int main(int argc, char** argv)
         exit(0);
     }
 
+    /* reset session to forget about parent process completely */
+    setsid();
+
     /* change working directory to root, so previous working directory
      * can be unmounted */
     if (chdir("/") < 0) {
