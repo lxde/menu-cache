@@ -53,6 +53,7 @@ intltool-update.in
 src/xml-purge
 libmenu-cache/libmenu-cache-uninstalled.pc
 libmenu-cache/libmenu-cache.pc
+libmenu-cache/menu-cache.h
 menu-cache-daemon/menu-cached
 menu-cache-gen/menu-cache-gen
 docs/reference/libmenu-cache/libmenu-cache*

@@ -1,3 +1,17 @@
+Changes in 0.5.0 since 0.4.1:
+
+* Added a possibility to include NoDisplay files into cache file. This
+    can be achieved by adding suffix '+hidden' to requested name in call
+    to menu_cache_lookup(). The hidden items will be returned along with
+    visible ones by any API that returns listing of cache directory. The
+    menu_cache_app_get_is_visible() API will return FALSE for hidden item
+    with any DE mask passed to the API.
+
+* New macro MENU_CACHE_CHECK_VERSION() to test version of library.
+
+* Two bugfixes for crashes.
+
+
 Changes in 0.4.1 since 0.4.0:
 
 * Minor bugfix, the resulting tar file was not complete.
