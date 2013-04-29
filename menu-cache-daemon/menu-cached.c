@@ -579,7 +579,6 @@ static void on_client_closed(gpointer user_data)
         }
     }
     /* DEBUG("client closed"); */
-    g_io_channel_unref(ch);
 }
 
 static gboolean on_client_data_in(GIOChannel* ch, GIOCondition cond, gpointer user_data)
