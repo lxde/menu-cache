@@ -29,6 +29,15 @@
 
 G_BEGIN_DECLS
 
+#define __VERSION_MAJOR @MC_VERSION_MAJOR@
+#define __VERSION_MINOR @MC_VERSION_MINOR@
+#define __VERSION_MICRO @MC_VERSION_MICRO@
+
+#define MENU_CACHE_CHECK_VERSION(_a,_b,_c) \
+    (__VERSION_MAJOR > _a || \
+    (__VERSION_MAJOR == _a && __VERSION_MINOR > _b) || \
+    (__VERSION_MAJOR == _a && __VERSION_MINOR == _b && __VERSION_MICRO >= _c))
+
 #define    MENU_CACHE_ITEM(x)    ((MenuCacheItem*)x)
 #define    MENU_CACHE_DIR(x)    ((MenuCacheDir*)x)
 #define    MENU_CACHE_APP(x)    ((MenuCacheApp*)x)

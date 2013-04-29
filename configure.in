@@ -57,11 +57,19 @@ GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 AM_CONDITIONAL([ENABLE_GTK_DOC], false)
 ])
 
+dnl Make version subfields for MENU_CACHE_CHECK_VERSION macro
+ac_version_subst_str=`echo $VERSION | awk -F '.' '/.*/ { printf "MC_VERSION_MAJOR=%d MC_VERSION_MINOR=%d MC_VERSION_MICRO=%d", $1, $2, $3 }'`
+eval ${ac_version_subst_str}
+AC_SUBST(MC_VERSION_MAJOR)
+AC_SUBST(MC_VERSION_MINOR)
+AC_SUBST(MC_VERSION_MICRO)
+
 AC_OUTPUT([
 Makefile
 libmenu-cache/Makefile
 libmenu-cache/libmenu-cache.pc
 libmenu-cache/libmenu-cache-uninstalled.pc
+libmenu-cache/menu-cache.h
 menu-cache-gen/Makefile
 menu-cache-daemon/Makefile
 docs/Makefile
