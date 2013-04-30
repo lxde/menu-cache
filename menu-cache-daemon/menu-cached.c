@@ -759,8 +759,8 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
 static void terminate(int sig)
 {
 /* #ifndef HAVE_ABSTRACT_SOCKETS */
-    char path[256];
-    get_socket_name(path, 256);
+    char path[1024];
+    get_socket_name(path, sizeof(path));
     unlink(path);
     exit(0);
 /* #endif */
@@ -770,7 +770,6 @@ static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer
 {
     /* FIXME: is this possible? */
     /* the server socket is accidentally closed. terminate the server. */
-    g_io_channel_unref(ch);
     terminate(SIGTERM);
     return TRUE;
 }
