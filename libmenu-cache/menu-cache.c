@@ -950,7 +950,8 @@ GSList* menu_cache_dir_list_children(MenuCacheDir* dir)
 {
     GSList *children, *l;
 
-    g_return_val_if_fail(MENU_CACHE_ITEM(dir)->type == MENU_CACHE_TYPE_DIR, NULL);
+    if(MENU_CACHE_ITEM(dir)->type != MENU_CACHE_TYPE_DIR)
+        return NULL;
     MENU_CACHE_LOCK;
     children = g_slist_copy(dir->children);
     for(l = children; l; l = l->next)
