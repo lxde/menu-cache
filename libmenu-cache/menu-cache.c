@@ -756,8 +756,8 @@ MenuCacheType menu_cache_item_get_type( MenuCacheItem* item )
  * menu_cache_item_get_id
  * @item: a menu cache item
  *
- * Retrieves ID (short name) of @item. Returned data are owned by menu
- * cache and should be not freed by caller.
+ * Retrieves ID (short name such as 'application.desktop') of @item.
+ * Returned data are owned by menu cache and should be not freed by caller.
  *
  * Returns: (transfer none): item ID.
  *
@@ -1717,4 +1717,52 @@ guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_e
     if( strcmp(desktop_env, "ROX") == 0 )
         return SHOW_IN_ROX;
     return 0;
+}
+
+static MenuCacheItem *_scan_by_id(MenuCacheItem *item, const char *id)
+{
+    GSList *l;
+
+    if (item)
+        switch (menu_cache_item_get_type(item))
+        {
+            case MENU_CACHE_TYPE_DIR:
+                for (l = MENU_CACHE_DIR(item)->children; l; l = l->next)
+                {
+                    item = _scan_by_id(MENU_CACHE_ITEM(l->data), id);
+                    if (item)
+                        return item;
+                }
+                break;
+            case MENU_CACHE_TYPE_APP:
+                if (g_strcmp0(menu_cache_item_get_id(item), id) == 0)
+                    return item;
+                break;
+            default: ;
+        }
+    return NULL;
+}
+
+/**
+ * menu_cache_find_item_by_id
+ * @id: item ID (name such as 'application.desktop')
+ *
+ * Searches if @id already exists within @cache and returns found item.
+ * Returned data should be freed with menu_cache_item_unref() after usage.
+ *
+ * Returns: (transfer full): found item or %NULL.
+ *
+ * Since: 0.5.0
+ */
+MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id)
+{
+    MenuCacheItem *item = NULL;
+
+    MENU_CACHE_LOCK;
+    if (cache && id)
+        item = _scan_by_id(MENU_CACHE_ITEM(cache->root_dir), id);
+    if (item)
+        menu_cache_item_ref(item);
+    MENU_CACHE_UNLOCK;
+    return item;
 }
