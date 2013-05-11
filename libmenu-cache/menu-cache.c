@@ -1169,7 +1169,7 @@ MenuCacheItem* menu_cache_item_from_path( MenuCache* cache, const char* path )
         for( ; l; l = l->next )
         {
             item = MENU_CACHE_ITEM(l->data);
-            if( strcmp( item->id, names[i] ) == 0 )
+            if( g_strcmp0( item->id, names[i] ) == 0 )
             {
                 if( item->type == MENU_CACHE_TYPE_DIR )
                     dir = MENU_CACHE_DIR(item);
