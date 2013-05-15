@@ -1748,6 +1748,7 @@ static MenuCacheItem *_scan_by_id(MenuCacheItem *item, const char *id)
 
 /**
  * menu_cache_find_item_by_id
+ * @cache: a menu cache descriptor
  * @id: item ID (name such as 'application.desktop')
  *
  * Searches if @id already exists within @cache and returns found item.

@@ -89,6 +89,7 @@ typedef enum
  * MenuCacheItemFlag:
  * @FLAG_USE_TERMINAL: run this application in terminal
  * @FLAG_USE_SN: use Startup Notify for this application
+ * @FLAG_IS_NODISPLAY: application is hidden from menu
  *
  * flags for application run.
  */
