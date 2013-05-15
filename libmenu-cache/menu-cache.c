@@ -686,9 +686,11 @@ _fail:
  * Decreases reference counter on @item. When reference count becomes 0
  * then resources associated with @item will be freed.
  *
+ * Returns: %FALSE (since 0.5.0)
+ *
  * Since: 0.1.0
  */
-void menu_cache_item_unref(MenuCacheItem* item)
+gboolean menu_cache_item_unref(MenuCacheItem* item)
 {
     /* DEBUG("item_unref(%s): %d", item->id, item->n_ref); */
     /* We need a lock here unfortunately since another thread may have access
@@ -735,6 +737,7 @@ void menu_cache_item_unref(MenuCacheItem* item)
         }
     }
     MENU_CACHE_UNLOCK;
+    return FALSE;
 }
 
 /**
