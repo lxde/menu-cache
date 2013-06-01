@@ -6,12 +6,12 @@ INCLUDES =				\
 	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
 	$(WARN_CFLAGS)			\
-    $(ADDITIONAL_FLAGS) \
-	-DMENUCACHE_LIBEXECDIR="\"$(libexecdir)\"" \
+	$(ADDITIONAL_FLAGS) \
+	-DMENUCACHE_LIBEXECDIR="\"$(pkglibexecdir)\"" \
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
-libexec_PROGRAMS = menu-cached
+pkglibexec_PROGRAMS = menu-cached
 
 menu_cached_SOURCES =		\
 	menu-cached.c			\

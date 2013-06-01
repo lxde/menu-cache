@@ -6,7 +6,7 @@ INCLUDES =				\
 	$(DEBUG_CFLAGS) \
 	$(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
-	-DMENUCACHE_LIBEXECDIR="\"$(libexecdir)\"" \
+	-DMENUCACHE_LIBEXECDIR="\"$(pkglibexecdir)\"" \
 	$(NULL)
 
 lib_LTLIBRARIES = libmenu-cache.la

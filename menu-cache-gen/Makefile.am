@@ -11,7 +11,7 @@ INCLUDES =				\
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
-libexec_PROGRAMS = menu-cache-gen
+pkglibexec_PROGRAMS = menu-cache-gen
 
 menu_cache_gen_SOURCES =		\
 	menu-cache-gen.c		\
