@@ -964,6 +964,21 @@ GSList* menu_cache_dir_list_children(MenuCacheDir* dir)
 }
 
 /**
+ * menu_cache_dir_is_visible
+ * @dir: a menu cache item
+ *
+ * Checks if @dir should be visible.
+ *
+ * Returns: %TRUE if @dir is visible.
+ *
+ * Since: 0.5.0
+ */
+gboolean menu_cache_dir_is_visible(MenuCacheDir *dir)
+{
+    return (dir->children != NULL);
+}
+
+/**
  * menu_cache_app_get_exec
  * @app: a menu cache item
  *

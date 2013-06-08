@@ -346,7 +346,7 @@ int main(int argc, char** argv)
     if(plus_ptr)
     {
         *plus_ptr = '\0';
-        menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_INCLUDE_NODISPLAY | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED );
+        menu_tree = gmenu_tree_lookup( ifile, GMENU_TREE_FLAGS_INCLUDE_NODISPLAY | GMENU_TREE_FLAGS_INCLUDE_EXCLUDED | GMENU_TREE_FLAGS_SHOW_EMPTY );
         *plus_ptr = '+';
     }
     else
