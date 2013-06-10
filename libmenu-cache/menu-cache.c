@@ -1193,6 +1193,7 @@ MenuCacheItem* menu_cache_item_from_path( MenuCache* cache, const char* path )
                     dir = MENU_CACHE_DIR(item);
                 break;
             }
+            item = NULL;
         }
         if( !item )
             break;
