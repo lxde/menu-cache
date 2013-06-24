@@ -848,7 +848,9 @@ int main(int argc, char** argv)
     g_io_add_watch(ch, G_IO_ERR, on_server_conn_close, NULL);
     g_io_channel_unref(ch);
 
+#if !GLIB_CHECK_VERSION(2, 36, 0)
     g_type_init();
+#endif
 
     hash = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
