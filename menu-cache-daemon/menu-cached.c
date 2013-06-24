@@ -606,7 +606,7 @@ retry:
     --len;
     line[len] = 0;
 
-    DEBUG("line(%d) = %s", len, line);
+    DEBUG("line(%d) = %s", (int)len, line);
 
     if( memcmp(line, "REG:", 4) == 0 )
     {
