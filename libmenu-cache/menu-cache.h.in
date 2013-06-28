@@ -148,15 +148,17 @@ GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 #endif
 MenuCacheDir* menu_cache_item_dup_parent( MenuCacheItem* item );
 GSList* menu_cache_dir_list_children( MenuCacheDir* dir );
+MenuCacheItem *menu_cache_find_child_by_id(MenuCacheDir *dir, const char *id);
+MenuCacheItem *menu_cache_find_child_by_name(MenuCacheDir *dir, const char *name);
 
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
-
 
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
 
 guint32 menu_cache_app_get_show_flags( MenuCacheApp* app );
 gboolean menu_cache_app_get_is_visible( MenuCacheApp* app, guint32 de_flags );
+gboolean menu_cache_dir_is_visible(MenuCacheDir *dir);
 
 gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app );
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app );

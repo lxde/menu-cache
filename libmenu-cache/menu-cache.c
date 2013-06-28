@@ -964,6 +964,66 @@ GSList* menu_cache_dir_list_children(MenuCacheDir* dir)
 }
 
 /**
+ * menu_cache_find_child_by_id
+ * @dir: a menu cache item
+ * @id: a string to find
+ *
+ * Checks if @dir has a child with given @id. Returned data should be
+ * freed with menu_cache_item_unref() when no longer needed.
+ *
+ * Returns: (transfer full): found item or %NULL.
+ *
+ * Since: 0.5.0
+ */
+MenuCacheItem *menu_cache_find_child_by_id(MenuCacheDir *dir, const char *id)
+{
+    GSList *child;
+    MenuCacheItem *item = NULL;
+
+    if (MENU_CACHE_ITEM(dir)->type != MENU_CACHE_TYPE_DIR || id == NULL)
+        return NULL;
+    MENU_CACHE_LOCK;
+    for (child = dir->children; child; child = child->next)
+        if (g_strcmp0(MENU_CACHE_ITEM(child->data)->id, id) == 0)
+        {
+            item = menu_cache_item_ref(child->data);
+            break;
+        }
+    MENU_CACHE_UNLOCK;
+    return item;
+}
+
+/**
+ * menu_cache_find_child_by_name
+ * @dir: a menu cache item
+ * @name: a string to find
+ *
+ * Checks if @dir has a child with given @name. Returned data should be
+ * freed with menu_cache_item_unref() when no longer needed.
+ *
+ * Returns: (transfer full): found item or %NULL.
+ *
+ * Since: 0.5.0
+ */
+MenuCacheItem *menu_cache_find_child_by_name(MenuCacheDir *dir, const char *name)
+{
+    GSList *child;
+    MenuCacheItem *item = NULL;
+
+    if (MENU_CACHE_ITEM(dir)->type != MENU_CACHE_TYPE_DIR || name == NULL)
+        return NULL;
+    MENU_CACHE_LOCK;
+    for (child = dir->children; child; child = child->next)
+        if (g_strcmp0(MENU_CACHE_ITEM(child->data)->name, name) == 0)
+        {
+            item = menu_cache_item_ref(child->data);
+            break;
+        }
+    MENU_CACHE_UNLOCK;
+    return item;
+}
+
+/**
  * menu_cache_dir_is_visible
  * @dir: a menu cache item
  *
