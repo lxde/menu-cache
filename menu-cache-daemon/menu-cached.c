@@ -121,7 +121,7 @@ static void cache_free(Cache* cache)
 static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
 {
     char line[ 4096 ];
-    int i, n;
+    int i, n, x;
     char** files;
     int ver_maj, ver_min;
 
@@ -141,20 +141,31 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
     if( ! fgets( line, G_N_ELEMENTS(line), f ) )
         return FALSE;
 
-    *n_files = n = atoi( line );
+    n = atoi( line );
     files = g_new0( char*, n + 1 );
 
-    for( i = 0; i < n; ++i )
+    for( i = 0, x = 0; i < n; ++i )
     {
         int len;
+        GFile *gfile;
         if( ! fgets( line, G_N_ELEMENTS(line), f ) )
             return FALSE;
 
         len = strlen( line );
         if( len <= 1 )
             return FALSE;
-        files[ i ] = g_strndup( line, len - 1 ); /* don't include \n */
+        files[ x ] = g_strndup( line, len - 1 ); /* don't include \n */
+        gfile = g_file_new_for_path(files[x]);
+        if (g_file_query_exists(gfile, NULL))
+            x++;
+        else
+        {
+            DEBUG("ignoring not existant file from menu-cache-gen: %s", files[x]);
+            g_free(files[x]);
+        }
+        g_object_unref(gfile);
     }
+    *n_files = x;
     *used_files = files;
     return TRUE;
 }
