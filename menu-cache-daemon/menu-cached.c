@@ -356,7 +356,11 @@ static gboolean is_desktop_file_in_cache(Cache* cache, int dir_idx, const char* 
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, Cache* cache )
 {
-    /* DEBUG("file %s is changed (%d).", g_file_get_path(gf), evt); */
+#ifdef G_ENABLE_DEBUG
+    char *path = g_file_get_path(gf);
+    g_debug("file %s is changed (%d).", path, evt);
+    g_free(path);
+#endif
     /* if( mon != cache->cache_mon ) */
     {
         /* Optimization: Some files in the dir are changed, but it
