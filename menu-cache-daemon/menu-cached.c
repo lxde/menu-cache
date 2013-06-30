@@ -155,7 +155,7 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
         if( len <= 1 )
             return FALSE;
         files[ x ] = g_strndup( line, len - 1 ); /* don't include \n */
-        gfile = g_file_new_for_path(files[x]);
+        gfile = g_file_new_for_path(files[x]+1);
         if (g_file_query_exists(gfile, NULL))
             x++;
         else
