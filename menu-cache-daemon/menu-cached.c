@@ -2,6 +2,7 @@
  *      menu-cached.c
  *
  *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
+ *      Copyright 2012-2013 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -61,6 +62,7 @@ typedef struct _Cache
     GFileMonitor** mons;
     /* GFileMonitor* cache_mon; */
 
+    gboolean need_reload;
     guint delayed_reload_handler;
     guint delayed_free_handler;
 
@@ -240,16 +242,13 @@ static gboolean regenerate_cache( const char* menu_name,
     return TRUE;
 }
 
-static gboolean delayed_reload( Cache* cache )
+static void do_reload(Cache* cache)
 {
     GSList* l;
     char buf[38];
     char* cache_file;
     int i;
     GFile* gf;
-
-    if(g_source_is_destroyed(g_main_current_source()))
-        return FALSE;
 
     /* DEBUG("Re-generation of cache is needed!"); */
     /* DEBUG("call menu-cache-gen to re-generate the cache"); */
@@ -306,7 +305,18 @@ static gboolean delayed_reload( Cache* cache )
         if(write(g_io_channel_unix_get_fd(ch), buf, 37) < 37)
             g_io_channel_shutdown(ch, FALSE, NULL);
     }
+    cache->need_reload = FALSE;
+}
+
+static gboolean delayed_reload( Cache* cache )
+{
+    if(g_source_is_destroyed(g_main_current_source()))
+        return FALSE;
+
     cache->delayed_reload_handler = 0;
+    if(cache->need_reload)
+        do_reload(cache);
+
     return FALSE;
 }
 
@@ -467,7 +477,14 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
     }
 
     if( cache->delayed_reload_handler )
+    {
+        /* we got some change in last 3 seconds... not reload again */
+        cache->need_reload = TRUE;
         g_source_remove(cache->delayed_reload_handler);
+    }
+    else
+        /* no reload in last 3 seconds... good, do it immediately */
+        do_reload(cache);
 
     cache->delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
