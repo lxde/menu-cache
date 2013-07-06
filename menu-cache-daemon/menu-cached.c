@@ -409,6 +409,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                 /* only *.desktop and *.directory files can affect the content of the menu. */
                 if( g_str_has_suffix(base_name, ".desktop") )
                 {
+#if 0
                     /* FIXME: there seems to be some problems here... so weird. */
                     /* further optimization:
                      * If the changed file is a desktop entry file with
@@ -432,6 +433,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                         g_key_file_free(kf);
                     }
                     else
+#endif
                         skip = FALSE;
                 }
                 else if( g_str_has_suffix(base_name, ".directory") )
@@ -439,10 +441,14 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 
                 if( skip )
                 {
+#if 0
                     /* FIXME: utime to update the mtime of cached file. */
                     /* FIXME: temporarily disable monitor of the cached file before utime() */
                     /* without this, directory mtime will > mtime of cache file,
                      * and the menu will get re-generated unnecessarily the next time. */
+                    /* 08.07.2013: it is weird - if few files were changed
+                       at once but one of them was ignored, all others may be
+                       ignored as well */
                     struct utimbuf ut;
                     char* cache_file;
 
@@ -468,6 +474,7 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                     g_object_unref(gf);
                     g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
                     */
+#endif
                     DEBUG("files are changed, but no re-generation is needed.");
                     return;
                 }
