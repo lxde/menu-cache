@@ -25,5 +25,5 @@ override_dh_install:
 	dh_install --fail-missing
 
 override_dh_strip:
-	dh_strip -plibmenu-cache2 --dbg-package=libmenu-cache-dbg
-	dh_strip -Nlibmenu-cache2
+	dh_strip -plibmenu-cache3 --dbg-package=libmenu-cache-dbg
+	dh_strip -Nlibmenu-cache3
