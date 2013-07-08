@@ -30,7 +30,8 @@ Description: LXDE implementation of the freedesktop Menu specification
   * Heavily reduced disk I/O.
 
 Package: libmenu-cache1-dev
-Section: libdevel
+Section: oldlibs
+Priority: extra
 Architecture: any
 Depends: ${misc:Depends}, libmenu-cache-dev
 Description: Development files for libmenu-cache (transitional package)
