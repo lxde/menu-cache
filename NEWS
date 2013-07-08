@@ -9,7 +9,10 @@ Changes in 0.5.0 since 0.4.1:
 
 * New macro MENU_CACHE_CHECK_VERSION() to test version of library.
 
-* Two bugfixes for crashes.
+* Added new APIs: menu_cache_find_item_by_id, menu_cache_find_child_by_id,
+    menu_cache_find_child_by_name.
+
+* Two bugfixes for crashes, and for some another bugs.
 
 
 Changes in 0.4.1 since 0.4.0:
