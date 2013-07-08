@@ -33,7 +33,6 @@ menu_cache_gen_SOURCES =		\
 	$(NULL)
 
 menu_cache_gen_LDADD = 		\
-	$(top_builddir)/libmenu-cache/libmenu-cache.la	\
 	$(GLIB_LIBS)					\
 	$(MONITOR_LIBS)					\
 	$(NULL)
