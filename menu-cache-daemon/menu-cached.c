@@ -320,60 +320,6 @@ static gboolean delayed_reload( Cache* cache )
     return FALSE;
 }
 
-static gboolean is_desktop_file_in_cache(Cache* cache, int dir_idx, const char* base_name)
-{
-    gboolean ret = FALSE;
-    char* cache_file = g_build_filename(g_get_user_cache_dir(), "menus", cache->md5, NULL );
-    FILE* f = fopen(cache_file, "r");
-    g_free(cache_file);
-    if( f )
-    {
-        char line[4096];
-        while( fgets(line, G_N_ELEMENTS(line), f) )
-        {
-            int l = strlen(line);
-            line[l - 1] = '\0';
-            /* this is not a 100% safe way to check if the
-             * desktop file is listed in our original cache,
-             * but this works in 99.9% of cases. */
-            if( line[0] == '-' && 0 == strcmp(line+1, base_name) )
-            {
-                int i;
-                /* if this line is -desktop_id, we can get its dir_idx in following 5 lines. */
-                for( i = 0; i < 5; ++i )
-                {
-                    if( ! fgets(line, G_N_ELEMENTS(line), f) )
-                        break;
-                    if( i == 3 && !line[0] ) /* the 4th line should be empty */
-                        break;
-                }
-                if( i >= 5 )
-                {
-                    if( dir_idx == atoi(line) )
-                    {
-                        ret = TRUE;
-                        break;
-                    }
-                }
-            }
-            else if(strcmp(line, base_name) == 0)
-            {
-                /* if this line is a basename, we can get its dir_idx in the next line. */
-                if( fgets( line, G_N_ELEMENTS(line), f) )
-                {
-                    if( dir_idx == atoi(line) )
-                    {
-                        ret = TRUE;
-                        break;
-                    }
-                }
-            }
-        }
-        fclose(f);
-    }
-    return ret;
-}
-
 void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                       GFileMonitorEvent evt, Cache* cache )
 {
@@ -409,31 +355,6 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                 /* only *.desktop and *.directory files can affect the content of the menu. */
                 if( g_str_has_suffix(base_name, ".desktop") )
                 {
-#if 0
-                    /* FIXME: there seems to be some problems here... so weird. */
-                    /* further optimization:
-                     * If the changed file is a desktop entry file with
-                     * Hidden=true or NoDisplay=true, and it's not in our
-                     * original menu cache, either, just omit it since it won't
-                     * affect the content of our menu.
-                     */
-                    gboolean in_cache = is_desktop_file_in_cache(cache, idx, base_name);
-                    /* DEBUG("in_cache = %d", in_cache); */
-                    if( ! in_cache ) /* means this is a new file or previously hidden */
-                    {
-                        GKeyFile* kf = g_key_file_new();
-                        if( g_key_file_load_from_file( kf, changed_file, 0, NULL ) )
-                        {
-                            if( ! g_key_file_get_boolean(kf, "Desktop Entry", "Hidden", NULL)
-                                && ! g_key_file_get_boolean(kf, "Desktop Entry", "NoDisplay", NULL) )
-                            {
-                                skip = FALSE;
-                            }
-                        }
-                        g_key_file_free(kf);
-                    }
-                    else
-#endif
                         skip = FALSE;
                 }
                 else if( g_str_has_suffix(base_name, ".directory") )
@@ -441,40 +362,6 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
 
                 if( skip )
                 {
-#if 0
-                    /* FIXME: utime to update the mtime of cached file. */
-                    /* FIXME: temporarily disable monitor of the cached file before utime() */
-                    /* without this, directory mtime will > mtime of cache file,
-                     * and the menu will get re-generated unnecessarily the next time. */
-                    /* 08.07.2013: it is weird - if few files were changed
-                       at once but one of them was ignored, all others may be
-                       ignored as well */
-                    struct utimbuf ut;
-                    char* cache_file;
-
-                    g_free(changed_file);
-
-                    cache_file = g_build_filename(g_get_user_cache_dir(), "menus", cache->md5, NULL );
-
-                    ut.actime = ut.modtime = time(NULL);
-                    /* stop monitor of cache file. */
-                    /*
-                    g_file_monitor_cancel( cache->cache_mon );
-                    g_object_unref( cache->cache_mon );
-                    cache->cache_mon = NULL;
-                    */
-                    /* update the mtime of the cache file. */
-                    utime( cache_file, &ut );
-
-                    /* restart the monitor */
-                    /* gf = g_file_new_for_path( cache_file ); */
-                    g_free(cache_file);
-                    /*
-                    cache->cache_mon = g_file_monitor_file(gf, 0, NULL, NULL);
-                    g_object_unref(gf);
-                    g_signal_connect( cache->cache_mon, "changed", G_CALLBACK(on_file_changed), cache);
-                    */
-#endif
                     DEBUG("files are changed, but no re-generation is needed.");
                     return;
                 }
