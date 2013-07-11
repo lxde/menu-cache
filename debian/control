@@ -16,6 +16,8 @@ Section: libs
 Architecture: any
 Pre-Depends: multiarch-support
 Depends: ${misc:Depends}, ${shlibs:Depends}, libmenu-cache-bin (>= 0.4.1)
+Replaces: libmenu-cache2
+Conflicts: libmenu-cache2
 Description: LXDE implementation of the freedesktop Menu specification
  Libmenu-cache is a library creating and utilizing caches to speed up
  the manipulation for freedesktop.org defined application menus.
