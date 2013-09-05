@@ -169,7 +169,14 @@ menu_realpath (const char *name, char *resolved)
               char *buf = alloca (path_max);
               size_t len;
 
-              if (++num_links > MAXSYMLINKS)
+              /* Get the maximum number of symlinks to follow. */
+              int symlinksmax = sysconf(_SC_SYMLOOP_MAX);
+#ifdef MAXSYMLINKS
+              if (symlinksmax == -1)
+                symlinksmax = MAXSYMLINKS;
+#endif
+
+              if (++num_links > symlinksmax)
                 {
                   errno = ELOOP;
                   goto error;
