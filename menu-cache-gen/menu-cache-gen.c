@@ -309,7 +309,7 @@ int main(int argc, char** argv)
 
     setlocale (LC_ALL, "");
 
-    opt_ctx = g_option_context_new("Generate cache for freedeskotp.org compliant menus.");
+    opt_ctx = g_option_context_new("Generate cache for freedesktop.org compliant menus.");
     g_option_context_add_main_entries( opt_ctx, opt_entries, NULL );
     if( ! g_option_context_parse( opt_ctx, &argc, &argv, &err ) )
     {
