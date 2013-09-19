@@ -164,6 +164,7 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
         {
             DEBUG("ignoring not existant file from menu-cache-gen: %s", files[x]);
             g_free(files[x]);
+            files[x] = NULL;
         }
         g_object_unref(gfile);
     }
