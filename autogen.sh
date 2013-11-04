@@ -44,4 +44,9 @@ $AUTOMAKE --add-missing --copy --include-deps
 ${AUTOCONF:-autoconf$AC_VERSION}
 
 rm -rf autom4te.cache
+
+if test "x$NOCONFIGURE" = "x"; then
+    ./configure $@
+fi
+
 cd "$OLD_DIR"
