@@ -146,7 +146,9 @@ GSList* menu_cache_dir_get_children( MenuCacheDir* dir );
 
 void menu_cache_init(int flags)
 {
-
+#if !GLIB_CHECK_VERSION(2, 3, 6)
+    g_type_init();
+#endif
 }
 
 static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache);
