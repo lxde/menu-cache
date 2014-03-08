@@ -74,13 +74,6 @@ else
 fi
 exec_prefix="$exec_prefix_save"
 AC_SUBST(PCFILE_LIBDIR)
-if test `eval echo "$includedir"` = '/usr/include'
-then
-    PCFILE_INCLUDE=
-else
-    PCFILE_INCLUDE=' -I${includedir}'
-fi
-AC_SUBST(PCFILE_INCLUDE)
 
 AC_OUTPUT([
 Makefile
