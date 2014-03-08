@@ -64,6 +64,24 @@ AC_SUBST(MC_VERSION_MAJOR)
 AC_SUBST(MC_VERSION_MINOR)
 AC_SUBST(MC_VERSION_MICRO)
 
+exec_prefix_save="$exec_prefix"
+test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
+if test `eval echo "$libdir"` = '/usr/lib'
+then
+    PCFILE_LIBDIR=
+else
+    PCFILE_LIBDIR=' -L${libdir}'
+fi
+exec_prefix="$exec_prefix_save"
+AC_SUBST(PCFILE_LIBDIR)
+if test `eval echo "$includedir"` = '/usr/include'
+then
+    PCFILE_INCLUDE=
+else
+    PCFILE_INCLUDE=' -I${includedir}'
+fi
+AC_SUBST(PCFILE_INCLUDE)
+
 AC_OUTPUT([
 Makefile
 libmenu-cache/Makefile
