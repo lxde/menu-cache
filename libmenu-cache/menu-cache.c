@@ -2,7 +2,7 @@
  *      menu-cache.c
  *
  *      Copyright 2008 PCMan <pcman.tw@gmail.com>
- *      Copyright 2012-2013 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2012-2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -1176,13 +1176,13 @@ MenuCacheDir* menu_cache_get_dir_from_path( MenuCache* cache, const char* path )
     }
     /* the topmost dir of the path should be the root menu dir. */
     MENU_CACHE_LOCK;
-    if( strcmp(names[0], MENU_CACHE_ITEM(cache->root_dir)->id) )
+    dir = cache->root_dir;
+    if (G_UNLIKELY(dir == NULL) || strcmp(names[0], MENU_CACHE_ITEM(dir)->id))
     {
         MENU_CACHE_UNLOCK;
         return NULL;
     }
 
-    dir = cache->root_dir;
     for( ++i; names[i]; ++i )
     {
         GSList* l;
@@ -1754,7 +1754,10 @@ GSList* menu_cache_list_all_apps(MenuCache* cache)
 {
     GSList* list;
     MENU_CACHE_LOCK;
-    list = list_app_in_dir(cache->root_dir, NULL);
+    if (G_UNLIKELY(!cache->root_dir)) /* empty cache */
+        list = NULL;
+    else
+        list = list_app_in_dir(cache->root_dir, NULL);
     MENU_CACHE_UNLOCK;
     return list;
 }
