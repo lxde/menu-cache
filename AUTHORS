@@ -1,9 +1,11 @@
-Authors of libmenu-cache and menu-cache-daemon:
-	Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+Upstream Authors:
+    LXDE team: http://lxde.org
+    Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 
-Most parts of menu-cache-gen was taken from libmenu of gnome-menus written by:
-	Mark McLoughlin <mark@skynet.ie>
-	Havoc Pennington <hp@redhat.com>
-Modified by:
-	Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+Copyright:
+    Copyright (c) 2012-2014 LXQt team
 
+License: GPL-2 and LGPL-2.1+
+The full text of the licenses can be found in the 'COPYING' file.
+
+Based on source code from libmenu of the GNOME project <http://gnome.org/>
