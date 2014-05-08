@@ -11,6 +11,16 @@ AM_SILENT_RULES([yes])
 
 AM_MAINTAINER_MODE([enable])
 
+# detect OS
+AC_CANONICAL_HOST
+os_name="generic"
+case "$host_os" in
+  freebsd*)
+    os_name="freebsd"
+  ;;
+esac
+AM_CONDITIONAL([FREEBSD], [test $os_name = "freebsd"])
+
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_C_O
