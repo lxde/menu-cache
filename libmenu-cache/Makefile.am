@@ -38,12 +38,5 @@ EXTRA_DIST =				\
         libmenu-cache-uninstalled.pc.in	\
 	$(NULL)
 
-# FreeBSD loves to install files to different locations
-# http://www.freebsd.org/doc/handbook/dirstructure.html
-if FREEBSD
-  pkgconfigdir   = $(prefix)/libdata/pkgconfig
-else
-  pkgconfigdir   = $(libdir)/pkgconfig
-endif
-
+pkgconfigdir   = $(libdir)/pkgconfig
 pkgconfig_DATA = libmenu-cache.pc
