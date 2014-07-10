@@ -1767,7 +1767,9 @@ GSList* menu_cache_list_all_apps(MenuCache* cache)
  * @cache: a menu cache descriptor
  * @desktop_env: desktop environment name
  *
- * Makes bit mask of desktop environment from its name.
+ * Makes bit mask of desktop environment from its name. The @desktop_env
+ * may be simple string or colon separated list of compatible session
+ * names according to XDG_CURRENT_DESKTOP freedesktop.org specification.
  *
  * Returns: DE bit mask.
  *
@@ -1776,32 +1778,44 @@ GSList* menu_cache_list_all_apps(MenuCache* cache)
 guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_env )
 {
     char** de;
+    char **envs;
+    guint32 flags = 0;
+    int j;
+
+    if (desktop_env == NULL || desktop_env[0] == '\0')
+        return flags;
+
+    envs = g_strsplit(desktop_env, ":", -1);
     MENU_CACHE_LOCK;
     de = cache->known_des;
-    if( de )
+    for (j = 0; envs[j]; j++)
     {
-        int i;
-        for( i = 0; de[i]; ++i )
+        if( de )
         {
-            if( strcmp( desktop_env, de[i] ) == 0 )
+            int i;
+            for( i = 0; de[i]; ++i )
+                if (strcmp(envs[j], de[i]) == 0)
+                    break;
+            if (de[i])
             {
-                MENU_CACHE_UNLOCK;
-                return 1 << (i + N_KNOWN_DESKTOPS);
+                flags |= 1 << (i + N_KNOWN_DESKTOPS);
+                continue;
             }
         }
+        if (strcmp(envs[j], "GNOME") == 0)
+            flags |= SHOW_IN_GNOME;
+        else if (strcmp(envs[j], "KDE") == 0)
+            flags |= SHOW_IN_KDE;
+        else if (strcmp(envs[j], "XFCE") == 0)
+            flags |= SHOW_IN_XFCE;
+        else if (strcmp(envs[j], "LXDE") == 0)
+            flags |= SHOW_IN_LXDE;
+        else if (strcmp(envs[j], "ROX") == 0)
+            flags |= SHOW_IN_ROX;
     }
     MENU_CACHE_UNLOCK;
-    if( strcmp(desktop_env, "GNOME") == 0 )
-        return SHOW_IN_GNOME;
-    if( strcmp(desktop_env, "KDE") == 0 )
-        return SHOW_IN_KDE;
-    if( strcmp(desktop_env, "XFCE") == 0 )
-        return SHOW_IN_XFCE;
-    if( strcmp(desktop_env, "LXDE") == 0 )
-        return SHOW_IN_LXDE;
-    if( strcmp(desktop_env, "ROX") == 0 )
-        return SHOW_IN_ROX;
-    return 0;
+    g_strfreev(envs);
+    return flags;
 }
 
 static MenuCacheItem *_scan_by_id(MenuCacheItem *item, const char *id)
