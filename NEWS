@@ -1,3 +1,18 @@
+Changes in 0.6.0 since 0.5.1:
+
+* Fixed few GLIB compatibility issues.
+
+* Changed default tarball format to XZ instead of GZIP.
+
+* Fixed build without --enable-gtk-doc.
+
+* Fixed crash on access root_dir with empty cache (no menu).
+
+* Allowed menu_cache_get_desktop_env_flag() accept colon-separated list
+    in accordance to freedesktop.org specification for the environment
+    variable XDG_CURRENT_DESKTOP.
+
+
 Changes in 0.5.1 since 0.5.0:
 
 * Fixed build on systems where MAXSYMLINKS isn't defined.
