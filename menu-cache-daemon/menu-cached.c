@@ -68,6 +68,9 @@ typedef struct _Cache
 
     /* clients requesting this menu cache */
     GSList* clients;
+
+    /* cache file name for reference */
+    char *cache_file;
 }Cache;
 
 GMainLoop* main_loop = NULL;
@@ -97,6 +100,9 @@ static gboolean delayed_cache_free(gpointer data)
     g_object_unref(cache->cache_mon);
 */
     g_free( cache->mons );
+    g_free(cache->menu_name);
+    g_free(cache->lang_name);
+    g_free(cache->cache_file);
     g_strfreev( cache->env );
     g_strfreev( cache->files );
 
@@ -247,7 +253,6 @@ static void do_reload(Cache* cache)
 {
     GSList* l;
     char buf[38];
-    char* cache_file;
     int i;
     GFile* gf;
 
@@ -257,8 +262,6 @@ static void do_reload(Cache* cache)
     memcpy( buf + 4, cache->md5, 32 );
     buf[36] = '\n';
     buf[37] = '\0';
-
-    cache_file = g_build_filename( g_get_user_cache_dir(), "menus", cache->md5, NULL );
 
     /* cancel old file monitors */
     g_strfreev(cache->files);
@@ -272,7 +275,7 @@ static void do_reload(Cache* cache)
     g_file_monitor_cancel(cache->cache_mon);
     g_object_unref(cache->cache_mon);
 */
-    if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache_file,
+    if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache->cache_file,
                             cache->env, &cache->n_files, &cache->files ) )
     {
         DEBUG("regeneration of cache failed.");
@@ -297,7 +300,6 @@ static void do_reload(Cache* cache)
     g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
     g_object_unref(gf);
 */
-    g_free(cache_file);
 
     /* notify the clients that reload is needed. */
     for( l = cache->clients; l; l = l->next )
@@ -539,7 +541,7 @@ retry:
     {
         int n_files, i;
         char *pline = line + 4;
-        char *sep, *menu_name, *lang_name, *cache_dir, *cache_file;
+        char *sep, *menu_name, *lang_name, *cache_dir;
         char **files;
         char **env;
         char reload_cmd[38] = "REL:";
@@ -575,16 +577,16 @@ retry:
             cache_dir = env[0]; /* XDG_CACHE_HOME */
             /* obtain cache dir from client's env */
 
-            cache_file = g_build_filename(*cache_dir ? cache_dir : g_get_user_cache_dir(), "menus", md5, NULL );
-            if( ! cache_file_is_updated(cache_file, &n_files, &files) )
+            cache = g_slice_new0( Cache );
+            cache->cache_file = g_build_filename(*cache_dir ? cache_dir : g_get_user_cache_dir(), "menus", md5, NULL );
+            if( ! cache_file_is_updated(cache->cache_file, &n_files, &files) )
             {
                 /* run menu-cache-gen */
-                if(! regenerate_cache( menu_name, lang_name, cache_file, env, &n_files, &files ) )
+                if(! regenerate_cache( menu_name, lang_name, cache->cache_file, env, &n_files, &files ) )
                 {
                     DEBUG("regeneration of cache failed!!");
                 }
             }
-            cache = g_slice_new0( Cache );
             memcpy( cache->md5, md5, 33 );
             cache->n_files = n_files;
             cache->files = files;
@@ -612,10 +614,17 @@ retry:
             g_signal_connect( cache->cache_mon, "changed", on_file_changed, cache);
             g_object_unref(gf);
             */
-            g_free(cache_file);
-
             g_hash_table_insert(hash, cache->md5, cache);
             DEBUG("new menu cache %p added to hash", cache);
+        }
+        else if (access(cache->cache_file, R_OK) != 0)
+        {
+            /* bug SF#657: if user deleted cache file we have to regenerate it */
+            if (!regenerate_cache(cache->menu_name, cache->lang_name, cache->cache_file,
+                                  cache->env, &cache->n_files, &cache->files))
+            {
+                DEBUG("regeneration of cache failed.");
+            }
         }
         /* DEBUG("menu %s requested by client %d", md5, g_io_channel_unix_get_fd(ch)); */
         cache->clients = g_slist_prepend(cache->clients, ch);
