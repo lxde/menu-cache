@@ -12,6 +12,8 @@ Changes in 0.6.0 since 0.5.1:
     in accordance to freedesktop.org specification for the environment
     variable XDG_CURRENT_DESKTOP.
 
+* The case if user deleted cache file is handled: it will be regenerated.
+
 
 Changes in 0.5.1 since 0.5.0:
 
