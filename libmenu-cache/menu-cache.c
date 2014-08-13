@@ -76,6 +76,12 @@ static GCond *sync_run_cond = NULL;
     g_mutex_unlock(sync_run_mutex); } while(0)
 #endif
 
+typedef struct
+{
+    char *dir;
+    gint n_ref;
+} MenuCacheFileDir;
+
 struct _MenuCacheItem
 {
     guint n_ref;
@@ -84,7 +90,7 @@ struct _MenuCacheItem
     char* name;
     char* comment;
     char* icon;
-    const char* file_dir;
+    MenuCacheFileDir* file_dir;
     char* file_name;
     MenuCacheDir* parent;
 };
@@ -98,7 +104,6 @@ struct _MenuCacheDir
 struct _MenuCacheApp
 {
     MenuCacheItem item;
-    const char* file_dir;
     char* generic_name;
     char* exec;
     char* working_dir;
@@ -115,8 +120,6 @@ struct _MenuCache
     char* reg; /* includes md5 sum */
     char* md5; /* link inside of reg */
     char* cache_file;
-    char** all_used_files;
-    int n_all_used_files;
     char** known_des;
     GSList* notifiers;
     GThread* thr;
@@ -151,16 +154,18 @@ void menu_cache_init(int flags)
 #endif
 }
 
-static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache);
+static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache,
+                                MenuCacheFileDir** all_used_files, int n_all_used_files);
 
 /* functions read_dir(), read_app(), and read_item() should be called for
    items that aren't accessible yet, therefore no lock is required */
-static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache)
+static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache,
+                     MenuCacheFileDir** all_used_files, int n_all_used_files)
 {
     MenuCacheItem* item;
 
     /* load child items in the dir */
-    while( (item = read_item( f, cache )) )
+    while( (item = read_item( f, cache, all_used_files, n_all_used_files )) )
     {
         /* menu_cache_ref shouldn't be called here for dir.
          * Otherwise, circular reference will happen. */
@@ -209,7 +214,8 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     g_free(line);
 }
 
-static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache)
+static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache,
+                                MenuCacheFileDir** all_used_files, int n_all_used_files)
 {
     MenuCacheItem* item;
     char *line;
@@ -318,46 +324,64 @@ _fail:
     }
     idx = atoi( line );
     g_free(line);
-    if( G_LIKELY( idx >=0 && idx < cache->n_all_used_files ) )
-        item->file_dir = cache->all_used_files[ idx ] + 1;
+    if( G_LIKELY( idx >=0 && idx < n_all_used_files ) )
+    {
+        item->file_dir = all_used_files[ idx ];
+        g_atomic_int_inc(&item->file_dir->n_ref);
+    }
 
     if( item->type == MENU_CACHE_TYPE_DIR )
-        read_dir( f, MENU_CACHE_DIR(item), cache );
+        read_dir( f, MENU_CACHE_DIR(item), cache, all_used_files, n_all_used_files );
     else if( item->type == MENU_CACHE_TYPE_APP )
         read_app( f, MENU_CACHE_APP(item), cache );
 
     return item;
 }
 
-static gboolean read_all_used_files(GDataInputStream* f, MenuCache* cache)
+static void menu_cache_file_dir_unref(MenuCacheFileDir *file_dir)
+{
+    if (g_atomic_int_dec_and_test(&file_dir->n_ref))
+    {
+        g_free(file_dir->dir);
+        g_free(file_dir);
+    }
+}
+
+static gint read_all_used_files(GDataInputStream* f, MenuCache* cache,
+                                MenuCacheFileDir*** all_used_files)
 {
     char *line;
     gsize len;
     int i, n;
-    char** dirs;
+    MenuCacheFileDir** dirs;
 
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if(G_UNLIKELY(line == NULL))
-        return FALSE;
+        return -1;
 
-    cache->n_all_used_files = n = atoi( line );
-    dirs = g_new0( char*, n + 1 );
+    n = atoi( line );
     g_free(line);
+    if (G_UNLIKELY(n <= 0))
+        return n;
+
+    dirs = g_new0( MenuCacheFileDir *, n );
 
     for( i = 0; i < n; ++i )
     {
         line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
         if(G_UNLIKELY(line == NULL))
         {
-            g_strfreev(dirs);
-            cache->n_all_used_files = 0;
-            return FALSE;
+            while (i-- > 0)
+                menu_cache_file_dir_unref(dirs[i]);
+            g_free(dirs);
+            return -1;
         }
-
-        dirs[i] = line; /* don't include \n */
+        dirs[i] = g_new(MenuCacheFileDir, 1);
+        dirs[i]->n_ref = 1;
+        dirs[i]->dir = line; /* don't include \n */
     }
-    cache->all_used_files = dirs;
-    return TRUE;
+    *all_used_files = dirs;
+    return n;
 }
 
 static gboolean read_all_known_des(GDataInputStream* f, MenuCache* cache)
@@ -447,7 +471,6 @@ void menu_cache_unref(MenuCache* cache)
         g_free( cache->menu_name );
         g_free(cache->reg);
         /* g_free( cache->menu_file_path ); */
-        g_strfreev( cache->all_used_files );
         g_strfreev(cache->known_des);
         g_slist_free(cache->notifiers);
         g_slice_free( MenuCache, cache );
@@ -606,6 +629,8 @@ gboolean menu_cache_reload( MenuCache* cache )
     GFile* file;
     GFileInputStream* istr = NULL;
     GDataInputStream* f;
+    MenuCacheFileDir** all_used_files;
+    int i, n;
 
     file = g_file_new_for_path(cache->cache_file);
     if(!file)
@@ -648,12 +673,11 @@ gboolean menu_cache_reload( MenuCache* cache )
         MENU_CACHE_UNLOCK;
         goto _fail;
     }
-    g_strfreev( cache->all_used_files );
 
     /* get all used files */
-    if( ! read_all_used_files( f, cache ) )
+    n = read_all_used_files( f, cache, &all_used_files );
+    if (n <= 0)
     {
-        cache->all_used_files = NULL;
         MENU_CACHE_UNLOCK;
         goto _fail;
     }
@@ -664,6 +688,9 @@ gboolean menu_cache_reload( MenuCache* cache )
     {
         cache->known_des = NULL;
         MENU_CACHE_UNLOCK;
+        for (i = 0; i < n; i++)
+            menu_cache_file_dir_unref(all_used_files[i]);
+        g_free(all_used_files);
 _fail:
         g_object_unref(f);
         return FALSE;
@@ -672,12 +699,16 @@ _fail:
     if(cache->root_dir)
         menu_cache_item_unref( MENU_CACHE_ITEM(cache->root_dir) );
 
-    cache->root_dir = (MenuCacheDir*)read_item( f, cache );
+    cache->root_dir = (MenuCacheDir*)read_item( f, cache, all_used_files, n );
     g_object_unref(f);
 
     g_idle_add_full(G_PRIORITY_HIGH_IDLE, reload_notify, menu_cache_ref(cache),
                     (GDestroyNotify)menu_cache_unref);
     MENU_CACHE_UNLOCK;
+
+    for (i = 0; i < n; i++)
+        menu_cache_file_dir_unref(all_used_files[i]);
+    g_free(all_used_files);
 
     return TRUE;
 }
@@ -706,6 +737,8 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
         g_free( item->name );
         g_free( item->comment );
         g_free( item->icon );
+
+        menu_cache_file_dir_unref(item->file_dir);
 
         if( item->file_name && item->file_name != item->id )
             g_free( item->file_name );
@@ -855,7 +888,7 @@ const char* menu_cache_item_get_file_basename( MenuCacheItem* item )
  */
 const char* menu_cache_item_get_file_dirname( MenuCacheItem* item )
 {
-    return item->file_dir;
+    return item->file_dir->dir + 1;
 }
 
 /**
@@ -874,7 +907,7 @@ char* menu_cache_item_get_file_path( MenuCacheItem* item )
 {
     if( ! item->file_name || ! item->file_dir )
         return NULL;
-    return g_build_filename( item->file_dir, item->file_name, NULL );
+    return g_build_filename( item->file_dir->dir + 1, item->file_name, NULL );
 }
 
 /**
