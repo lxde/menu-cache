@@ -1,3 +1,11 @@
+Changes in 0.6.1 since 0.6.0:
+
+* Fixed invalid memory access after cache reload.
+
+* A little cleanup of dist tarball: removed unused files menu-cache.h and
+    libmenu-cache-uninstalled.pc.in.
+
+
 Changes in 0.6.0 since 0.5.1:
 
 * Fixed few GLIB compatibility issues.
