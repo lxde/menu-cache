@@ -5,5 +5,7 @@
    note that will break compatibility for generated cache */
 #define VER_MAJOR	1
 #define VER_MINOR	1
+/* This is for backward compatibility on transitions */
+#define VER_MINOR_SUPPORTED 1
 
 #endif

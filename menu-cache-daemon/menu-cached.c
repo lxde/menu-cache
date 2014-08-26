@@ -181,7 +181,7 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
 
 static void set_env( char* penv, const char* name )
 {
-    if( *penv )
+    if( penv && *penv )
         g_setenv( name, penv, TRUE);
     else
         g_unsetenv( name );
@@ -196,6 +196,7 @@ static void pre_exec( gpointer user_data )
     set_env(*++env, "XDG_DATA_DIRS");
     set_env(*++env, "XDG_CONFIG_HOME");
     set_env(*++env, "XDG_DATA_HOME");
+    set_env(*++env, "CACHE_GEN_VERSION");
 }
 
 static gboolean regenerate_cache( const char* menu_name,
@@ -555,7 +556,9 @@ retry:
          * XDG_MENU_PREFIX
          * XDG_DATA_DIRS
          * XDG_CONFIG_HOME
-         * XDG_DATA_HOME */
+         * XDG_DATA_HOME
+         * (optional) CACHE_GEN_VERSION
+         * md5 hash */
 
         md5 = pline + len - 32; /* the md5 hash of this menu */
 
@@ -572,6 +575,7 @@ retry:
             lang_name = pline;
             pline = sep + 1;
 
+            ((char *)md5)[-1] = '\0';
             env = g_strsplit(pline, "\t", 0);
 
             cache_dir = env[0]; /* XDG_CACHE_HOME */
