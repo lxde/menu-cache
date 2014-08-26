@@ -29,13 +29,12 @@ libmenu_cache_la_LDFLAGS =			\
 
 lib_menu_cache_includedir = $(includedir)/menu-cache
 
-lib_menu_cache_include_HEADERS =		\
+nodist_lib_menu_cache_include_HEADERS =		\
 	menu-cache.h			\
 	$(NULL)
 
 EXTRA_DIST =				\
-        libmenu-cache.pc.in		\
-        libmenu-cache-uninstalled.pc.in	\
+	libmenu-cache.pc.in		\
 	$(NULL)
 
 pkgconfigdir   = $(libdir)/pkgconfig

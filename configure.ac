@@ -79,7 +79,6 @@ AC_OUTPUT([
 Makefile
 libmenu-cache/Makefile
 libmenu-cache/libmenu-cache.pc
-libmenu-cache/libmenu-cache-uninstalled.pc
 libmenu-cache/menu-cache.h
 menu-cache-gen/Makefile
 menu-cache-daemon/Makefile
