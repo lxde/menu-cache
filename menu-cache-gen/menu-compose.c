@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <glib/gstdio.h>
 
 static GSList *DEs = NULL;
 
@@ -658,9 +659,10 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
                                                "KDE",
                                                "XFCE",
                                                "ROX" };
+    char *tmp = NULL;
     FILE *f;
     GSList *l;
-    guint i;
+    int i;
     gboolean ok = FALSE;
 
     all_apps = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, menu_app_free);
@@ -670,12 +672,22 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     _stage1(layout, NULL, NULL);
     /* Recursively remove non-matched files by OnlyUnallocated flag */
     _stage2(layout);
+    /* Prepare temporary file for safe creation */
+    tmp = g_path_get_dirname(file);
+    if (tmp != NULL && !g_file_test(tmp, G_FILE_TEST_EXISTS))
+        g_mkdir_with_parents(tmp, 0700);
+    g_free(tmp);
+    tmp = g_strdup_printf("%sXXXXXX", file);
+    i = g_mkstemp(tmp);
+    if (i < 0)
+        goto failed;
     /* Compose created layout into output file */
-    f = fopen(file, "w");
+    f = fdopen(i, "w");
     if (f == NULL)
         goto failed;
     /* Write common data */
-    fprintf(f, "1.1\n%s\n%d\n", menuname, /* FIXME: use CACHE_GEN_VERSION */
+    fprintf(f, "1.1\n%s%s\n%d\n", /* FIXME: use CACHE_GEN_VERSION */
+            menuname, with_hidden ? "+hidden" : "",
             g_slist_length(DirDirs) + g_slist_length(AppDirs) + g_slist_length(MenuFiles));
     for (l = DirDirs; l; l = l->next)
         if (fprintf(f, "D%s\n", (const char *)l->data) < 0)
@@ -695,7 +707,12 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
 failed:
     if (f != NULL)
         fclose(f);
+    if (ok)
+        ok = g_rename(tmp, file) == 0;
+    else if (tmp)
+        g_unlink(tmp);
     /* Free all the data */
+    g_free(tmp);
     g_hash_table_destroy(all_apps);
     menu_menu_free(layout);
     g_slist_free(DEs);
