@@ -75,8 +75,8 @@ typedef struct {
     gboolean inline_header_is_set : 1; /* for Menuname */
     gboolean inline_alias_is_set : 1; /* for Menuname */
     gboolean inline_limit_is_set : 1; /* for Menuname */
-    int inline_limit;
     GList *items; /* items are MenuItem : Menuname or Filename or Separator or Merge */
+    int inline_limit;
 } MenuLayout;
 
 /* Menuname item */
@@ -88,7 +88,6 @@ typedef struct {
 /* Filename item in layout */
 typedef struct {
     MenuCacheType type : 2; /* MENU_CACHE_TYPE_APP */
-    gboolean excluded : 1;
     char *id;
 } MenuFilename;
 
@@ -108,36 +107,38 @@ typedef struct {
     MenuLayout layout; /* copied from hash on </Menu> */
     char *name;
     /* next fields are only for Menu */
+    char *key; /* for sorting */
     GList *id; /* <Directory> for <Menu>, may be NULL, first is most relevant */
     /* next fields are only for composer */
-    GList *files; /* loaded MenuApp items - allocated only here, not in children */
     GList *children; /* items are MenuItem : MenuApp, MenuMenu, MenuSep, MenuRule */
     char *title;
     char *comment;
     char *icon;
-    int dir_index;
+    const char *dir;
 } MenuMenu;
 
 /* File item in menu */
 typedef struct {
     MenuCacheType type : 2; /* MENU_CACHE_TYPE_APP */
     gboolean excluded : 1;
-    gboolean allocated : 1; /* set by composer */
-    gboolean use_terminal : 1; /* set by composer */
-    gboolean use_notification : 1; /* set by composer */
-    gboolean hidden : 1; /* set by composer */
-    int dir_index; /* set by composer */
-    MenuMenu *parent;
+    gboolean allocated : 1;
+    gboolean matched : 1;
+    gboolean use_terminal : 1;
+    gboolean use_notification : 1;
+    gboolean hidden : 1;
+    GList *dirs; /* can be reordered until allocated */
+    GList *menus;
+    char *filename; /* if NULL then is equal to id */
+    char *key; /* for sorting */
     char *id;
-    /* next fields are only for composer */
     char *title;
     char *comment;
     char *icon;
     char *generic_name;
     char *exec;
-    char **categories;
-    char **show_in;
-    char **hide_in;
+    const char **categories; /* all char ** keep interned values */
+    const char **show_in;
+    const char **hide_in;
 } MenuApp;
 
 /* a placeholder for matching */
@@ -145,6 +146,12 @@ typedef struct {
     MenuCacheType type : 2; /* MENU_CACHE_TYPE_NONE */
     FmXmlFileItem *rule;
 } MenuRule;
+
+/* requested language */
+char *language;
+
+/* list of menu files to monitor */
+GSList *MenuFiles;
 
 /* list of available app dirs */
 GSList *AppDirs;
@@ -156,7 +163,8 @@ GSList *DirDirs;
 MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error);
 
 /* parse all files into layout and save cache file */
-void save_menu_cache(MenuMenu *layout, const char *file);
+gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *file,
+                         gboolean with_hidden);
 
-/* free layout data */
-//void free_menu_layout(MenuMenu *layout);
+/* free MenuLayout data */
+void _free_layout_items(GList *data);

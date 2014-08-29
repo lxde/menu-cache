@@ -763,6 +763,8 @@ static gboolean _merge_xml_file(MenuTreeData *data, FmXmlFileItem *item,
         return TRUE;
     }
     *m = g_list_prepend(it, (gpointer)path);
+    if (g_slist_find(MenuFiles, path) == NULL)
+        MenuFiles = g_slist_append(MenuFiles, (gpointer)path);
     save_path = data->file_path;
     data->file_path = path;
     g_debug("merging the XML file '%s'", data->file_path);
@@ -1338,11 +1340,43 @@ static FmXmlFileItem *_find_in_children(GList *list, const char *name)
     return NULL;
 }
 
+void _free_layout_items(GList *data)
+{
+    union {
+        MenuMenuname *menu;
+        MenuFilename *file;
+        MenuSep *sep;
+        MenuMerge *merge;
+    } a = { NULL };
+
+    while (data != NULL)
+    {
+        a.menu = data->data;
+        switch (a.menu->layout.type) {
+        case MENU_CACHE_TYPE_DIR:
+            g_free(a.menu->name);
+            g_slice_free(MenuMenuname, a.menu);
+            break;
+        case MENU_CACHE_TYPE_APP:
+            g_free(a.file->id);
+            g_slice_free(MenuFilename, a.file);
+            break;
+        case MENU_CACHE_TYPE_SEP:
+            g_slice_free(MenuSep, a.sep);
+            break;
+        case MENU_CACHE_TYPE_NONE:
+            g_slice_free(MenuMerge, a.merge);
+        }
+        data = g_list_delete_link(data, data);
+    }
+}
+
 static void _free_layout(gpointer data)
 {
     MenuLayout *layout = data;
 
-    // FIXME!
+    _free_layout_items(layout->items);
+    g_slice_free(MenuLayout, data);
 }
 
 MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error)
@@ -1372,6 +1406,7 @@ MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error)
                                         _free_layout);
     data.menu = fm_xml_file_new(NULL);
     data.line = data.pos = -1;
+    MenuFiles = g_slist_prepend(NULL, (gpointer)g_intern_string(file));
     /* g_debug("new FmXmlFile %p", data.menu); */
     menuTag_Menu = fm_xml_file_set_handler(data.menu, "Menu",
                                            &_menu_xml_handler_pass, FALSE, NULL);

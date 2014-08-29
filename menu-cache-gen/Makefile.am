@@ -13,6 +13,7 @@ pkglibexec_PROGRAMS = menu-cache-gen
 menu_cache_gen_SOURCES = \
 	main.c \
 	menu-merge.c \
+	menu-compose.c \
 	$(NULL)
 
 menu_cache_gen_LDADD = \
