@@ -10,6 +10,16 @@ Advantages:
 4. Less unnecessary and complicated file monitoring.
 5. Heavily reduced disk I/O.
 
+Installing:
+
+Since version 0.7.0 the Libmenu-cache requires Libfm-extra for the
+menu-cache-gen menu cache generation binary. Since Libfm depends on
+Libmenu-cache, there is some hint for bootstrapers how to build those
+libraries together: you need create Libfm-extra first, you can easily
+do this by passing '--with-extra-only' option to configure script and
+installing Libfm-extra. Then you can succesfully build Libmenu-cache
+and therefore build full version of Libfm.
+
 Spec:
 
 Cached menus are localized and stored in ~/.cache/menus/file_name.
