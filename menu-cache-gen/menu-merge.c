@@ -1211,9 +1211,11 @@ restart:
         sub = l->data;
         if (sub == NULL || fm_xml_file_item_get_tag(sub) != menuTag_AppDir)
             continue;
-        for (l2 = l; l2; l2 = l2->next)
+        for (l2 = l->next; l2; l2 = l2->next)
             if (l2->data != NULL && fm_xml_file_item_get_tag(l2->data) == menuTag_AppDir)
-                break;
+                if (strcmp(fm_xml_file_item_get_data(fm_xml_file_item_find_child(l2->data, FM_XML_FILE_TEXT), NULL),
+                           fm_xml_file_item_get_data(fm_xml_file_item_find_child(l->data, FM_XML_FILE_TEXT), NULL)) == 0)
+                    break;
         if (l2 == NULL) /* no duplicates */
             continue;
         fm_xml_file_item_destroy(sub);
@@ -1244,9 +1246,11 @@ restart:
         sub = l->data;
         if (sub == NULL || fm_xml_file_item_get_tag(sub) != menuTag_LegacyDir)
             continue;
-        for (l2 = l; l2; l2 = l2->next)
+        for (l2 = l->next; l2; l2 = l2->next)
             if (l2->data != NULL && fm_xml_file_item_get_tag(l2->data) == menuTag_LegacyDir)
-                break;
+                if (strcmp(fm_xml_file_item_get_data(fm_xml_file_item_find_child(l2->data, FM_XML_FILE_TEXT), NULL),
+                           fm_xml_file_item_get_data(fm_xml_file_item_find_child(l->data, FM_XML_FILE_TEXT), NULL)) == 0)
+                    break;
         if (l2 == NULL) /* no duplicates */
             continue;
         fm_xml_file_item_destroy(sub);
@@ -1307,9 +1311,11 @@ restart:
         sub = l->data;
         if (sub == NULL || fm_xml_file_item_get_tag(sub) != menuTag_DirectoryDir)
             continue;
-        for (l2 = l; l2; l2 = l2->next)
+        for (l2 = l->next; l2; l2 = l2->next)
             if (l2->data != NULL && fm_xml_file_item_get_tag(l2->data) == menuTag_DirectoryDir)
-                break;
+                if (strcmp(fm_xml_file_item_get_data(fm_xml_file_item_find_child(l2->data, FM_XML_FILE_TEXT), NULL),
+                           fm_xml_file_item_get_data(fm_xml_file_item_find_child(l->data, FM_XML_FILE_TEXT), NULL)) == 0)
+                    break;
         if (l2 == NULL) /* no duplicates */
             continue;
         fm_xml_file_item_destroy(sub);
