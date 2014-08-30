@@ -78,8 +78,11 @@ static char *_get_language_string(GKeyFile *kf, const char *key)
 
 static void _fill_menu_from_file(MenuMenu *menu, const char *path)
 {
-    GKeyFile *kf = g_key_file_new();
+    GKeyFile *kf;
 
+    if (!g_str_has_suffix(path, ".directory")) /* ignore random names */
+        return;
+    kf = g_key_file_new();
     if (!g_key_file_load_from_file(kf, path, G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
         goto exit;
     menu->title = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_NAME);
@@ -442,6 +445,22 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
     }
     prefix = g_string_new("");
     _apps = g_list_reverse(_apps);
+    /* the same directory being scanned with different prefix should be denied */
+    for (l = _apps; l; l = l->next)
+    {
+        for (child = _apps; child; child = result)
+        {
+            int len;
+
+            result = child->next; /* it is not used yet so we can use it now */
+            if (child == l)
+                continue;
+            len = strlen(l->data);
+            if (strncmp(l->data, child->data, len) == 0 &&
+                ((const char *)child->data)[len] == G_DIR_SEPARATOR)
+                _apps = g_list_delete_link(_apps, child);
+        }
+    }
     for (l = _apps; l; l = l->next)
     {
         /* scan and fill the list */
@@ -487,23 +506,26 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
                 if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR &&
                     strcmp(((MenuMenuname *)app)->name, ((MenuMenu *)l->data)->name) == 0)
                     break;
-            if (l == NULL)
+            if (l != NULL) /* found such menu */
             {
-                /* we have to do this because it might be added by Merge */
-                for (l = result; l; l = l->next)
-                    if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR &&
-                        strcmp(((MenuMenuname *)app)->name, ((MenuMenu *)l->data)->name) == 0)
-                        break;
-                if (l == NULL) /* not found, ignoring it */
-                    break;
-                /* move it ahead then */
-                result = g_list_remove_link(result, l);
-            }
-            else
+                /* apply custom settings */
+                if (((MenuMenuname *)app)->layout.only_unallocated)
+                    ((MenuMenu *)l->data)->layout.show_empty = ((MenuMenuname *)app)->layout.show_empty;
+                if (((MenuMenuname *)app)->layout.is_set)
+                    ((MenuMenu *)l->data)->layout.allow_inline = ((MenuMenuname *)app)->layout.allow_inline;
+                if (((MenuMenuname *)app)->layout.inline_header_is_set)
+                    ((MenuMenu *)l->data)->layout.inline_header = ((MenuMenuname *)app)->layout.inline_header;
+                if (((MenuMenuname *)app)->layout.inline_alias_is_set)
+                    ((MenuMenu *)l->data)->layout.inline_alias = ((MenuMenuname *)app)->layout.inline_alias;
+                if (((MenuMenuname *)app)->layout.inline_limit_is_set)
+                    ((MenuMenu *)l->data)->layout.inline_limit = ((MenuMenuname *)app)->layout.inline_limit;
                 /* remove from menu->children */
                 menu->children = g_list_remove_link(menu->children, l);
-            /* prepend to result */
-            result = g_list_concat(l, result);
+                /* prepend to result */
+                result = g_list_concat(l, result);
+                /* ready for recursion now */
+                _stage1(l->data, dirs, apps);
+            }
             break;
         case MENU_CACHE_TYPE_APP: /* MemuFilename */
             app = g_hash_table_lookup(all_apps, ((MenuFilename *)app)->id);
@@ -555,15 +577,27 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
                     if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR)
                     {
                         GList *this = l;
-                        _stage1(l->data, dirs, apps); /* it's time for recursion */
-                        if (((MenuMenu *)l->data)->key == NULL)
+
+                        /* find it in the rest of layout and skip if it's found */
+                        for (l = child->next; l; l = l->next)
+                            if (((MenuMenuname *)l->data)->layout.type == MENU_CACHE_TYPE_DIR &&
+                                strcmp(((MenuMenuname *)l->data)->name, ((MenuMenu *)this->data)->name) == 0)
+                                break;
+                        if (l != NULL)
                         {
-                            if (((MenuMenu *)l->data)->title != NULL)
-                                ((MenuMenu *)l->data)->key = g_utf8_collate_key(((MenuMenu *)l->data)->title, -1);
-                            else
-                                ((MenuMenu *)l->data)->key = g_utf8_collate_key(((MenuMenu *)l->data)->name, -1);
+                            /* it will be added later by MenuMenuname handler */
+                            l = this->next;
+                            continue;
                         }
-                        l = l->next;
+                        _stage1(this->data, dirs, apps); /* it's time for recursion */
+                        if (((MenuMenu *)this->data)->key == NULL)
+                        {
+                            if (((MenuMenu *)this->data)->title != NULL)
+                                ((MenuMenu *)this->data)->key = g_utf8_collate_key(((MenuMenu *)this->data)->title, -1);
+                            else
+                                ((MenuMenu *)this->data)->key = g_utf8_collate_key(((MenuMenu *)this->data)->name, -1);
+                        }
+                        l = this->next;
                         /* move out from menu->children into result */
                         menu->children = g_list_remove_link(menu->children, this);
                         next = g_list_concat(this, next);
@@ -579,6 +613,23 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
     }
     _free_leftovers(menu->children);
     menu->children = g_list_reverse(result);
+    for (child = menu->children; child; )
+    {
+        MenuMenu *submenu = child->data;
+
+        if (submenu->layout.type == MENU_CACHE_TYPE_DIR &&
+            submenu->layout.allow_inline &&
+            (submenu->layout.inline_limit == 0 ||
+             g_list_length(submenu->children) <= submenu->layout.inline_limit))
+        {
+            if (submenu->layout.inline_alias && g_list_length(submenu->children) == 1)
+            {
+                /* FIXME: replace name of single child with name of submenu */
+            }
+            /* FIXME: inline the submenu... how to use inline_header? */
+        }
+        child = child->next;
+    }
     /* NOTE: now only menus are allocated in menu->children */
     /* Do cleanup */
     g_list_free(available);
@@ -686,13 +737,14 @@ static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
     GList *child;
     gboolean ok = TRUE;
 
-    if (!with_hidden && menu->children == NULL)
+    if (!with_hidden && !menu->layout.show_empty && menu->children == NULL)
         return TRUE;
     index = g_slist_index(DirDirs, menu->dir);
     if (fprintf(f, "+%s\n%s\n%s\n%s\n%s\n%d\n", menu->name, NONULL(menu->title),
                 NONULL(menu->comment), NONULL(menu->icon),
                 menu->id ? (const char *)menu->id->data : "", index) < 0)
         return FALSE;
+    /* FIXME: should pass show_empty into file somehow - v.1.2 may be */
     for (child = menu->children; ok && child != NULL; child = child->next)
     {
         index = ((MenuApp *)child->data)->type;

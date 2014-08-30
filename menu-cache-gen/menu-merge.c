@@ -122,13 +122,16 @@ static gboolean _menu_xml_handler_Name(FmXmlFileItem *item, GList *children,
                                        guint n_attributes, gint line, gint pos,
                                        GError **error, gpointer user_data)
 {
+    const char *name;
+
     if (_fail_if_in_layout(item, error))
         return FALSE;
     item = fm_xml_file_item_find_child(item, FM_XML_FILE_TEXT);
-    if (item == NULL || fm_xml_file_item_get_data(item, NULL) == NULL) /* empty tag */
+    if (item == NULL || (name = fm_xml_file_item_get_data(item, NULL)) == NULL ||
+        strchr(name, '/') != NULL) /* empty or invalid tag */
     {
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
-                            _("Empty <Name> tag"));
+                            _("Invalid <Name> tag"));
         return FALSE;
     }
     return TRUE;
@@ -362,8 +365,13 @@ static gboolean _menu_xml_handler_MergeFile(FmXmlFileItem *item, GList *children
     FmXmlFileItem *name;
     const char *path;
 
-    if (_fail_if_in_layout(item, error))
+    name = fm_xml_file_item_get_parent(item);
+    if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
+    {
+        g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+                            _("Tag <MergeFile> can appear only below <Menu>"));
         return FALSE;
+    }
     if (children == NULL ||
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
@@ -445,8 +453,13 @@ static gboolean _menu_xml_handler_MergeDir(FmXmlFileItem *item, GList *children,
     FmXmlFileItem *name;
     const char *path;
 
-    if (_fail_if_in_layout(item, error))
+    name = fm_xml_file_item_get_parent(item);
+    if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
+    {
+        g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+                            _("Tag <MergeDir> can appear only below <Menu>"));
         return FALSE;
+    }
     if (children == NULL ||
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
@@ -469,6 +482,26 @@ static gboolean _menu_xml_handler_MergeDir(FmXmlFileItem *item, GList *children,
     return TRUE;
 }
 
+/* used for validating DefaultMergeDirs and KDELegacyDirs */
+static gboolean _menu_xml_handler_DefaultMergeDirs(FmXmlFileItem *item, GList *children,
+                                                   char * const *attribute_names,
+                                                   char * const *attribute_values,
+                                                   guint n_attributes, gint line, gint pos,
+                                                   GError **error, gpointer user_data)
+{
+    FmXmlFileItem *parent = fm_xml_file_item_get_parent(item);
+
+    if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
+    {
+        g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+                    _("Tag <%s> can appear only below <Menu>"),
+                    fm_xml_file_item_get_tag_name(item));
+        return FALSE;
+    }
+    /* actual merge will be done in next stage */
+    return TRUE;
+}
+
 static gboolean _menu_xml_handler_LegacyDir(FmXmlFileItem *item, GList *children,
                                             char * const *attribute_names,
                                             char * const *attribute_values,
@@ -479,8 +512,13 @@ static gboolean _menu_xml_handler_LegacyDir(FmXmlFileItem *item, GList *children
     FmXmlFileItem *name;
     const char *path;
 
-    if (_fail_if_in_layout(item, error))
+    name = fm_xml_file_item_get_parent(item);
+    if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
+    {
+        g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+                            _("Tag <LegacyDir> can appear only below <Menu>"));
         return FALSE;
+    }
     if (children == NULL ||
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
@@ -597,8 +635,8 @@ static gboolean _menu_xml_handler_Menuname(FmXmlFileItem *item, GList *children,
         }
         else if (strcmp(attribute_names[0], "inline") == 0)
         {
-            menu->layout.is_inline = (g_ascii_strcasecmp(attribute_values[0],
-                                                         "true") == 0);
+            menu->layout.allow_inline = (g_ascii_strcasecmp(attribute_values[0],
+                                                            "true") == 0);
             menu->layout.is_set = TRUE;
         }
         else if (strcmp(attribute_names[0], "inline_header") == 0)
@@ -730,8 +768,8 @@ static gboolean _menu_xml_handler_DefaultLayout(FmXmlFileItem *item, GList *chil
             layout->show_empty = (g_ascii_strcasecmp(attribute_values[0],
                                                      "true") == 0);
         else if (strcmp(attribute_names[0], "inline") == 0)
-            layout->is_inline = (g_ascii_strcasecmp(attribute_values[0],
-                                                    "true") == 0);
+            layout->allow_inline = (g_ascii_strcasecmp(attribute_values[0],
+                                                       "true") == 0);
         else if (strcmp(attribute_names[0], "inline_header") == 0)
             layout->inline_header = (g_ascii_strcasecmp(attribute_values[0],
                                                         "true") == 0);
@@ -1355,7 +1393,7 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
     menu = g_slice_new0(MenuMenu);
     menu->layout.type = MENU_CACHE_TYPE_DIR;
     menu->layout.show_empty = layout->show_empty;
-    menu->layout.is_inline = layout->is_inline;
+    menu->layout.allow_inline = layout->allow_inline;
     menu->layout.inline_header = layout->inline_header;
     menu->layout.inline_alias = layout->inline_alias;
     menu->layout.inline_limit = layout->inline_limit;
@@ -1509,9 +1547,9 @@ MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error)
     menuTag_MergeDir = fm_xml_file_set_handler(data.menu, "MergeDir",
                                                &_menu_xml_handler_MergeDir, FALSE, NULL);
     menuTag_DefaultMergeDirs = fm_xml_file_set_handler(data.menu, "DefaultMergeDirs",
-                                                       &_menu_xml_handler_pass, FALSE, NULL);
+                                                       &_menu_xml_handler_DefaultMergeDirs, FALSE, NULL);
     menuTag_KDELegacyDirs = fm_xml_file_set_handler(data.menu, "KDELegacyDirs",
-                                                    &_menu_xml_handler_pass, FALSE, NULL);
+                                                    &_menu_xml_handler_DefaultMergeDirs, FALSE, NULL);
     menuTag_Name = fm_xml_file_set_handler(data.menu, "Name",
                                            &_menu_xml_handler_Name, FALSE, NULL);
     menuTag_Deleted = fm_xml_file_set_handler(data.menu, "Deleted",

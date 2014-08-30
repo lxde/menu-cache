@@ -67,9 +67,9 @@ typedef enum {
 typedef struct {
     MenuCacheType type : 2; /* used by MenuMenu, MENU_CACHE_TYPE_DIR */
     gboolean only_unallocated : 1; /* for Menuname: TRUE if show_empty is set */
-    gboolean is_set : 1; /* used by MenuMenu, for Menuname: TRUE if is_inline is set */
+    gboolean is_set : 1; /* used by MenuMenu, for Menuname: TRUE if allow_inline is set */
     gboolean show_empty : 1;
-    gboolean is_inline : 1;
+    gboolean allow_inline : 1;
     gboolean inline_header : 1;
     gboolean inline_alias : 1;
     gboolean inline_header_is_set : 1; /* for Menuname */
