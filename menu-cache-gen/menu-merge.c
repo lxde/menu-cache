@@ -86,7 +86,7 @@ GSList *DirDirs = NULL;
 GSList *MenuDirs = NULL;
 
 /* we keep all the unfinished items in the hash */
-static GHashTable *layout_hash = NULL; // FIXME: init it!
+static GHashTable *layout_hash = NULL;
 
 static gboolean _fail_if_in_layout(FmXmlFileItem *item, GError **error)
 {
@@ -220,6 +220,7 @@ static gboolean _menu_xml_handler_AppDir(FmXmlFileItem *item, GList *children,
         char *_dir = g_path_get_dirname(data->file_path);
         path = _path = g_build_filename(_dir, path, NULL);
         g_free(_dir);
+        /* FIXME: canonicalize path */
         fm_xml_file_item_destroy(name);
         fm_xml_file_item_append_text(item, _path, -1, FALSE);
     }
@@ -968,6 +969,57 @@ static void _merge_level(GList *first)
     }
 }
 
+static FmXmlFileItem *_walk_path(GList *child, const char *path)
+{
+    FmXmlFileItem *item;
+    char *subpath = strchr(path, '/');
+
+    if (subpath)
+    {
+        char *next = &subpath[1];
+        subpath = g_strndup(path, subpath - path);
+        path = next;
+    }
+    for (; child != NULL; child = child->next)
+    {
+        item = child->data;
+        if (item == NULL)
+            continue;
+        if (g_strcmp0(subpath ? subpath : path, _get_menu_name(item)) == 0)
+            break;
+        item = NULL;
+    }
+    g_free(subpath); /* free but still use as marker */
+    if (subpath != NULL && item != NULL)
+    {
+        child = fm_xml_file_item_get_children(item);
+        item = _walk_path(child, path);
+        g_list_free(child);
+    }
+    return item;
+}
+
+static FmXmlFileItem *_walk_children(GList *children, FmXmlFileItem *list,
+                                     FmXmlFileTag tag)
+{
+    GList *sub, *l;
+    FmXmlFileItem *item = NULL;
+
+    sub = fm_xml_file_item_get_children(list);
+    for (l = sub; l; l = l->next)
+        if (fm_xml_file_item_get_tag((item = l->data)) == tag)
+            break;
+        else
+            item = NULL;
+    g_list_free(sub);
+    if (item == NULL) /* no tag found */
+        return NULL;
+    item = fm_xml_file_item_find_child(item, FM_XML_FILE_TEXT);
+    if (item == NULL) /* empty tag, assume we are here */
+        return fm_xml_file_item_get_parent(list);
+    return _walk_path(children, fm_xml_file_item_get_data(item, NULL));
+}
+
 static gboolean _activate_merges(MenuTreeData *data, FmXmlFileItem *item,
                                  GError **error)
 {
@@ -1200,7 +1252,22 @@ restart:
             !_activate_merges(data, sub, error))
             goto failed; /* failed to merge */
     }
-    /* FIXME: support <Move><New>...</New><Old>...</Old></Move> for menus */
+    /* support <Move><New>...</New><Old>...</Old></Move> for menus */
+    for (l = children; l; l = l2)
+    {
+        l2 = l->next;
+        sub = l->data;
+        if (sub && fm_xml_file_item_get_tag(sub) == menuTag_Move)
+        {
+            /* reuse both item and sub, we don't need them anymore */
+            item = _walk_children(children, sub, menuTag_Old);
+            sub = _walk_children(children, sub, menuTag_New);
+            if (item != NULL && sub != NULL)
+                fm_xml_file_item_append_child(sub, item);
+            else
+                g_debug("invalid <Move> tag ignored");
+        }
+    }
     g_list_free(children);
     return TRUE;
 
