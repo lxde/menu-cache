@@ -251,6 +251,7 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
         }
         g_free(filename);
     }
+    g_dir_close(gd);
     g_key_file_free(kf);
 }
 
@@ -367,11 +368,12 @@ static void _free_leftovers(GList *item);
 
 static void menu_menu_free(MenuMenu *menu)
 {
-    _free_layout_items(menu->layout.items);
     g_free(menu->name);
     g_free(menu->key);
+    g_list_foreach(menu->id, (GFunc)g_free, NULL);
     g_list_free(menu->id);
     _free_leftovers(menu->children);
+    _free_layout_items(menu->layout.items);
     g_free(menu->title);
     g_free(menu->comment);
     g_free(menu->icon);
@@ -925,9 +927,9 @@ failed:
     else if (tmp)
         g_unlink(tmp);
     /* Free all the data */
+    menu_menu_free(layout);
     g_free(tmp);
     g_hash_table_destroy(all_apps);
-    menu_menu_free(layout);
     g_slist_free(DEs);
     g_slist_free(loaded_dirs);
     return ok;
