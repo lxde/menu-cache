@@ -1252,6 +1252,11 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
     FmXmlFileTag tag;
     gboolean ok = TRUE;
 
+    if (fm_xml_file_item_find_child(node, menuTag_Name) == NULL)
+    {
+        g_warning("got a <Menu> without <Name>, ignored");
+        return NULL;
+    }
     children = fm_xml_file_item_get_children(node);
     /* check if it's deleted first */
     for (l = children; l; l = l->next)
