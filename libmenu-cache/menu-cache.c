@@ -1571,6 +1571,7 @@ static MenuCache* menu_cache_create(const char* menu_name)
     char* file_name;
     int len = 0;
     GChecksum *sum;
+    char *langs_list;
 
     if( !xdg_cfg )
         xdg_cfg = "";
@@ -1585,14 +1586,13 @@ static MenuCache* menu_cache_create(const char* menu_name)
     if( ! xdg_cache_home )
         xdg_cache_home = "";
 
-    /* get rid of the encoding part of locale name. */
-    while( strchr(langs[0], '.') )
-        ++langs;
+    /* reconstruct languages list in form as it should be in $LANGUAGES */
+    langs_list = g_strjoinv(":", (char **)langs);
 
     buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" CACHE_VERSION
                            "\t00000000000000000000000000000000\n",
                             menu_name,
-                            *langs,
+                            langs_list,
                             xdg_cache_home,
                             xdg_cfg,
                             xdg_prefix,
@@ -1613,6 +1613,7 @@ static MenuCache* menu_cache_create(const char* menu_name)
     memcpy( cache->md5, md5, 32 );
     cache->menu_name = g_strdup(menu_name);
     g_free( file_name );
+    g_free(langs_list);
 
     g_checksum_free(sum); /* md5 is also freed here */
 
