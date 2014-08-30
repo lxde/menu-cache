@@ -1080,11 +1080,12 @@ restart:
         const gchar * const *dirs = g_get_system_config_dirs();
         char *merged;
         FmXmlFileItem *it_sub;
+        int i = g_strv_length((char **)dirs);
 
         /* insert in reverse order - see XDG menu specification */
-        while (dirs[0] != NULL)
+        while (i > 0)
         {
-            merged = g_build_filename(*dirs++, "menus", "applications-merged", NULL);
+            merged = g_build_filename(dirs[--i], "menus", "applications-merged", NULL);
             it_sub = fm_xml_file_item_new(menuTag_MergeDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
             if (!fm_xml_file_insert_before(sub, it_sub))
@@ -1169,11 +1170,12 @@ restart:
         const gchar * const *dirs = g_get_system_data_dirs();
         char *merged;
         FmXmlFileItem *it_sub;
+        int i = g_strv_length((char **)dirs);
 
         /* insert in reverse order - see XDG menu specification */
-        while (dirs[0] != NULL)
+        while (i > 0)
         {
-            merged = g_build_filename(*dirs++, "applications", NULL);
+            merged = g_build_filename(dirs[--i], "applications", NULL);
             it_sub = fm_xml_file_item_new(menuTag_AppDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
             if (!fm_xml_file_insert_before(sub, it_sub))
@@ -1231,8 +1233,41 @@ restart:
     }
     if (sub != NULL)
     {
-        /* FIXME: not supported yet */
-        g_warning("KDELegacyDirs tag currently isn't supported");
+        const gchar * const *dirs = g_get_system_data_dirs();
+        char *merged;
+        FmXmlFileItem *it_sub;
+        int i = g_strv_length((char **)dirs);
+
+        /* insert in reverse order - see XDG menu specification */
+        while (i > 0)
+        {
+            merged = g_build_filename(dirs[--i], "applnk", NULL);
+            it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
+            /* FIXME: set prefix to "kde-" */
+            fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
+            if (!fm_xml_file_insert_before(sub, it_sub))
+            {
+                g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+                            _("Failed to insert tag <LegacyDir>%s</LegacyDir>"),
+                            merged);
+                g_free(merged);
+                goto failed; /* failed to merge */
+            }
+            g_free(merged);
+        }
+        merged = g_build_filename(g_get_user_data_dir(), "applnk", NULL);
+        it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
+        /* FIXME: set prefix to "kde-" */
+        fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
+        if (!fm_xml_file_insert_before(sub, it_sub))
+        {
+            g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+                        _("Failed to insert tag <LegacyDir>%s</LegacyDir>"),
+                        merged);
+            g_free(merged);
+            goto failed; /* failed to merge */
+        }
+        g_free(merged);
         /* destroy all KDELegacyDirs */
         for (l = children; l; l = l->next)
             if (fm_xml_file_item_get_tag(l->data) == menuTag_KDELegacyDirs)
@@ -1269,11 +1304,12 @@ restart:
         const gchar * const *dirs = g_get_system_data_dirs();
         char *merged;
         FmXmlFileItem *it_sub;
+        int i = g_strv_length((char **)dirs);
 
         /* insert in reverse order - see XDG menu specification */
-        while (dirs[0] != NULL)
+        while (i > 0)
         {
-            merged = g_build_filename(*dirs++, "desktop-directories", NULL);
+            merged = g_build_filename(dirs[--i], "desktop-directories", NULL);
             it_sub = fm_xml_file_item_new(menuTag_DirectoryDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
             if (!fm_xml_file_insert_before(sub, it_sub))
