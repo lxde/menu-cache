@@ -147,11 +147,14 @@ typedef struct {
     FmXmlFileItem *rule;
 } MenuRule;
 
-/* requested language */
-char *language;
+/* requested language(s) */
+char **languages;
 
 /* list of menu files to monitor */
 GSList *MenuFiles;
+
+/* list of menu dirs to monitor */
+GSList *MenuDirs;
 
 /* list of available app dirs */
 GSList *AppDirs;

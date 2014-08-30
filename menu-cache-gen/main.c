@@ -30,13 +30,16 @@
 #include <string.h>
 #include <locale.h>
 
+char **languages = NULL;
+GSList *MenuFiles = NULL;
+
 /* GLib options parser data is taken from previous menu-cache-gen code
  *
  *      Copyright 2008 PCMan <pcman.tw@google.com>
  */
 static char* ifile = NULL;
 static char* ofile = NULL;
-char* language = NULL;
+static char* lang = NULL;
 
 GOptionEntry opt_entries[] =
 {
@@ -46,7 +49,7 @@ e.", NULL },
 */
     {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
     {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
-    {"lang", 'l', 0, G_OPTION_ARG_STRING, &language, "Language", NULL },
+    {"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", NULL },
     { NULL }
 };
 
@@ -70,9 +73,11 @@ int main(int argc, char **argv)
     }
 
     /* do with -l: if language is NULL then query it from environment */
-    if (language == NULL)
-        language = setlocale(LC_ALL, NULL);
-    setlocale(LC_ALL, language);
+    if (lang == NULL || lang[0] == '\0')
+        languages = (char **)g_get_language_names();
+    else
+        languages = g_strsplit(lang, ":", 0);
+    setlocale(LC_ALL, "");
 
     /* do with files: both ifile and ofile should be set correctly */
     if (ifile == NULL || ofile == NULL)
@@ -86,15 +91,26 @@ int main(int argc, char **argv)
     if (G_LIKELY(!g_path_is_absolute(ifile)))
     {
         /* resolv the path */
-        char *path = g_build_filename(g_get_user_config_dir(), "menus", ifile, NULL);
-        gboolean found = g_file_test(path, G_FILE_TEST_IS_DIR);
+        char *path;
+        gboolean found;
         const gchar * const *dirs = g_get_system_config_dirs();
 
+        const char *menu_prefix = g_getenv("XDG_MENU_PREFIX");
+        if (menu_prefix != NULL && menu_prefix[0] != '\0')
+        {
+            char *path = g_strconcat(menu_prefix, ifile, NULL);
+            g_free(ifile);
+            ifile = path;
+        }
+        path = g_build_filename(g_get_user_config_dir(), "menus", ifile, NULL);
+        found = g_file_test(path, G_FILE_TEST_IS_REGULAR);
         while (!found && dirs[0] != NULL)
         {
+            MenuFiles = g_slist_append(MenuFiles, (gpointer)g_intern_string(path));
             g_free(path);
             path = g_build_filename(dirs[0], "menus", ifile, NULL);
-            found = g_file_test(path, G_FILE_TEST_IS_DIR);
+            found = g_file_test(path, G_FILE_TEST_IS_REGULAR);
+            dirs++;
         }
         if (!found)
         {
@@ -104,6 +120,11 @@ int main(int argc, char **argv)
         g_free(ifile);
         ifile = path;
     }
+    MenuFiles = g_slist_append(MenuFiles, (gpointer)g_intern_string(ifile));
+
+#if !GLIB_CHECK_VERSION(2, 36, 0)
+    g_type_init();
+#endif
 
     /* load, merge menu file, and create menu */
     menu = get_merged_menu(ifile, &xmlfile, &err);

@@ -59,18 +59,31 @@ static void menu_app_free(gpointer data)
     g_slice_free(MenuApp, app);
 }
 
+/* g_key_file_get_locale_string is too much limited so implement replacement */
+static char *_get_language_string(GKeyFile *kf, const char *key)
+{
+    char **lang;
+    char *try_key, *str;
+
+    for (lang = languages; lang[0] != NULL; lang++)
+    {
+        try_key = g_strdup_printf("%s[%s]", key, lang[0]);
+        str = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP, try_key, NULL);
+        g_free(try_key);
+        if (str != NULL)
+            return str;
+    }
+    return g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP, key, languages[0], NULL);
+}
+
 static void _fill_menu_from_file(MenuMenu *menu, const char *path)
 {
     GKeyFile *kf = g_key_file_new();
 
     if (!g_key_file_load_from_file(kf, path, G_KEY_FILE_KEEP_TRANSLATIONS, NULL))
         goto exit;
-    menu->title = g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                               G_KEY_FILE_DESKTOP_KEY_NAME,
-                                               language, NULL);
-    menu->comment = g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                                 G_KEY_FILE_DESKTOP_KEY_COMMENT,
-                                                 language, NULL);
+    menu->title = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_NAME);
+    menu->comment = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_COMMENT);
     menu->icon = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                        G_KEY_FILE_DESKTOP_KEY_ICON, NULL);
     menu->layout.is_set = TRUE;
@@ -101,17 +114,11 @@ static const char **menu_app_intern_key_file_list(GKeyFile *kf, const char *key,
 
 static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
 {
-    app->title = g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                              G_KEY_FILE_DESKTOP_KEY_NAME,
-                                              language, NULL);
-    app->comment = g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                                G_KEY_FILE_DESKTOP_KEY_COMMENT,
-                                                language, NULL);
+    app->title = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_NAME);
+    app->comment = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_COMMENT);
     app->icon = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                       G_KEY_FILE_DESKTOP_KEY_ICON, NULL);
-    app->generic_name = g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                                     G_KEY_FILE_DESKTOP_KEY_GENERIC_NAME,
-                                                     language, NULL);
+    app->generic_name = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_GENERIC_NAME);
     app->exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                       G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
     app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES, FALSE);
@@ -127,15 +134,24 @@ static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
 
 static GHashTable *all_apps = NULL;
 
-static void _fill_apps_from_dir(MenuMenu *menu, const char *dir, GString *prefix)
+static GSList *loaded_dirs = NULL;
+
+static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix)
 {
-    GDir *gd = g_dir_open(dir, 0, NULL);
+    const char *dir = lptr->data;
+    GDir *gd;
     const char *name;
     char *filename, *id;
     gsize prefix_len = prefix->len;
     MenuApp *app;
     GKeyFile *kf;
 
+    if (g_slist_find(loaded_dirs, dir) == NULL)
+        loaded_dirs = g_slist_prepend(loaded_dirs, (gpointer)dir);
+    /* the directory might be scanned with different prefix already */
+    else if (prefix->str[0] == '\0')
+        return;
+    gd = g_dir_open(dir, 0, NULL);
     if (gd == NULL)
         return;
     kf = g_key_file_new();
@@ -150,7 +166,10 @@ static void _fill_apps_from_dir(MenuMenu *menu, const char *dir, GString *prefix
             /* recursion */
             g_string_append(prefix, name);
             g_string_append_c(prefix, '-');
-            _fill_apps_from_dir(menu, g_intern_string(filename), prefix);
+            name = g_intern_string(filename);
+            /* a little trick here - we insert new node after this one */
+            lptr = g_list_insert_before(lptr, lptr->next, (gpointer)name);
+            _fill_apps_from_dir(menu, lptr->next, prefix);
             g_string_truncate(prefix, prefix_len);
         }
         else if (!g_str_has_suffix(name, ".desktop") ||
@@ -266,6 +285,8 @@ static gboolean menu_app_match_tag(MenuApp *app, FmXmlFileItem *it)
             while (*cats)
                 if (*cats == cat)
                     break;
+                else
+                    cats++;
             ok = (*cats != NULL);
         }
     }
@@ -354,7 +375,7 @@ static void _free_leftovers(GList *item)
     }
 }
 
-/* apps and dirs are in order "first is more relevant" */
+/* dirs are in order "first is more relevant" */
 static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
 {
     GList *child, *_dirs = NULL, *_apps = NULL, *l, *available = NULL, *result;
@@ -420,12 +441,14 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
         }
     }
     prefix = g_string_new("");
+    _apps = g_list_reverse(_apps);
     for (l = _apps; l; l = l->next)
     {
         /* scan and fill the list */
-        _fill_apps_from_dir(menu, l->data, prefix);
+        _fill_apps_from_dir(menu, l, prefix);
     }
-    apps = _apps = g_list_concat(_apps, g_list_copy(apps));
+    if (_apps != NULL)
+        apps = _apps = g_list_concat(g_list_copy(apps), _apps);
     /* Gather all available files (some in $all_apps may be not in $apps) */
     g_hash_table_iter_init(&iter, all_apps);
     while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&app))
@@ -483,7 +506,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
             result = g_list_concat(l, result);
             break;
         case MENU_CACHE_TYPE_APP: /* MemuFilename */
-            app = g_hash_table_lookup(all_apps, ((MenuFilename *)l->data)->id);
+            app = g_hash_table_lookup(all_apps, ((MenuFilename *)app)->id);
             if (app == NULL || !app->matched || app->excluded)
                 /* not available, ignoring it */
                 break;
@@ -502,20 +525,25 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
             result = g_list_concat(l, result);
             break;
         case MENU_CACHE_TYPE_SEP: /* MenuSep */
-            result = g_list_prepend(result, l->data);
+            result = g_list_prepend(result, app);
             break;
         case MENU_CACHE_TYPE_NONE: /* MenuMerge */
             next = NULL;
-            switch (((MenuMerge *)l->data)->merge_type) {
+            switch (((MenuMerge *)app)->merge_type) {
             case MERGE_FILES:
                 tag = 1; /* use it as mark to not add dirs */
-                break;
             case MERGE_ALL:
                 for (l = available; l; l = l->next)
                 {
                     app = l->data;
                     if (app->key == NULL)
-                        app->key = g_utf8_collate_key(app->title, -1);
+                    {
+                        if (app->title != NULL)
+                            app->key = g_utf8_collate_key(app->title, -1);
+                        else
+                            g_warning("id %s has no Name", app->id),
+                            app->key = g_utf8_collate_key(app->id, -1);
+                    }
                     app->menus = g_list_prepend(app->menus, menu);
                 }
                 next = available;
@@ -527,8 +555,14 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
                     if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR)
                     {
                         GList *this = l;
+                        _stage1(l->data, dirs, apps); /* it's time for recursion */
                         if (((MenuMenu *)l->data)->key == NULL)
-                            ((MenuMenu *)l->data)->key = g_utf8_collate_key(((MenuMenu *)l->data)->title, -1);
+                        {
+                            if (((MenuMenu *)l->data)->title != NULL)
+                                ((MenuMenu *)l->data)->key = g_utf8_collate_key(((MenuMenu *)l->data)->title, -1);
+                            else
+                                ((MenuMenu *)l->data)->key = g_utf8_collate_key(((MenuMenu *)l->data)->name, -1);
+                        }
                         l = l->next;
                         /* move out from menu->children into result */
                         menu->children = g_list_remove_link(menu->children, this);
@@ -546,13 +580,6 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
     _free_leftovers(menu->children);
     menu->children = g_list_reverse(result);
     /* NOTE: now only menus are allocated in menu->children */
-    /* Do recursion for all submenus */
-    for (l = menu->children; l; l = l->next)
-    {
-        menu = l->data; /* we can reuse the pointer now */
-        if (menu->layout.type == MENU_CACHE_TYPE_DIR)
-            _stage1(menu, dirs, apps);
-    }
     /* Do cleanup */
     g_list_free(available);
     g_list_free(_dirs);
@@ -560,35 +587,69 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps)
     g_string_free(prefix, TRUE);
 }
 
-static void _stage2(MenuMenu *menu)
+static gint _stage2(MenuMenu *menu)
 {
-    GList *child = menu->children;
+    GList *child = menu->children, *next, *to_delete = NULL;
     MenuApp *app;
+    gint count = 0;
 
     while (child)
     {
         app = child->data;
+        next = child->next;
         switch (app->type) {
         case MENU_CACHE_TYPE_APP: /* Menu App */
             if (menu->layout.only_unallocated && app->menus->next != NULL)
             {
                 /* it is more than in one menu */
-                GList *next = child->next;
                 menu->children = g_list_delete_link(menu->children, child);
                 child = next;
                 app->menus = g_list_remove(app->menus, menu);
                 break;
             }
-            child = child->next;
+            child = next;
+            count++;
             break;
         case MENU_CACHE_TYPE_DIR: /* MenuMenu */
             /* do recursion */
-            _stage2(child->data);
+            if (_stage2(child->data) > 0)
+                count++;
+            else
+                to_delete = g_list_prepend(to_delete, child);
+            child = next;
+            break;
         default:
             /* separator */
-            child = child->next;
+            if (child == menu->children || next == NULL ||
+                (app = next->data)->type == MENU_CACHE_TYPE_SEP)
+                menu->children = g_list_delete_link(menu->children, child);
+            child = next;
         }
     }
+    if (count == 0) /* if no apps here then don't keep dirs as well */
+    {
+        while (to_delete)
+        {
+            child = to_delete->data;
+            menu_menu_free(child->data);
+            menu->children = g_list_delete_link(menu->children, child);
+            to_delete = g_list_delete_link(to_delete, to_delete);
+        }
+    }
+    return count;
+}
+
+static inline int _compose_flags(const char **f)
+{
+    int x = 0, i;
+
+    while (*f)
+    {
+        i = g_slist_index(DEs, *f++);
+        if (i >= 0)
+            x |= 1 << i;
+    }
+    return x;
 }
 
 #define NONULL(a) (a == NULL) ? "" : a
@@ -597,7 +658,7 @@ static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
 {
     int index;
     MenuCacheItemFlag flags = 0;
-    MenuCacheShowFlag show = SHOW_IN_LXDE;
+    int show = 0;
 
     if (app->hidden && !with_hidden)
         return TRUE;
@@ -608,11 +669,15 @@ static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
         flags |= FLAG_IS_NODISPLAY;
     if (app->use_notification)
         flags |= FLAG_USE_SN;
+    if (app->show_in)
+        show = _compose_flags(app->show_in);
+    else if (app->hide_in)
+        show = ~_compose_flags(app->hide_in);
     /* FIXME: compose show flags */
     return fprintf(f, "-%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%u\n%d\n", app->id,
                    NONULL(app->title), NONULL(app->comment), NONULL(app->icon),
                    NONULL(app->filename), index, NONULL(app->generic_name),
-                   NONULL(app->exec), flags, (int)show) > 0;
+                   NONULL(app->exec), flags, show) > 0;
 }
 
 static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
@@ -621,7 +686,7 @@ static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
     GList *child;
     gboolean ok = TRUE;
 
-    if (menu->children == NULL && !with_hidden)
+    if (!with_hidden && menu->children == NULL)
         return TRUE;
     index = g_slist_index(DirDirs, menu->dir);
     if (fprintf(f, "+%s\n%s\n%s\n%s\n%s\n%d\n", menu->name, NONULL(menu->title),
@@ -640,6 +705,7 @@ static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
             /* separator - not add duplicates nor at start nor at end */
             fprintf(f, "-\n");
     }
+    fputc('\n', f);
     return ok;
 }
 
@@ -659,7 +725,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
                                                "KDE",
                                                "XFCE",
                                                "ROX" };
-    char *tmp = NULL;
+    char *tmp;
     FILE *f;
     GSList *l;
     int i;
@@ -673,6 +739,9 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     /* Recursively remove non-matched files by OnlyUnallocated flag */
     _stage2(layout);
     /* Prepare temporary file for safe creation */
+    tmp = strrchr(menuname, G_DIR_SEPARATOR);
+    if (tmp)
+        menuname = &tmp[1];
     tmp = g_path_get_dirname(file);
     if (tmp != NULL && !g_file_test(tmp, G_FILE_TEST_EXISTS))
         g_mkdir_with_parents(tmp, 0700);
@@ -688,17 +757,21 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     /* Write common data */
     fprintf(f, "1.1\n%s%s\n%d\n", /* FIXME: use CACHE_GEN_VERSION */
             menuname, with_hidden ? "+hidden" : "",
-            g_slist_length(DirDirs) + g_slist_length(AppDirs) + g_slist_length(MenuFiles));
+            g_slist_length(DirDirs) + g_slist_length(AppDirs)
+            + g_slist_length(MenuDirs) + g_slist_length(MenuFiles));
     for (l = DirDirs; l; l = l->next)
         if (fprintf(f, "D%s\n", (const char *)l->data) < 0)
             goto failed;
     for (l = AppDirs; l; l = l->next)
         if (fprintf(f, "D%s\n", (const char *)l->data) < 0)
             goto failed;
+    for (l = MenuDirs; l; l = l->next)
+        if (fprintf(f, "D%s\n", (const char *)l->data) < 0)
+            goto failed;
     for (l = MenuFiles; l; l = l->next)
         if (fprintf(f, "F%s\n", (const char *)l->data) < 0)
             goto failed;
-    for (l = DEs; l; l = l->next)
+    for (l = g_slist_nth(DEs, 5); l; l = l->next)
         if (fprintf(f, "%s;", (const char *)l->data) < 0)
             goto failed;
     fputc('\n', f);
@@ -716,5 +789,6 @@ failed:
     g_hash_table_destroy(all_apps);
     menu_menu_free(layout);
     g_slist_free(DEs);
+    g_slist_free(loaded_dirs);
     return ok;
 }

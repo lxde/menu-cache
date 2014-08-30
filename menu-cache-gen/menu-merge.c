@@ -82,6 +82,9 @@ GSList *AppDirs = NULL;
 /* list of available dir dirs */
 GSList *DirDirs = NULL;
 
+/* list of menu dirs to monitor */
+GSList *MenuDirs = NULL;
+
 /* we keep all the unfinished items in the hash */
 static GHashTable *layout_hash = NULL; // FIXME: init it!
 
@@ -537,7 +540,7 @@ static gboolean _menu_xml_handler_Filename(FmXmlFileItem *item, GList *children,
     }
     parent = fm_xml_file_item_get_parent(item);
     if (parent)
-        tag = fm_xml_file_item_get_tag(item);
+        tag = fm_xml_file_item_get_tag(parent);
     if (tag == menuTag_Layout || tag == menuTag_DefaultLayout)
     {
         layout = _find_layout(parent, TRUE);
@@ -571,7 +574,7 @@ static gboolean _menu_xml_handler_Menuname(FmXmlFileItem *item, GList *children,
     }
     parent = fm_xml_file_item_get_parent(item);
     if (parent)
-        tag = fm_xml_file_item_get_tag(item);
+        tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -634,7 +637,7 @@ static gboolean _menu_xml_handler_Separator(FmXmlFileItem *item, GList *children
 
     parent = fm_xml_file_item_get_parent(item);
     if (parent)
-        tag = fm_xml_file_item_get_tag(item);
+        tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -663,7 +666,7 @@ static gboolean _menu_xml_handler_Merge(FmXmlFileItem *item, GList *children,
 
     parent = fm_xml_file_item_get_parent(item);
     if (parent)
-        tag = fm_xml_file_item_get_tag(item);
+        tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -743,7 +746,8 @@ static gboolean _menu_xml_handler_DefaultLayout(FmXmlFileItem *item, GList *chil
 }
 
 static gboolean _merge_xml_file(MenuTreeData *data, FmXmlFileItem *item,
-                                const char *path, GList **m, GError **error)
+                                const char *path, GList **m, GError **error,
+                                gboolean add_to_list)
 {
     FmXmlFile *menu = NULL;
     GList *xml = NULL, *it; /* loaded list */
@@ -763,7 +767,7 @@ static gboolean _merge_xml_file(MenuTreeData *data, FmXmlFileItem *item,
         return TRUE;
     }
     *m = g_list_prepend(it, (gpointer)path);
-    if (g_slist_find(MenuFiles, path) == NULL)
+    if (add_to_list && g_slist_find(MenuFiles, path) == NULL)
         MenuFiles = g_slist_append(MenuFiles, (gpointer)path);
     save_path = data->file_path;
     data->file_path = path;
@@ -859,6 +863,9 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
     gboolean ok = TRUE;
 
     g_debug("merging the XML directory '%s'", path);
+    path = g_intern_string(path);
+    if (g_slist_find(MenuDirs, path) == NULL)
+        MenuDirs = g_slist_append(MenuDirs, (gpointer)path);
     dir = g_dir_open(path, 0, &err);
     if (dir)
     {
@@ -870,7 +877,7 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
                 continue;
             }
             child = g_build_filename(path, name, NULL);
-            ok = _merge_xml_file(data, item, child, m, &err);
+            ok = _merge_xml_file(data, item, child, m, &err, FALSE);
             if (!ok)
             {
                 /*
@@ -892,9 +899,11 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
         }
         g_dir_close(dir);
     }
-    else if (ignore_not_exist && err->domain == G_IO_ERROR &&
-             err->code == G_IO_ERROR_NOT_FOUND)
+    else if (ignore_not_exist && err->domain == G_FILE_ERROR &&
+             (err->code == G_FILE_ERROR_NOENT))
+    {
         g_error_free(err);
+    }
     else
     {
         g_propagate_error(error, err);
@@ -1040,11 +1049,11 @@ restart:
             if (l2 == NULL)
             {
                 if (tag == menuTag_MergeFile)
-                    ok = _merge_xml_file(data, l->data, path, &merged, error);
+                    ok = _merge_xml_file(data, l->data, path, &merged, error, TRUE);
                 else
                     ok = _merge_menu_directory(data, l->data, path, &merged, error, TRUE);
                 if (!ok)
-                    goto failed;
+                    goto failed; /* failed to merge */
             }
             /* destroy item -- we replaced it already */
             fm_xml_file_item_destroy(l->data);
@@ -1311,8 +1320,8 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
         else if (tag == menuTag_NotOnlyUnallocated)
             menu->layout.only_unallocated = FALSE;
         else if (tag == menuTag_Include || tag == menuTag_Exclude ||
-                 tag == menuTag_AppDir || tag == menuTag_LegacyDir ||
-                 tag == menuTag_KDELegacyDirs)
+                 tag == menuTag_DirectoryDir || tag == menuTag_AppDir ||
+                 tag == menuTag_LegacyDir || tag == menuTag_KDELegacyDirs)
                  /* FIXME: can those be here? Filename Category All And Not Or */
         {
             MenuRule *child = g_slice_new0(MenuRule);
@@ -1406,7 +1415,6 @@ MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error)
                                         _free_layout);
     data.menu = fm_xml_file_new(NULL);
     data.line = data.pos = -1;
-    MenuFiles = g_slist_prepend(NULL, (gpointer)g_intern_string(file));
     /* g_debug("new FmXmlFile %p", data.menu); */
     menuTag_Menu = fm_xml_file_set_handler(data.menu, "Menu",
                                            &_menu_xml_handler_pass, FALSE, NULL);
