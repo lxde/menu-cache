@@ -685,6 +685,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
     {
         MenuMenu *submenu = child->data;
 
+        child = child->next;
         if (submenu->layout.type == MENU_CACHE_TYPE_DIR &&
             submenu->layout.allow_inline &&
             (submenu->layout.inline_limit == 0 ||
@@ -695,8 +696,16 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
                 /* FIXME: replace name of single child with name of submenu */
             }
             /* FIXME: inline the submenu... how to use inline_header? */
+            submenu->children = g_list_reverse(submenu->children);
+            while (submenu->children != NULL)
+            {
+                menu->children = g_list_insert_before(menu->children, child,
+                                                      submenu->children->data);
+                submenu->children = g_list_delete_link(submenu->children, submenu->children);
+            }
+            menu->children = g_list_remove(menu->children, submenu);
+            menu_menu_free(submenu);
         }
-        child = child->next;
     }
     /* NOTE: now only menus are allocated in menu->children */
     /* Do cleanup */
@@ -793,7 +802,6 @@ static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
         show = _compose_flags(app->show_in);
     else if (app->hide_in)
         show = ~_compose_flags(app->hide_in);
-    /* FIXME: compose show flags */
     return fprintf(f, "-%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%u\n%d\n", app->id,
                    NONULL(app->title), NONULL(app->comment), NONULL(app->icon),
                    NONULL(app->filename), index, NONULL(app->generic_name),
