@@ -1219,6 +1219,39 @@ restart:
         fm_xml_file_item_destroy(sub);
         l->data = NULL;
     }
+    /* expand KDELegacyDirs then supress duplicates on LegacyDir */
+    for (l = children, sub = NULL; l; l = l->next)
+    {
+        if (l->data == NULL)
+            continue;
+        if (fm_xml_file_item_get_tag(l->data) == menuTag_KDELegacyDirs)
+            sub = l->data;
+    }
+    if (sub != NULL)
+    {
+        /* FIXME: not supported yet */
+        g_warning("KDELegacyDirs tag currently isn't supported");
+        /* destroy all KDELegacyDirs */
+        for (l = children; l; l = l->next)
+            if (fm_xml_file_item_get_tag(l->data) == menuTag_KDELegacyDirs)
+            {
+                fm_xml_file_item_destroy(l->data);
+                l->data = NULL;
+            }
+    }
+    for (l = children; l; l = l->next)
+    {
+        sub = l->data;
+        if (sub == NULL || fm_xml_file_item_get_tag(sub) != menuTag_LegacyDir)
+            continue;
+        for (l2 = l; l2; l2 = l2->next)
+            if (l2->data != NULL && fm_xml_file_item_get_tag(l2->data) == menuTag_LegacyDir)
+                break;
+        if (l2 == NULL) /* no duplicates */
+            continue;
+        fm_xml_file_item_destroy(sub);
+        l->data = NULL;
+    }
     /* expand DefaultDirectoryDirs then supress duplicates on DirectoryDir */
     for (l = children, sub = NULL; l; l = l->next)
     {
@@ -1431,7 +1464,7 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
             menu->layout.only_unallocated = FALSE;
         else if (tag == menuTag_Include || tag == menuTag_Exclude ||
                  tag == menuTag_DirectoryDir || tag == menuTag_AppDir ||
-                 tag == menuTag_LegacyDir || tag == menuTag_KDELegacyDirs)
+                 tag == menuTag_LegacyDir)
                  /* FIXME: can those be here? Filename Category All And Not Or */
         {
             MenuRule *child = g_slice_new0(MenuRule);
