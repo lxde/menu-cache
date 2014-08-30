@@ -75,6 +75,7 @@ typedef struct {
     gboolean inline_header_is_set : 1; /* for Menuname */
     gboolean inline_alias_is_set : 1; /* for Menuname */
     gboolean inline_limit_is_set : 1; /* for Menuname; for MenuMenu is Legacy mark */
+    gboolean nodisplay : 1;
     GList *items; /* items are MenuItem : Menuname or Filename or Separator or Merge */
     int inline_limit;
 } MenuLayout;

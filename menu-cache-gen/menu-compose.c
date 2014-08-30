@@ -91,6 +91,8 @@ static void _fill_menu_from_file(MenuMenu *menu, const char *path)
     menu->comment = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_COMMENT);
     menu->icon = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                        G_KEY_FILE_DESKTOP_KEY_ICON, NULL);
+    menu->layout.nodisplay = g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
+                                                    G_KEY_FILE_DESKTOP_KEY_NO_DISPLAY, NULL);
     menu->layout.is_set = TRUE;
 exit:
     g_key_file_free(kf);
@@ -772,6 +774,7 @@ static gint _stage2(MenuMenu *menu)
     }
     if (count == 0) /* if no apps here then don't keep dirs as well */
     {
+        /* if (!with_hidden || req_version < 2) */
         while (to_delete)
         {
             child = to_delete->data;
@@ -828,6 +831,8 @@ static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
     gboolean ok = TRUE;
 
     if (!with_hidden && !menu->layout.show_empty && menu->children == NULL)
+        return TRUE;
+    if (menu->layout.nodisplay/* && (!with_hidden || req_version < 2)*/)
         return TRUE;
     index = g_slist_index(DirDirs, menu->dir);
     if (fprintf(f, "+%s\n%s\n%s\n%s\n%s\n%d\n", menu->name, NONULL(menu->title),
