@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <glib/gstdio.h>
 
+#define NONULL(a) (a == NULL) ? "" : a
+
 static GSList *DEs = NULL;
 
 static void menu_app_reset(MenuApp *app)
@@ -396,9 +398,9 @@ static void _free_leftovers(GList *item)
 }
 
 /* dirs are in order "first is more relevant" */
-static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
+static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GList *p)
 {
-    GList *child, *_dirs = NULL, *_apps = NULL, *_legs = NULL;
+    GList *child, *_dirs = NULL, *_apps = NULL, *_legs = NULL, *_lprefs = NULL;
     GList *l, *available = NULL, *result;
     const char *id;
     char *filename;
@@ -430,6 +432,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
             id = g_intern_string(fm_xml_file_item_get_data(fm_xml_file_item_find_child(rule->rule,
                                                            FM_XML_FILE_TEXT), NULL));
             _legs = g_list_prepend(_legs, (gpointer)id);
+            _lprefs = g_list_prepend(_lprefs, (gpointer)fm_xml_file_item_get_comment(rule->rule));
         }
     }
     /* Gather data from files in the dirs */
@@ -510,7 +513,12 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
             len = strlen(l->data);
             if (strncmp(l->data, child->data, len) == 0 &&
                 ((const char *)child->data)[len] == G_DIR_SEPARATOR)
+            {
+                len = g_list_position(_legs, child);
                 _legs = g_list_delete_link(_legs, child);
+                child = g_list_nth(_lprefs, len);
+                _lprefs = g_list_delete_link(_lprefs, child);
+            }
         }
     }
     if (!menu->layout.inline_limit_is_set) for (l = _apps; l; l = l->next)
@@ -520,13 +528,17 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
     }
     if (_apps != NULL)
         apps = _apps = g_list_concat(g_list_copy(apps), _apps);
-    for (l = _legs; l; l = l->next)
+    for (l = _legs, child = _lprefs; l; l = l->next, child = child->next)
     {
-        /* FIXME: use prefix from <LegacyDir> attribute */
+        /* use prefix from <LegacyDir> attribute */
+        g_string_assign(prefix, NONULL(child->data));
         _fill_apps_from_dir(menu, l, prefix, TRUE);
+        g_string_truncate(prefix, 0);
     }
     if (_legs != NULL)
         legacy = _legs = g_list_concat(g_list_copy(legacy), _legs);
+    if (_lprefs != NULL)
+        p = _lprefs = g_list_concat(g_list_copy(p), _lprefs);
     /* Gather all available files (some in $all_apps may be not in $apps) */
     g_hash_table_iter_init(&iter, all_apps);
     while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&app))
@@ -592,7 +604,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
                 /* prepend to result */
                 result = g_list_concat(l, result);
                 /* ready for recursion now */
-                _stage1(l->data, dirs, apps, legacy);
+                _stage1(l->data, dirs, apps, legacy, p);
             }
             break;
         case MENU_CACHE_TYPE_APP: /* MemuFilename */
@@ -657,7 +669,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
                             l = this->next;
                             continue;
                         }
-                        _stage1(this->data, dirs, apps, legacy); /* it's time for recursion */
+                        _stage1(this->data, dirs, apps, legacy, p); /* it's time for recursion */
                         if (((MenuMenu *)this->data)->key == NULL)
                         {
                             if (((MenuMenu *)this->data)->title != NULL)
@@ -713,6 +725,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy)
     g_list_free(_dirs);
     g_list_free(_apps);
     g_list_free(_legs);
+    g_list_free(_lprefs);
     g_string_free(prefix, TRUE);
 }
 
@@ -780,8 +793,6 @@ static inline int _compose_flags(const char **f)
     }
     return x;
 }
-
-#define NONULL(a) (a == NULL) ? "" : a
 
 static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
 {
@@ -864,7 +875,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     for (i = 0; i < N_KNOWN_DESKTOPS; i++)
         DEs = g_slist_append(DEs, (gpointer)g_intern_static_string(de_names[i]));
     /* Recursively add files into layout, don't take OnlyUnallocated into account */
-    _stage1(layout, NULL, NULL, NULL);
+    _stage1(layout, NULL, NULL, NULL, NULL);
     /* Recursively remove non-matched files by OnlyUnallocated flag */
     _stage2(layout);
     /* Prepare temporary file for safe creation */

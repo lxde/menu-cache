@@ -537,7 +537,16 @@ static gboolean _menu_xml_handler_LegacyDir(FmXmlFileItem *item, GList *children
         fm_xml_file_item_append_text(item, _path, -1, FALSE);
         g_free(_path);
     }
-    /* FIXME: handle "prefix" attribute! */
+    /* handle "prefix" attribute! */
+    path = 0;
+    if (attribute_names) while (attribute_names[0])
+    {
+        if (strcmp(attribute_names[0], "prefix") == 0)
+            path = attribute_values[0];
+        attribute_names++;
+        attribute_values++;
+    }
+    fm_xml_file_item_set_comment(item, path);
     /* actual merge will be done in next stage */
     return TRUE;
 }
@@ -1243,7 +1252,7 @@ restart:
         {
             merged = g_build_filename(dirs[--i], "applnk", NULL);
             it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
-            /* FIXME: set prefix to "kde-" */
+            fm_xml_file_item_set_comment(it_sub, "kde-");
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
             if (!fm_xml_file_insert_before(sub, it_sub))
             {
@@ -1257,7 +1266,7 @@ restart:
         }
         merged = g_build_filename(g_get_user_data_dir(), "applnk", NULL);
         it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
-        /* FIXME: set prefix to "kde-" */
+        fm_xml_file_item_set_comment(it_sub, "kde-");
         fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
         if (!fm_xml_file_insert_before(sub, it_sub))
         {
