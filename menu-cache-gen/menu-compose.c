@@ -805,14 +805,17 @@ static gint _stage2(MenuMenu *menu)
     }
     if (count == 0) /* if no apps here then don't keep dirs as well */
     {
-        /* if (!with_hidden || req_version < 2) */
-        while (to_delete)
-        {
-            child = to_delete->data;
-            menu_menu_free(child->data);
-            menu->children = g_list_delete_link(menu->children, child);
-            to_delete = g_list_delete_link(to_delete, to_delete);
-        }
+        if (menu->layout.show_empty)
+            count++;
+        else
+            /* if (!with_hidden || req_version < 2) */
+            while (to_delete)
+            {
+                child = to_delete->data;
+                menu_menu_free(child->data);
+                menu->children = g_list_delete_link(menu->children, child);
+                to_delete = g_list_delete_link(to_delete, to_delete);
+            }
     }
     return count;
 }
