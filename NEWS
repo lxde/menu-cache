@@ -1,3 +1,12 @@
+* Added bit of support for multiple supported cache file versions, using
+    CACHE_GEN_VERSION environment variable to the generator. This may be
+    useful in future when 1.2 cache file version will be implemented.
+
+* The menu-cache-gen libexec binary is rewritten from scratch. No that
+    Red Hat / GNOME code anymore. New menu-cache-gen uses libfm-extra XML
+    manipulation functions therefore it is required now for build.
+
+
 Changes in 0.6.1 since 0.6.0:
 
 * Fixed invalid memory access after cache reload.

@@ -41,7 +41,7 @@ fi
 AC_SUBST(ADDITIONAL_FLAGS)
 
 dnl --enable-debug=(yes|minimum|no)
-AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging [default=no]],,enable_debug=yes)
+AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes]   turn on debugging [[default=no]]],,enable_debug=yes)
 if test "$enable_debug" = "yes"; then
   DEBUG_CFLAGS="-DG_ENABLE_DEBUG"
 else
