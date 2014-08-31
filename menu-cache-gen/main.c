@@ -56,9 +56,9 @@ GOptionEntry opt_entries[] =
     {"force", 'f', 0, G_OPTION_ARG_NONE, &force, "Force regeneration of cache even if it's up-to-dat
 e.", NULL },
 */
-    {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
-    {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
-    {"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", NULL },
+    {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", "FILENAME" },
+    {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", "FILENAME" },
+    {"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", "LANG_LIST" },
     {"verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &option_verbose, "Send debug messages to terminal", NULL },
     { NULL }
 };
