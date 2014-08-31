@@ -1,6 +1,5 @@
-AC_INIT([menu-cache], [0.6.1],
+AC_INIT([menu-cache], [0.6.99],
         [http://lxde.org/])
-AC_CONFIG_SRCDIR(menu-cache-gen/gmenu-tree.h)
 
 AM_INIT_AUTOMAKE([no-dist-gzip dist-xz])
 AM_CONFIG_HEADER(config.h)
@@ -24,6 +23,10 @@ AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS")
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.16.0 gio-2.0 >= 2.15.2)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+
+PKG_CHECK_MODULES(LIBFM_EXTRA, libfm-extra)
+AC_SUBST(LIBFM_EXTRA_CFLAGS)
+AC_SUBST(LIBFM_EXTRA_LIBS)
 
 AC_ARG_ENABLE(more_warnings,
        [AC_HELP_STRING([--enable-more-warnings],

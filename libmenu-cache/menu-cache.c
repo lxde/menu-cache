@@ -124,6 +124,7 @@ struct _MenuCache
     GSList* notifiers;
     GThread* thr;
     GCancellable* cancellable;
+    guint version;
     gboolean ready : 1; /* used for sync access */
 };
 
@@ -631,6 +632,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     GDataInputStream* f;
     MenuCacheFileDir** all_used_files;
     int i, n;
+    int ver_maj, ver_min;
 
     file = g_file_new_for_path(cache->cache_file);
     if(!file)
@@ -648,12 +650,12 @@ gboolean menu_cache_reload( MenuCache* cache )
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if(G_LIKELY(line))
     {
-        int ver_maj, ver_min;
         len = sscanf(line, "%d.%d", &ver_maj, &ver_min);
         g_free(line);
         if(len < 2)
             goto _fail;
-        if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+        if( ver_maj != VER_MAJOR ||
+            ver_min > VER_MINOR || ver_min < VER_MINOR_SUPPORTED )
             goto _fail;
     }
     else
@@ -695,6 +697,7 @@ _fail:
         g_object_unref(f);
         return FALSE;
     }
+    cache->version = ver_min;
 
     if(cache->root_dir)
         menu_cache_item_unref( MENU_CACHE_ITEM(cache->root_dir) );
@@ -1549,6 +1552,10 @@ retry:
     return TRUE;
 }
 
+#define CACHE_VERSION __num2str(VER_MAJOR) "." __num2str(VER_MINOR)
+#define __num2str(s) __def2str(s)
+#define __def2str(s) #s
+
 static MenuCache* menu_cache_create(const char* menu_name)
 {
     MenuCache* cache;
@@ -1564,6 +1571,7 @@ static MenuCache* menu_cache_create(const char* menu_name)
     char* file_name;
     int len = 0;
     GChecksum *sum;
+    char *langs_list;
 
     if( !xdg_cfg )
         xdg_cfg = "";
@@ -1578,13 +1586,13 @@ static MenuCache* menu_cache_create(const char* menu_name)
     if( ! xdg_cache_home )
         xdg_cache_home = "";
 
-    /* get rid of the encoding part of locale name. */
-    while( strchr(langs[0], '.') )
-        ++langs;
+    /* reconstruct languages list in form as it should be in $LANGUAGES */
+    langs_list = g_strjoinv(":", (char **)langs);
 
-    buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t00000000000000000000000000000000\n",
+    buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" CACHE_VERSION
+                           "\t00000000000000000000000000000000\n",
                             menu_name,
-                            *langs,
+                            langs_list,
                             xdg_cache_home,
                             xdg_cfg,
                             xdg_prefix,
@@ -1605,6 +1613,7 @@ static MenuCache* menu_cache_create(const char* menu_name)
     memcpy( cache->md5, md5, 32 );
     cache->menu_name = g_strdup(menu_name);
     g_free( file_name );
+    g_free(langs_list);
 
     g_checksum_free(sum); /* md5 is also freed here */
 
@@ -1899,3 +1908,6 @@ MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id)
     MENU_CACHE_UNLOCK;
     return item;
 }
+
+/* TODO:
+const char **menu_cache_app_get_categories(MenuCacheApp *app) */
