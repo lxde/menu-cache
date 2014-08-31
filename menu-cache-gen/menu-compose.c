@@ -45,6 +45,7 @@ static void menu_app_reset(MenuApp *app)
     g_free(app->icon);
     g_free(app->generic_name);
     g_free(app->exec);
+    g_free(app->wd);
     g_free(app->categories);
     g_free(app->show_in);
     g_free(app->hide_in);
@@ -128,6 +129,7 @@ static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
     app->generic_name = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_GENERIC_NAME);
     app->exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                       G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
+    //app->wd =
     app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES, FALSE);
     app->show_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_ONLY_SHOW_IN, TRUE);
     app->hide_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_NOT_SHOW_IN, TRUE);
@@ -163,6 +165,7 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
     if (gd == NULL)
         return;
     kf = g_key_file_new();
+    DBG("fill apps from dir [%s]%s", prefix->str, dir);
     /* Scan the directory with subdirs,
        ignore not .desktop files,
        ignore already present files that are allocated */
@@ -225,6 +228,7 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
                     app->type = MENU_CACHE_TYPE_APP;
                     app->filename = (prefix_len > 0) ? g_strdup(name) : NULL;
                     app->id = g_strdup((prefix_len > 0) ? prefix->str : name);
+                    VDBG("found app id=%s", app->id);
                     g_hash_table_insert(all_apps, app->id, app);
                     app->dirs = g_list_prepend(NULL, (gpointer)dir);
                     _fill_app_from_key_file(app, kf);
@@ -236,7 +240,10 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
                           (const char *)app->dirs->data, dir);
             else if (g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
                                             G_KEY_FILE_DESKTOP_KEY_HIDDEN, NULL))
+            {
+                VDBG("removing app id=%s", app->id),
                 g_hash_table_remove(all_apps, name);
+            }
             else
             {
                 /* reset the data */
@@ -272,6 +279,7 @@ static gboolean menu_app_match_tag(MenuApp *app, FmXmlFileItem *it)
     GList *children, *child;
     gboolean ok = FALSE;
 
+    VVDBG("menu_app_match_tag: entering <%s>", fm_xml_file_item_get_tag_name(it));
     children = fm_xml_file_item_get_children(it);
     if (tag == menuTag_Or)
     {
@@ -316,6 +324,7 @@ static gboolean menu_app_match_tag(MenuApp *app, FmXmlFileItem *it)
         }
     }
     g_list_free(children);
+    VVDBG("menu_app_match_tag %s: leaving <%s>: %d", app->id, fm_xml_file_item_get_tag_name(it), ok);
     return ok;
 }
 
@@ -413,6 +422,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
     FmXmlFileTag tag;
     GHashTableIter iter;
 
+    DBG("... entering %s (%d dirs %d apps)", menu->name, g_list_length(dirs), g_list_length(apps));
     /* Gather our dirs : DirectoryDir AppDir LegacyDir KDELegacyDirs */
     for (child = menu->children; child; child = child->next)
     {
@@ -423,6 +433,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         if (tag == menuTag_DirectoryDir) {
             id = g_intern_string(fm_xml_file_item_get_data(fm_xml_file_item_find_child(rule->rule,
                                                            FM_XML_FILE_TEXT), NULL));
+            DBG("new DirectoryDir %s", id);
             if (_dirs == NULL)
                 _dirs = g_list_copy(dirs);
             /* replace and reorder the list */
@@ -431,10 +442,12 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         } else if (tag == menuTag_AppDir) {
             id = g_intern_string(fm_xml_file_item_get_data(fm_xml_file_item_find_child(rule->rule,
                                                            FM_XML_FILE_TEXT), NULL));
+            DBG("new AppDir %s", id);
             _apps = g_list_prepend(_apps, (gpointer)id);
         } else if (tag == menuTag_LegacyDir) {
             id = g_intern_string(fm_xml_file_item_get_data(fm_xml_file_item_find_child(rule->rule,
                                                            FM_XML_FILE_TEXT), NULL));
+            DBG("new LegacyDir %s", id);
             _legs = g_list_prepend(_legs, (gpointer)id);
             _lprefs = g_list_prepend(_lprefs, (gpointer)fm_xml_file_item_get_comment(rule->rule));
         }
@@ -471,6 +484,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         }
         if (filename != NULL)
         {
+            VVDBG("found dir file %s", filename);
             _fill_menu_from_file(menu, filename);
             g_free(filename);
             if (!menu->layout.is_set)
@@ -536,6 +550,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
     {
         /* use prefix from <LegacyDir> attribute */
         g_string_assign(prefix, NONULL(child->data));
+        VDBG("got legacy prefix %s", (char*)child->data);
         _fill_apps_from_dir(menu, l, prefix, TRUE);
         g_string_truncate(prefix, 0);
     }
@@ -544,6 +559,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
     if (_lprefs != NULL)
         p = _lprefs = g_list_concat(g_list_copy(p), _lprefs);
     /* Gather all available files (some in $all_apps may be not in $apps) */
+    VDBG("... do matching");
     g_hash_table_iter_init(&iter, all_apps);
     while (g_hash_table_iter_next(&iter, NULL, (gpointer *)&app))
     {
@@ -558,11 +574,14 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         else for (child = app->dirs; child; child = child->next)
         {
             for (l = apps; l; l = l->next)
+            {
                 if (l->data == child->data)
                     break;
+            }
             if (l != NULL) /* found one */
                 break;
         }
+        VVDBG("check %s in %s: %d", app->id, app->dirs ? (const char *)app->dirs->data : "(nil)", child != NULL);
         if (child == NULL) /* not matched */
             continue;
         /* Check matching : Include And Or Not All */
@@ -575,10 +594,12 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         app->allocated = TRUE;
         /* Mark it by Exclude And Or Not All */
         app->excluded = menu_app_match_excludes(app, menu->children);
+        VVDBG("found match: %s excluded:%d", app->id, app->excluded);
         if (!app->excluded)
             available = g_list_prepend(available, app);
     }
     /* Compose layout using available list and replace menu->children */
+    VDBG("... compose (available=%d)", g_list_length(available));
     result = NULL;
     for (child = menu->layout.items; child; child = child->next)
     {
@@ -586,6 +607,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         app = child->data; /* either: MenuMenuname, MemuFilename, MenuSep, MenuMerge */
         switch (app->type) {
         case MENU_CACHE_TYPE_DIR: /* MenuMenuname */
+            VDBG("composing Menuname %s", ((MenuMenuname *)app)->name);
             for (l = menu->children; l; l = l->next)
                 if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR &&
                     strcmp(((MenuMenuname *)app)->name, ((MenuMenu *)l->data)->name) == 0)
@@ -612,6 +634,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             }
             break;
         case MENU_CACHE_TYPE_APP: /* MemuFilename */
+            VDBG("composing Filename %s", ((MenuFilename *)app)->id);
             app = g_hash_table_lookup(all_apps, ((MenuFilename *)app)->id);
             if (app == NULL || !app->matched || app->excluded)
                 /* not available, ignoring it */
@@ -631,9 +654,11 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             result = g_list_concat(l, result);
             break;
         case MENU_CACHE_TYPE_SEP: /* MenuSep */
+            VDBG("composing Separator");
             result = g_list_prepend(result, app);
             break;
         case MENU_CACHE_TYPE_NONE: /* MenuMerge */
+            VDBG("composing Merge type %d", ((MenuMerge *)app)->merge_type);
             next = NULL;
             switch (((MenuMerge *)app)->merge_type) {
             case MERGE_FILES:
@@ -642,6 +667,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
                 for (l = available; l; l = l->next)
                 {
                     app = l->data;
+                    VVDBG("+++ composing app %s", app->id);
                     if (app->key == NULL)
                     {
                         if (app->title != NULL)
@@ -674,6 +700,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
                             continue;
                         }
                         _stage1(this->data, dirs, apps, legacy, p); /* it's time for recursion */
+                        VVDBG("+++ composing menu %s (%s)", ((MenuMenu *)this->data)->name, ((MenuMenu *)this->data)->title);
                         if (((MenuMenu *)this->data)->key == NULL)
                         {
                             if (((MenuMenu *)this->data)->title != NULL)
@@ -695,6 +722,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             }
         }
     }
+    VDBG("... cleanup");
     _free_leftovers(menu->children);
     menu->children = g_list_reverse(result);
     for (child = menu->children; child; )
@@ -707,6 +735,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             (submenu->layout.inline_limit == 0 ||
              g_list_length(submenu->children) <= submenu->layout.inline_limit))
         {
+            DBG("*** got some inline!");
             if (submenu->layout.inline_alias && g_list_length(submenu->children) == 1)
             {
                 /* FIXME: replace name of single child with name of submenu */
@@ -724,6 +753,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         }
     }
     /* NOTE: now only menus are allocated in menu->children */
+    DBG("... done %s", menu->name);
     /* Do cleanup */
     g_list_free(available);
     g_list_free(_dirs);
@@ -747,6 +777,7 @@ static gint _stage2(MenuMenu *menu)
         case MENU_CACHE_TYPE_APP: /* Menu App */
             if (menu->layout.only_unallocated && app->menus->next != NULL)
             {
+                VDBG("removing from %s as only_unallocated %s",menu->name,app->id);
                 /* it is more than in one menu */
                 menu->children = g_list_delete_link(menu->children, child);
                 child = next;
@@ -906,6 +937,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
             menuname, with_hidden ? "+hidden" : "",
             g_slist_length(DirDirs) + g_slist_length(AppDirs)
             + g_slist_length(MenuDirs) + g_slist_length(MenuFiles));
+    VDBG("%d %d %d %d",g_slist_length(DirDirs),g_slist_length(AppDirs),g_slist_length(MenuDirs),g_slist_length(MenuFiles));
     for (l = DirDirs; l; l = l->next)
         if (fprintf(f, "D%s\n", (const char *)l->data) < 0)
             goto failed;

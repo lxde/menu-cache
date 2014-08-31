@@ -33,6 +33,15 @@
 char **languages = NULL;
 GSList *MenuFiles = NULL;
 
+gint verbose = 0;
+
+static gboolean option_verbose (const gchar *option_name, const gchar *value,
+                                gpointer data, GError **error)
+{
+    verbose++;
+    return TRUE;
+}
+
 /* GLib options parser data is taken from previous menu-cache-gen code
  *
  *      Copyright 2008 PCMan <pcman.tw@google.com>
@@ -50,6 +59,7 @@ e.", NULL },
     {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Source *.menu file to read", NULL },
     {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Output file to write cache to", NULL },
     {"lang", 'l', 0, G_OPTION_ARG_STRING, &lang, "Language", NULL },
+    {"verbose", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, &option_verbose, "Send debug messages to terminal", NULL },
     { NULL }
 };
 

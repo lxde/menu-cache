@@ -137,6 +137,7 @@ typedef struct {
     char *icon;
     char *generic_name;
     char *exec;
+    char *wd;
     const char **categories; /* all char ** keep interned values */
     const char **show_in;
     const char **hide_in;
@@ -172,3 +173,10 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
 
 /* free MenuLayout data */
 void _free_layout_items(GList *data);
+
+/* verbosity level */
+gint verbose;
+
+#define DBG if (verbose) g_debug
+#define VDBG if (verbose > 1) g_debug
+#define VVDBG if (verbose > 2) g_debug

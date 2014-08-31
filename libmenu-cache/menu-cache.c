@@ -1908,3 +1908,6 @@ MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id)
     MENU_CACHE_UNLOCK;
     return item;
 }
+
+/* TODO:
+const char **menu_cache_app_get_categories(MenuCacheApp *app) */

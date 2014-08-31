@@ -819,7 +819,7 @@ static gboolean _merge_xml_file(MenuTreeData *data, FmXmlFileItem *item,
         MenuFiles = g_slist_append(MenuFiles, (gpointer)path);
     save_path = data->file_path;
     data->file_path = path;
-    g_debug("merging the XML file '%s'", data->file_path);
+    DBG("merging the XML file '%s'", data->file_path);
     gf = g_file_new_for_path(data->file_path);
     ok = g_file_load_contents(gf, NULL, &contents, &len, NULL, error);
     g_object_unref(gf);
@@ -910,7 +910,7 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
     const char *name;
     gboolean ok = TRUE;
 
-    g_debug("merging the XML directory '%s'", path);
+    DBG("merging the XML directory '%s'", path);
     path = g_intern_string(path);
     if (g_slist_find(MenuDirs, path) == NULL)
         MenuDirs = g_slist_append(MenuDirs, (gpointer)path);
@@ -950,6 +950,7 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
     else if (ignore_not_exist && err->domain == G_FILE_ERROR &&
              (err->code == G_FILE_ERROR_NOENT))
     {
+        VDBG("_merge_menu_directory: dir %s does not exist", path);
         g_error_free(err);
     }
     else
@@ -999,7 +1000,7 @@ static void _merge_level(GList *first)
                             GList *children = fm_xml_file_item_get_children(next->data);
                             GList *l;
 
-                            g_debug("found two identical Menu '%s', merge them", name);
+                            DBG("found two identical Menu '%s', merge them", name);
                             for (l = children; l; l = l->next) /* merge all but Name */
                                 if (fm_xml_file_item_get_tag(l->data) != menuTag_Name)
                                     fm_xml_file_item_append_child(first->data, l->data);
@@ -1290,6 +1291,7 @@ restart:
         sub = l->data;
         if (sub == NULL || fm_xml_file_item_get_tag(sub) != menuTag_LegacyDir)
             continue;
+        VDBG("check LegacyDir %s", fm_xml_file_item_get_data(fm_xml_file_item_find_child(l->data, FM_XML_FILE_TEXT), NULL));
         for (l2 = l->next; l2; l2 = l2->next)
             if (l2->data != NULL && fm_xml_file_item_get_tag(l2->data) == menuTag_LegacyDir)
                 if (strcmp(fm_xml_file_item_get_data(fm_xml_file_item_find_child(l2->data, FM_XML_FILE_TEXT), NULL),
@@ -1387,7 +1389,7 @@ restart:
             if (item != NULL && sub != NULL)
                 fm_xml_file_item_append_child(sub, item);
             else
-                g_debug("invalid <Move> tag ignored");
+                DBG("invalid <Move> tag ignored");
         }
     }
     g_list_free(children);
@@ -1482,6 +1484,7 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
     menu->layout.inline_alias = layout->inline_alias;
     menu->layout.inline_limit = layout->inline_limit;
     menu->layout.items = _layout_items_copy(layout->items);
+    VDBG("*** starting new menu");
     /* gather all explicit data from XML */
     for (l = children; l; l = l->next)
     {
@@ -1494,7 +1497,10 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
         {
             MenuMenu *child = _make_menu_node(l->data, def);
             if (child != NULL)
+            {
+                VDBG("*** added submenu %s", child->name);
                 menu->children = g_list_prepend(menu->children, child);
+            }
         }
         else if (tag == menuTag_Directory)
         {
@@ -1521,11 +1527,13 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
             MenuRule *child = g_slice_new0(MenuRule);
             child->type = MENU_CACHE_TYPE_NONE;
             child->rule = l->data;
+            VDBG("*** adding rule %s", fm_xml_file_item_get_tag_name(l->data));
             menu->children = g_list_prepend(menu->children, child);
         }
     }
     g_list_free(children);
     menu->children = g_list_reverse(menu->children);
+    VDBG("*** done menu %s",menu->name);
     return menu;
 }
 
@@ -1706,6 +1714,12 @@ MenuMenu *get_merged_menu(const char *file, FmXmlFile **xmlfile, GError **error)
     default_layout.items = g_list_prepend(g_list_prepend(NULL, &def_files), &def_menus);
     menu = _make_menu_node(apps, &default_layout);
     g_list_free(default_layout.items);
+    if (verbose > 2)
+    {
+        char *dump = fm_xml_file_to_data(data.menu, NULL, NULL);
+        g_print("%s", dump);
+        g_free(dump);
+    }
     /* Free layouts hash */
 _return_error:
     if (menu == NULL)
