@@ -738,7 +738,20 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             DBG("*** got some inline!");
             if (submenu->layout.inline_alias && g_list_length(submenu->children) == 1)
             {
-                /* FIXME: replace name of single child with name of submenu */
+                /* replace name of single child with name of submenu */
+                VDBG("replacing title of single child of %s due to inline_alias",
+                     submenu->name);
+                app = submenu->children->data;
+                if (app->type == MENU_CACHE_TYPE_DIR)
+                {
+                    g_free(((MenuMenu *)app)->title);
+                    ((MenuMenu *)app)->title = g_strdup(submenu->title ? submenu->title : submenu->name);
+                }
+                else if (app->type == MENU_CACHE_TYPE_APP)
+                {
+                    g_free(app->title);
+                    app->title = g_strdup(submenu->title ? submenu->title : submenu->name);
+                }
             }
             /* FIXME: inline the submenu... how to use inline_header? */
             submenu->children = g_list_reverse(submenu->children);
