@@ -5,7 +5,7 @@ Maintainer: Debian LXDE Maintainers <lxde-debian@lists.lxde.org>
 Uploaders:
  Andrew Lee (李健秋) <ajqlee@debian.org>, Daniel Baumann <daniel@debian.org>
 Build-Depends: debhelper (>= 9), dh-autoreconf, intltool, libglib2.0-dev,
- gtk-doc-tools, libglib2.0-doc
+ gtk-doc-tools, libglib2.0-doc, libfm-dev
 Standards-Version: 3.9.3
 Homepage: http://www.lxde.org/
 Vcs-Browser: http://git.lxde.org/gitweb/?p=debian/menu-cache.git
