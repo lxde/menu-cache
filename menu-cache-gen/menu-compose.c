@@ -776,12 +776,13 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
     g_string_free(prefix, TRUE);
 }
 
-static gint _stage2(MenuMenu *menu)
+static gint _stage2(MenuMenu *menu, gboolean with_hidden)
 {
     GList *child = menu->children, *next, *to_delete = NULL;
     MenuApp *app;
     gint count = 0;
 
+    VVDBG("stage 2: entered '%s'", menu->name);
     while (child)
     {
         app = child->data;
@@ -802,9 +803,10 @@ static gint _stage2(MenuMenu *menu)
             break;
         case MENU_CACHE_TYPE_DIR: /* MenuMenu */
             /* do recursion */
-            if (_stage2(child->data) > 0)
+            if (_stage2(child->data, with_hidden) > 0)
                 count++;
             else
+                /* if (!with_hidden || req_version < 2) */
                 to_delete = g_list_prepend(to_delete, child);
             child = next;
             break;
@@ -816,19 +818,21 @@ static gint _stage2(MenuMenu *menu)
             child = next;
         }
     }
-    if (count == 0) /* if no apps here then don't keep dirs as well */
+    VVDBG("stage 2: counted '%s': %d", menu->name, count);
+    if (count > 0 && with_hidden)
+        g_list_free(to_delete);
+    else while (to_delete) /* if no apps here then don't keep dirs as well */
+    {
+        child = to_delete->data;
+        VVDBG("stage 2: deleting empty '%s'", ((MenuMenu *)child->data)->name);
+        menu_menu_free(child->data);
+        menu->children = g_list_delete_link(menu->children, child);
+        to_delete = g_list_delete_link(to_delete, to_delete);
+    }
+    if (count == 0)
     {
         if (menu->layout.show_empty)
             count++;
-        else
-            /* if (!with_hidden || req_version < 2) */
-            while (to_delete)
-            {
-                child = to_delete->data;
-                menu_menu_free(child->data);
-                menu->children = g_list_delete_link(menu->children, child);
-                to_delete = g_list_delete_link(to_delete, to_delete);
-            }
     }
     return count;
 }
@@ -931,7 +935,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     /* Recursively add files into layout, don't take OnlyUnallocated into account */
     _stage1(layout, NULL, NULL, NULL, NULL);
     /* Recursively remove non-matched files by OnlyUnallocated flag */
-    _stage2(layout);
+    _stage2(layout, with_hidden);
     /* Prepare temporary file for safe creation */
     tmp = strrchr(menuname, G_DIR_SEPARATOR);
     if (tmp)
