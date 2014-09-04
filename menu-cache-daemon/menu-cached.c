@@ -538,10 +538,10 @@ retry:
 
     if( memcmp(line, "REG:", 4) == 0 )
     {
-        int n_files, i;
+        int n_files = 0, i;
         char *pline = line + 4;
         char *sep, *menu_name, *lang_name, *cache_dir;
-        char **files;
+        char **files = NULL;
         char **env;
         char reload_cmd[38] = "REL:";
 
