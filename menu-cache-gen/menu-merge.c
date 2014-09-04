@@ -88,6 +88,12 @@ GSList *MenuDirs = NULL;
 /* we keep all the unfinished items in the hash */
 static GHashTable *layout_hash = NULL;
 
+#define RETURN_TRUE_AND_DESTROY_IF_QUIET(a) do { \
+    if (verbose == 0) { \
+        fm_xml_file_item_destroy(a); \
+        return TRUE; \
+    } } while (0)
+
 static gboolean _fail_if_in_layout(FmXmlFileItem *item, GError **error)
 {
     FmXmlFileItem *parent;
@@ -105,6 +111,15 @@ static gboolean _fail_if_in_layout(FmXmlFileItem *item, GError **error)
     return FALSE;
 }
 
+#define RETURN_IF_IN_LAYOUT(i,e) do { \
+    if (_fail_if_in_layout(i, e)) { \
+        if (verbose > 0) \
+            return FALSE; \
+        fm_xml_file_item_destroy(i); \
+        g_clear_error(e); \
+        return TRUE; \
+    } } while (0)
+
 /* this handler does nothing, used just to remember its id */
 static gboolean _menu_xml_handler_pass(FmXmlFileItem *item, GList *children,
                                        char * const *attribute_names,
@@ -112,7 +127,8 @@ static gboolean _menu_xml_handler_pass(FmXmlFileItem *item, GList *children,
                                        guint n_attributes, gint line, gint pos,
                                        GError **error, gpointer user_data)
 {
-    return !_fail_if_in_layout(item, error);
+    RETURN_IF_IN_LAYOUT(item, error);
+    return TRUE;
 }
 
 /* checks the tag */
@@ -124,12 +140,12 @@ static gboolean _menu_xml_handler_Name(FmXmlFileItem *item, GList *children,
 {
     const char *name;
 
-    if (_fail_if_in_layout(item, error))
-        return FALSE;
+    RETURN_IF_IN_LAYOUT(item, error);
     item = fm_xml_file_item_find_child(item, FM_XML_FILE_TEXT);
     if (item == NULL || (name = fm_xml_file_item_get_data(item, NULL)) == NULL ||
         strchr(name, '/') != NULL) /* empty or invalid tag */
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <Name> tag"));
         return FALSE;
@@ -146,9 +162,8 @@ static gboolean _menu_xml_handler_Not(FmXmlFileItem *item, GList *children,
     FmXmlFileTag tag;
     GList *child;
 
-    if (_fail_if_in_layout(item, error))
-        return FALSE;
-    for (child = children; child; child = child->next)
+    RETURN_IF_IN_LAYOUT(item, error);
+    if (verbose > 0) for (child = children; child; child = child->next)
     {
         tag = fm_xml_file_item_get_tag(child->data);
         if (tag != menuTag_And && tag == menuTag_Or && tag == menuTag_Filename &&
@@ -204,6 +219,7 @@ static gboolean _menu_xml_handler_AppDir(FmXmlFileItem *item, GList *children,
     parent = fm_xml_file_item_get_parent(item);
     if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <AppDir> can appear only below <Menu>"));
         return FALSE;
@@ -212,6 +228,7 @@ static gboolean _menu_xml_handler_AppDir(FmXmlFileItem *item, GList *children,
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <AppDir> tag"));
         return FALSE;
@@ -245,6 +262,7 @@ static gboolean _menu_xml_handler_DefaultAppDirs(FmXmlFileItem *item, GList *chi
     parent = fm_xml_file_item_get_parent(item);
     if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <DefaultAppDirs> can appear only below <Menu>"));
         return FALSE;
@@ -291,6 +309,7 @@ static gboolean _menu_xml_handler_DirectoryDir(FmXmlFileItem *item, GList *child
     parent = fm_xml_file_item_get_parent(item);
     if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <DirectoryDir> can appear only below <Menu>"));
         return FALSE;
@@ -299,6 +318,7 @@ static gboolean _menu_xml_handler_DirectoryDir(FmXmlFileItem *item, GList *child
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <DirectoryDir> tag"));
         return FALSE;
@@ -332,6 +352,7 @@ static gboolean _menu_xml_handler_DefaultDirectoryDirs(FmXmlFileItem *item, GLis
     parent = fm_xml_file_item_get_parent(item);
     if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <DefaultDirectoryDirs> can appear only below <Menu>"));
         return FALSE;
@@ -368,6 +389,7 @@ static gboolean _menu_xml_handler_MergeFile(FmXmlFileItem *item, GList *children
     name = fm_xml_file_item_get_parent(item);
     if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <MergeFile> can appear only below <Menu>"));
         return FALSE;
@@ -376,6 +398,7 @@ static gboolean _menu_xml_handler_MergeFile(FmXmlFileItem *item, GList *children
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <MergeFile> tag"));
         return FALSE;
@@ -456,6 +479,7 @@ static gboolean _menu_xml_handler_MergeDir(FmXmlFileItem *item, GList *children,
     name = fm_xml_file_item_get_parent(item);
     if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <MergeDir> can appear only below <Menu>"));
         return FALSE;
@@ -464,6 +488,7 @@ static gboolean _menu_xml_handler_MergeDir(FmXmlFileItem *item, GList *children,
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <MergeDir> tag"));
         return FALSE;
@@ -493,6 +518,7 @@ static gboolean _menu_xml_handler_DefaultMergeDirs(FmXmlFileItem *item, GList *c
 
     if (parent == NULL || fm_xml_file_item_get_tag(parent) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                     _("Tag <%s> can appear only below <Menu>"),
                     fm_xml_file_item_get_tag_name(item));
@@ -515,6 +541,7 @@ static gboolean _menu_xml_handler_LegacyDir(FmXmlFileItem *item, GList *children
     name = fm_xml_file_item_get_parent(item);
     if (name == NULL || fm_xml_file_item_get_tag(name) != menuTag_Menu)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <LegacyDir> can appear only below <Menu>"));
         return FALSE;
@@ -523,6 +550,7 @@ static gboolean _menu_xml_handler_LegacyDir(FmXmlFileItem *item, GList *children
         fm_xml_file_item_get_tag((name = children->data)) != FM_XML_FILE_TEXT ||
         (path = fm_xml_file_item_get_data(name, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Invalid <LegacyDir> tag"));
         return FALSE;
@@ -582,6 +610,7 @@ static gboolean _menu_xml_handler_Filename(FmXmlFileItem *item, GList *children,
         fm_xml_file_item_get_tag(children->data) != FM_XML_FILE_TEXT ||
         (id = fm_xml_file_item_get_data(children->data, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Empty <Filename> tag"));
         return FALSE;
@@ -616,6 +645,7 @@ static gboolean _menu_xml_handler_Menuname(FmXmlFileItem *item, GList *children,
         fm_xml_file_item_get_tag(children->data) != FM_XML_FILE_TEXT ||
         (name = fm_xml_file_item_get_data(children->data, NULL)) == NULL)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Empty <Menuname> tag"));
         return FALSE;
@@ -625,6 +655,7 @@ static gboolean _menu_xml_handler_Menuname(FmXmlFileItem *item, GList *children,
         tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <Menuname> may only appear below <Layout> or"
                               " <DefaultLayout>"));
@@ -688,6 +719,7 @@ static gboolean _menu_xml_handler_Separator(FmXmlFileItem *item, GList *children
         tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <Separator> may only appear below <Layout> or"
                               " <DefaultLayout>"));
@@ -717,6 +749,7 @@ static gboolean _menu_xml_handler_Merge(FmXmlFileItem *item, GList *children,
         tag = fm_xml_file_item_get_tag(parent);
     if (tag != menuTag_Layout && tag != menuTag_DefaultLayout)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <Merge> may only appear below <Layout> or"
                               " <DefaultLayout>"));
@@ -739,6 +772,7 @@ static gboolean _menu_xml_handler_Merge(FmXmlFileItem *item, GList *children,
     }
     if (type == MERGE_NONE)
     {
+        RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
         g_set_error_literal(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                             _("Tag <Merge> should have attribute 'type' as"
                               " \"menus\", \"files\", or \"all\""));
@@ -868,6 +902,8 @@ static gboolean _merge_xml_file(MenuTreeData *data, FmXmlFileItem *item,
 
         if (fm_xml_file_item_get_tag(it->data) != menuTag_Menu)
         {
+            if (verbose == 0)
+                continue; /* just skip it in quiet mode */
             g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
                         _("Merging file may contain only <Menu> top level tag,"
                           " got <%s>"), fm_xml_file_item_get_tag_name(it->data));
@@ -1026,7 +1062,7 @@ static void _merge_level(GList *first)
 static FmXmlFileItem *_walk_path(GList *child, const char *path,
                                  FmXmlFileItem *parent, gboolean create)
 {
-    FmXmlFileItem *item;
+    FmXmlFileItem *item = NULL;
     char *subpath = strchr(path, '/');
 
     if (subpath)
@@ -1119,7 +1155,7 @@ restart:
             merged = g_build_filename(dirs[--i], "menus", "applications-merged", NULL);
             it_sub = fm_xml_file_item_new(menuTag_MergeDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-            if (!fm_xml_file_insert_before(sub, it_sub))
+            if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
             {
                 g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                             _("Failed to insert tag <MergeDir>%s</MergeDir>"),
@@ -1132,7 +1168,7 @@ restart:
         merged = g_build_filename(g_get_user_config_dir(), "menus", "applications-merged", NULL);
         it_sub = fm_xml_file_item_new(menuTag_MergeDir);
         fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-        if (!fm_xml_file_insert_before(sub, it_sub))
+        if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
         {
             g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                         _("Failed to insert tag <MergeDir>%s</MergeDir>"),
@@ -1187,9 +1223,12 @@ restart:
                     ok = _merge_menu_directory(data, l->data, path, &merged, error, TRUE);
                 if (!ok)
                 {
-                    /* FIXME: shouldn't we just ignore errors here? */
-                    g_prefix_error(error, "failed on '%s': ", path);
-                    goto failed; /* failed to merge */
+                    if (verbose > 0)
+                    {
+                        g_prefix_error(error, "failed on '%s': ", path);
+                        goto failed; /* failed to merge */
+                    }
+                    g_clear_error(error);
                 }
             }
             /* destroy item -- we replaced it already */
@@ -1224,7 +1263,7 @@ restart:
             merged = g_build_filename(dirs[--i], "applications", NULL);
             it_sub = fm_xml_file_item_new(menuTag_AppDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-            if (!fm_xml_file_insert_before(sub, it_sub))
+            if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
             {
                 g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                             _("Failed to insert tag <AppDir>%s</AppDir>"),
@@ -1237,7 +1276,7 @@ restart:
         merged = g_build_filename(g_get_user_data_dir(), "applications", NULL);
         it_sub = fm_xml_file_item_new(menuTag_AppDir);
         fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-        if (!fm_xml_file_insert_before(sub, it_sub))
+        if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
         {
             g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                         _("Failed to insert tag <AppDir>%s</AppDir>"),
@@ -1291,7 +1330,7 @@ restart:
             it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
             fm_xml_file_item_set_comment(it_sub, "kde-");
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-            if (!fm_xml_file_insert_before(sub, it_sub))
+            if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
             {
                 g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                             _("Failed to insert tag <LegacyDir>%s</LegacyDir>"),
@@ -1305,7 +1344,7 @@ restart:
         it_sub = fm_xml_file_item_new(menuTag_LegacyDir);
         fm_xml_file_item_set_comment(it_sub, "kde-");
         fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-        if (!fm_xml_file_insert_before(sub, it_sub))
+        if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
         {
             g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                         _("Failed to insert tag <LegacyDir>%s</LegacyDir>"),
@@ -1359,7 +1398,7 @@ restart:
             merged = g_build_filename(dirs[--i], "desktop-directories", NULL);
             it_sub = fm_xml_file_item_new(menuTag_DirectoryDir);
             fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-            if (!fm_xml_file_insert_before(sub, it_sub))
+            if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
             {
                 g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                             _("Failed to insert tag <DirectoryDir>%s</DirectoryDir>"),
@@ -1372,7 +1411,7 @@ restart:
         merged = g_build_filename(g_get_user_data_dir(), "desktop-directories", NULL);
         it_sub = fm_xml_file_item_new(menuTag_DirectoryDir);
         fm_xml_file_item_append_text(it_sub, merged, -1, FALSE);
-        if (!fm_xml_file_insert_before(sub, it_sub))
+        if (!fm_xml_file_insert_before(sub, it_sub) && verbose > 0)
         {
             g_set_error(error, G_MARKUP_ERROR, G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                         _("Failed to insert tag <DirectoryDir>%s</DirectoryDir>"),

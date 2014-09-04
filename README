@@ -20,6 +20,21 @@ do this by passing '--with-extra-only' option to configure script and
 installing Libfm-extra. Then you can succesfully build Libmenu-cache
 and therefore build full version of Libfm.
 
+Diagnostics:
+
+Libmenu-cache uses cache generation in "fail-proof" mode when it will
+ignore improper tags in XML menu file but fail only if that menu file
+doesn't exist at all, or has invalid XML structure, or has no root menu
+with name 'Applications'. If you want to explore how it is generated
+then you can start menu-cache-gen manually in verbose mode, for example:
+
+G_MESSAGES_DEBUG=all \
+  /usr/lib/menu-cache/menu-cache-gen -v -i applications.menu -o /dev/null
+
+so you can see all the processing of your XML file and it will fail on
+any broken tag or at least show you a warning and you can inspect that
+log.
+
 Spec:
 
 Cached menus are localized and stored in ~/.cache/menus/file_name.

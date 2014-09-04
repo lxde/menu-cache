@@ -733,7 +733,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         if (submenu->layout.type == MENU_CACHE_TYPE_DIR &&
             submenu->layout.allow_inline &&
             (submenu->layout.inline_limit == 0 ||
-             g_list_length(submenu->children) <= submenu->layout.inline_limit))
+             (int)g_list_length(submenu->children) <= submenu->layout.inline_limit))
         {
             DBG("*** got some inline!");
             if (submenu->layout.inline_alias && g_list_length(submenu->children) == 1)
@@ -924,7 +924,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
                                                "XFCE",
                                                "ROX" };
     char *tmp;
-    FILE *f;
+    FILE *f = NULL;
     GSList *l;
     int i;
     gboolean ok = FALSE;

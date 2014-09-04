@@ -5,6 +5,7 @@ INCLUDES = \
 	$(GLIB_CFLAGS) \
 	$(LIBFM_EXTRA_CFLAGS) \
 	$(DEBUG_CFLAGS) \
+	$(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
 	$(NULL)
 
