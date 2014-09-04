@@ -1186,7 +1186,11 @@ restart:
                 else
                     ok = _merge_menu_directory(data, l->data, path, &merged, error, TRUE);
                 if (!ok)
+                {
+                    /* FIXME: shouldn't we just ignore errors here? */
+                    g_prefix_error(error, "failed on '%s': ", path);
                     goto failed; /* failed to merge */
+                }
             }
             /* destroy item -- we replaced it already */
             fm_xml_file_item_destroy(l->data);
