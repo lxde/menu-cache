@@ -73,9 +73,11 @@ typedef struct _Cache
     char *cache_file;
 }Cache;
 
-GMainLoop* main_loop = NULL;
+static GMainLoop* main_loop = NULL;
 
 static GHashTable* hash = NULL;
+
+static char *socket_file = NULL;
 
 static void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
                              GFileMonitorEvent evt, Cache* cache );
@@ -441,10 +443,9 @@ static void get_socket_name( char* buf, int len )
     g_free(dpy);
 }
 
-static int create_socket()
+static int create_socket(struct sockaddr_un *addr)
 {
     int fd = -1;
-    struct sockaddr_un addr;
 
     fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
@@ -452,20 +453,17 @@ static int create_socket()
         DEBUG("Failed to create socket");
         return -1;
     }
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    get_socket_name( addr.sun_path, sizeof( addr.sun_path ) );
 
     /* remove previous socket file */
-    if (unlink(addr.sun_path) < 0) {
+    if (unlink(addr->sun_path) < 0) {
         if (errno != ENOENT)
-            g_error("Couldn't remove previous socket file %s", addr.sun_path);
+            g_error("Couldn't remove previous socket file %s", addr->sun_path);
     }
     /* remove of previous socket file successful */
     else
-        g_warning("removed previous socket file %s", addr.sun_path);
+        g_warning("removed previous socket file %s", addr->sun_path);
 
-    if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+    if(bind(fd, (struct sockaddr *)addr, sizeof(*addr)) < 0)
     {
         DEBUG("Failed to bind to socket");
         close(fd);
@@ -699,9 +697,7 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
 static void terminate(int sig)
 {
 /* #ifndef HAVE_ABSTRACT_SOCKETS */
-    char path[1024];
-    get_socket_name(path, sizeof(path));
-    unlink(path);
+    unlink(socket_file);
     exit(0);
 /* #endif */
 }
@@ -714,11 +710,11 @@ static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer
     return TRUE;
 }
 
-
 int main(int argc, char** argv)
 {
     GIOChannel* ch;
     int server_fd;
+    struct sockaddr_un addr;
 #ifndef DISABLE_DAEMONIZE
     int fd, pid;
 
@@ -726,7 +722,21 @@ int main(int argc, char** argv)
     long i;
 #endif
 
-    server_fd = create_socket();
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    if (argc < 2)
+        /* old way, not recommended! */
+        get_socket_name( addr.sun_path, sizeof( addr.sun_path ) );
+    else if (strlen(argv[1]) >= sizeof(addr.sun_path))
+        /* ouch, it's too big! */
+        return 1;
+    else
+        /* this is a good way! */
+        strncpy(addr.sun_path, argv[1], sizeof(addr.sun_path) - 1);
+
+    socket_file = addr.sun_path;
+
+    server_fd = create_socket(&addr);
 
     if( server_fd < 0 )
         return 1;
@@ -798,11 +808,7 @@ int main(int argc, char** argv)
     g_main_loop_run( main_loop );
     g_main_loop_unref( main_loop );
 
-    {
-        char path[256];
-        get_socket_name(path, 256 );
-        unlink(path);
-    }
+    unlink(addr.sun_path);
 
     g_hash_table_destroy(hash);
     return 0;

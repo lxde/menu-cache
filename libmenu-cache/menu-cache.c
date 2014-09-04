@@ -1352,7 +1352,7 @@ static void get_socket_name( char* buf, int len )
 
 #define MAX_RETRIES 25
 
-static gboolean fork_server()
+static gboolean fork_server(const char *path)
 {
     int ret, pid, status;
 
@@ -1365,8 +1365,9 @@ static gboolean fork_server()
     pid = fork();
     if (pid == 0)
     {
-        execl( MENUCACHE_LIBEXECDIR "/menu-cached", MENUCACHE_LIBEXECDIR "/menu-cached", NULL);
-        g_print("failed to exec %s\n", MENUCACHE_LIBEXECDIR "/menu-cached");
+        execl(MENUCACHE_LIBEXECDIR "/menu-cached", MENUCACHE_LIBEXECDIR "/menu-cached",
+              path, NULL);
+        g_print("failed to exec %s %s\n", MENUCACHE_LIBEXECDIR "/menu-cached", path);
     }
 
     /*
@@ -1528,7 +1529,7 @@ retry:
         if((rc == ECONNREFUSED || rc == ENOENT) && retries == 0)
         {
             DEBUG("no running server found, starting it");
-            fork_server();
+            fork_server(addr.sun_path);
             ++retries;
             goto retry;
         }

@@ -6,6 +6,9 @@
     Red Hat / GNOME code anymore. New menu-cache-gen uses libfm-extra XML
     manipulation functions therefore it is required now for build.
 
+* Added a parameter for menu-cached to specify socket path instead of
+    calculating one, that is definitely more safe.
+
 
 Changes in 0.6.1 since 0.6.0:
 
