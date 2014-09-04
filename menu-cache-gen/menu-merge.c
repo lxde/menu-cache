@@ -939,6 +939,12 @@ static gboolean _merge_menu_directory(MenuTreeData *data, FmXmlFileItem *item,
                 }
                 */
                 g_free(child);
+                if (ignore_not_exist && err->domain == G_IO_ERROR &&
+                    (err->code == G_IO_ERROR_NOT_FOUND))
+                {
+                    g_clear_error(&err);
+                    continue;
+                }
                 g_propagate_error(error, err);
                 err = NULL;
                 break;
@@ -1165,7 +1171,18 @@ restart:
             if (l2 == NULL)
             {
                 if (tag == menuTag_MergeFile)
-                    ok = _merge_xml_file(data, l->data, path, &merged, error, TRUE);
+                {
+                    GError *err = NULL;
+                    ok = _merge_xml_file(data, l->data, path, &merged, &err, TRUE);
+                    if (ok) ;
+                    else if (err->domain == G_IO_ERROR && err->code == G_IO_ERROR_NOT_FOUND)
+                    {
+                        g_error_free(err);
+                        ok = TRUE;
+                    }
+                    else
+                        g_propagate_error(error, err);
+                }
                 else
                     ok = _merge_menu_directory(data, l->data, path, &merged, error, TRUE);
                 if (!ok)
