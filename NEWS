@@ -9,6 +9,9 @@
 * Added a parameter for menu-cached to specify socket path instead of
     calculating one, that is definitely more safe.
 
+* Libmenu-cache handles menu-cached failure more gracefully now, don't
+    tries to restart it so fast that it clones many times.
+
 
 Changes in 0.6.1 since 0.6.0:
 

@@ -1382,24 +1382,27 @@ retry_wait:
     return TRUE;
 }
 
-static gpointer server_io_thread(gpointer _unused)
+/* this thread is started by connect_server() */
+static gpointer server_io_thread(gpointer data)
 {
     char buf[1024]; /* protocol has a lot shorter strings */
     ssize_t sz;
     size_t ptr = 0;
-    int fd;
+    int fd = GPOINTER_TO_INT(data);
     GHashTableIter it;
     char* menu_name;
     MenuCache* cache;
 
-    G_LOCK(connect);
-    fd = server_fd;
-    G_UNLOCK(connect);
     while(fd >= 0)
     {
         sz = read(fd, &buf[ptr], sizeof(buf) - ptr);
         if(sz <= 0) /* socket error or EOF */
         {
+            MENU_CACHE_LOCK;
+            ptr = hash ? g_hash_table_size(hash) : 0;
+            MENU_CACHE_UNLOCK;
+            if (ptr == 0) /* don't need it anymore */
+                break;
             G_LOCK(connect);
             if(fd != server_fd) /* someone replaced us?! go out immediately! */
             {
@@ -1409,9 +1412,10 @@ static gpointer server_io_thread(gpointer _unused)
             server_fd = -1;
             G_UNLOCK(connect);
             DEBUG("connect failed, trying reconnect");
+            sleep(1);
             if( ! connect_server(NULL) )
             {
-                g_print("fail to re-connect to the server.\n");
+                g_critical("fail to re-connect to the server.");
                 MENU_CACHE_LOCK;
                 if(hash)
                 {
@@ -1422,7 +1426,7 @@ static gpointer server_io_thread(gpointer _unused)
                 MENU_CACHE_UNLOCK;
                 break;
             }
-            DEBUG("successfully restart server.\nre-register menus.");
+            DEBUG("successfully reconnected server, re-register menus.");
             /* re-register all menu caches */
             MENU_CACHE_LOCK;
             if(hash)
@@ -1433,7 +1437,7 @@ static gpointer server_io_thread(gpointer _unused)
                     /* FIXME: need we remove it from hash if failed? */
             }
             MENU_CACHE_UNLOCK;
-            continue;
+            break; /* next thread will do it */
         }
         while(sz > 0)
         {
@@ -1484,6 +1488,11 @@ static gpointer server_io_thread(gpointer _unused)
             ptr = 0;
         }
     }
+    G_LOCK(connect);
+    if (fd == server_fd)
+        server_fd = -1;
+    G_UNLOCK(connect);
+    close(fd);
     /* DEBUG("server io thread terminated"); */
 #if GLIB_CHECK_VERSION(2, 32, 0)
     g_thread_unref(g_thread_self());
@@ -1546,9 +1555,9 @@ retry:
     server_fd = fd;
     G_UNLOCK(connect);
 #if GLIB_CHECK_VERSION(2, 32, 0)
-    g_thread_new("menu-cache-io", server_io_thread, NULL);
+    g_thread_new("menu-cache-io", server_io_thread, GINT_TO_POINTER(fd));
 #else
-    g_thread_create(server_io_thread, NULL, FALSE, NULL);
+    g_thread_create(server_io_thread, GINT_TO_POINTER(fd), FALSE, NULL);
 #endif
     return TRUE;
 }
@@ -1660,9 +1669,8 @@ static gpointer menu_cache_loader_thread(gpointer data)
         return NULL;
     }
     /* and request update from server */
-    if(!cache->cancellable || !g_cancellable_is_cancelled(cache->cancellable))
-        register_menu_to_server(cache);
-    else
+    if ((cache->cancellable && g_cancellable_is_cancelled(cache->cancellable)) ||
+        !register_menu_to_server(cache))
         SET_CACHE_READY(cache);
     return NULL;
 }
