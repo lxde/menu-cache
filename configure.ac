@@ -1,4 +1,4 @@
-AC_INIT([menu-cache], [0.6.99],
+AC_INIT([menu-cache], [0.7.0],
         [http://lxde.org/])
 
 AM_INIT_AUTOMAKE([no-dist-gzip dist-xz])

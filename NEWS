@@ -1,3 +1,5 @@
+Changes in 0.7.0 since 0.6.1:
+
 * Added bit of support for multiple supported cache file versions, using
     CACHE_GEN_VERSION environment variable to the generator. This may be
     useful in future when 1.2 cache file version will be implemented.
