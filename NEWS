@@ -1,3 +1,11 @@
+* Added new cache file format generation support with changes:
+    - invisible directories (NoDisplay=true or empty) can be put into the
+        cache too but with flag (not displayed) set;
+    - content of TryExec field is added to contents of cache file;
+    - list of categories is added to contents of cache file;
+    - list of keywords is added to contents of cache file.
+
+
 Changes in 0.7.0 since 0.6.1:
 
 * Added bit of support for multiple supported cache file versions, using

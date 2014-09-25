@@ -35,6 +35,8 @@
 
 static GSList *DEs = NULL;
 
+static guint req_version = 1;
+
 static void menu_app_reset(MenuApp *app)
 {
     g_free(app->filename);
@@ -45,8 +47,10 @@ static void menu_app_reset(MenuApp *app)
     g_free(app->icon);
     g_free(app->generic_name);
     g_free(app->exec);
+    g_free(app->try_exec);
     g_free(app->wd);
     g_free(app->categories);
+    g_free(app->keywords);
     g_free(app->show_in);
     g_free(app->hide_in);
 }
@@ -79,6 +83,23 @@ static char *_get_language_string(GKeyFile *kf, const char *key)
     return g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP, key, languages[0], NULL);
 }
 
+static char **_get_language_string_list(GKeyFile *kf, const char *key, gsize *lp)
+{
+    char **lang;
+    char *try_key, **str;
+
+    for (lang = languages; lang[0] != NULL; lang++)
+    {
+        try_key = g_strdup_printf("%s[%s]", key, lang[0]);
+        str = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, try_key, lp, NULL);
+        g_free(try_key);
+        if (str != NULL)
+            return str;
+    }
+    return g_key_file_get_locale_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key,
+                                             languages[0], lp, NULL);
+}
+
 static void _fill_menu_from_file(MenuMenu *menu, const char *path)
 {
     GKeyFile *kf;
@@ -100,12 +121,17 @@ exit:
 }
 
 static const char **menu_app_intern_key_file_list(GKeyFile *kf, const char *key,
+                                                  gboolean localized,
                                                   gboolean add_to_des)
 {
     gsize len, i;
-    char **val = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key, &len, NULL);
+    char **val;
     const char **res;
 
+    if (localized)
+        val = _get_language_string_list(kf, key, &len);
+    else
+        val = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key, &len, NULL);
     if (val == NULL)
         return NULL;
     res = (const char **)g_new(char *, len + 1);
@@ -129,10 +155,16 @@ static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
     app->generic_name = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_GENERIC_NAME);
     app->exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                       G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
+    app->try_exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
+                                          G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
     //app->wd =
-    app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES, FALSE);
-    app->show_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_ONLY_SHOW_IN, TRUE);
-    app->hide_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_NOT_SHOW_IN, TRUE);
+    app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES,
+                                                    FALSE, FALSE);
+    app->keywords = menu_app_intern_key_file_list(kf, "Keywords", TRUE, FALSE);
+    app->show_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_ONLY_SHOW_IN,
+                                                 FALSE, TRUE);
+    app->hide_in = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_NOT_SHOW_IN,
+                                                 FALSE, TRUE);
     app->use_terminal = g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
                                                G_KEY_FILE_DESKTOP_KEY_TERMINAL, NULL);
     app->use_notification = g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
@@ -805,8 +837,7 @@ static gint _stage2(MenuMenu *menu, gboolean with_hidden)
             /* do recursion */
             if (_stage2(child->data, with_hidden) > 0)
                 count++;
-            else
-                /* if (!with_hidden || req_version < 2) */
+            else if (!with_hidden || req_version < 2)
                 to_delete = g_list_prepend(to_delete, child);
             child = next;
             break;
@@ -833,6 +864,8 @@ static gint _stage2(MenuMenu *menu, gboolean with_hidden)
     {
         if (menu->layout.show_empty)
             count++;
+        else
+            menu->layout.nodisplay = TRUE;
     }
     return count;
 }
@@ -848,6 +881,22 @@ static inline int _compose_flags(const char **f)
             x |= 1 << i;
     }
     return x;
+}
+
+static gboolean write_app_extra(FILE *f, MenuApp *app)
+{
+    gboolean ret;
+    char *cats, *keywords;
+    char *null_list[] = { NULL };
+
+    if (req_version < 2)
+        return TRUE;
+    cats = g_strjoinv(";", app->categories ? (char **)app->categories : null_list);
+    keywords = g_strjoinv(",", app->keywords ? (char **)app->keywords : null_list);
+    ret = fprintf(f, "%s\n%s\n%s\n", NONULL(app->try_exec), cats, keywords);
+    g_free(cats);
+    g_free(keywords);
+    return ret;
 }
 
 static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
@@ -872,7 +921,7 @@ static gboolean write_app(FILE *f, MenuApp *app, gboolean with_hidden)
     return fprintf(f, "-%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%u\n%d\n", app->id,
                    NONULL(app->title), NONULL(app->comment), NONULL(app->icon),
                    NONULL(app->filename), index, NONULL(app->generic_name),
-                   NONULL(app->exec), flags, show) > 0;
+                   NONULL(app->exec), flags, show) > 0 && write_app_extra(f, app);
 }
 
 static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
@@ -883,14 +932,17 @@ static gboolean write_menu(FILE *f, MenuMenu *menu, gboolean with_hidden)
 
     if (!with_hidden && !menu->layout.show_empty && menu->children == NULL)
         return TRUE;
-    if (menu->layout.nodisplay/* && (!with_hidden || req_version < 2)*/)
+    if (menu->layout.nodisplay && (!with_hidden || req_version < 2))
         return TRUE;
     index = g_slist_index(DirDirs, menu->dir);
     if (fprintf(f, "+%s\n%s\n%s\n%s\n%s\n%d\n", menu->name, NONULL(menu->title),
                 NONULL(menu->comment), NONULL(menu->icon),
                 menu->id ? (const char *)menu->id->data : "", index) < 0)
         return FALSE;
-    /* FIXME: should pass show_empty into file somehow - v.1.2 may be */
+    /* pass show_empty into file if format is v.1.2 */
+    if (req_version >= 2 &&
+        fprintf(f, "%d\n", menu->layout.nodisplay ? FLAG_IS_NODISPLAY : 0) < 0)
+        return FALSE;
     for (child = menu->children; ok && child != NULL; child = child->next)
     {
         index = ((MenuApp *)child->data)->type;
@@ -929,6 +981,14 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     int i;
     gboolean ok = FALSE;
 
+    tmp = (char *)g_getenv("CACHE_GEN_VERSION");
+    if (sscanf(tmp, "%d.%u", &i, &req_version) == 2)
+    {
+        if (i != 1 || req_version < 1) /* unsupported format requested */
+            return FALSE;
+        if (req_version > 2) /* fallback to maximal supported format */
+            req_version = 2;
+    }
     all_apps = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, menu_app_free);
     for (i = 0; i < N_KNOWN_DESKTOPS; i++)
         DEs = g_slist_append(DEs, (gpointer)g_intern_static_string(de_names[i]));
@@ -953,7 +1013,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     if (f == NULL)
         goto failed;
     /* Write common data */
-    fprintf(f, "1.1\n%s%s\n%d\n", /* FIXME: use CACHE_GEN_VERSION */
+    fprintf(f, "1.%d\n%s%s\n%d\n", req_version, /* use CACHE_GEN_VERSION */
             menuname, with_hidden ? "+hidden" : "",
             g_slist_length(DirDirs) + g_slist_length(AppDirs)
             + g_slist_length(MenuDirs) + g_slist_length(MenuFiles));

@@ -48,7 +48,8 @@ to prevent byte order problems.
 
 Format of the cached menu file, line by line.
 (Spaces before the lines are for easier demostration of hierarchy.
- There are no spaces in the real cached file.):
+ There are no spaces in the real cached file.
+ Fields marked with [**] added only in the file format 1.2):
 
 version number (major.minor)
 menu name>
@@ -66,6 +67,7 @@ seperated by ;
   dir in which menu directory file locates (use this number as index to get
                                             the string from array of preceding
                                             list of monitored files)
+  [**] bitmask flags: (--)|(--)|(not displayed)
     -application desktop id (NOTE: desktop id is not necessarily the basename
                              of desktop file)
      title
@@ -77,8 +79,11 @@ seperated by ;
                                              preceding list of monitored files)
      generic name
      exec command line
-     bitmask flags: (use terminal)|(use startup notification)
+     bitmask flags: (use terminal)|(use startup notification)|(not displayed)
      show_in_flags: bitwise or of masks for various DEs.
+     [**] executable name to test for availability
+     [**] categories: list divided by semicolon
+     [**] keywords: list divided by comma
     +sub dir id
      title
      comment

@@ -137,8 +137,10 @@ typedef struct {
     char *icon;
     char *generic_name;
     char *exec;
+    char *try_exec;
     char *wd;
     const char **categories; /* all char ** keep interned values */
+    const char **keywords;
     const char **show_in;
     const char **hide_in;
 } MenuApp;
