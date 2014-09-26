@@ -26,6 +26,7 @@
 #endif
 
 #include "menu-tags.h"
+#include "version.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -35,7 +36,7 @@
 
 static GSList *DEs = NULL;
 
-static guint req_version = 1;
+static guint req_version = 1; /* old compatibility default */
 
 static void menu_app_reset(MenuApp *app)
 {
@@ -893,7 +894,7 @@ static gboolean write_app_extra(FILE *f, MenuApp *app)
         return TRUE;
     cats = g_strjoinv(";", app->categories ? (char **)app->categories : null_list);
     keywords = g_strjoinv(",", app->keywords ? (char **)app->keywords : null_list);
-    ret = fprintf(f, "%s\n%s\n%s\n", NONULL(app->try_exec), cats, keywords);
+    ret = fprintf(f, "%s\n%s\n%s\n", NONULL(app->try_exec), cats, keywords) > 0;
     g_free(cats);
     g_free(keywords);
     return ret;
@@ -984,12 +985,13 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     tmp = (char *)g_getenv("CACHE_GEN_VERSION");
     if (sscanf(tmp, "%d.%u", &i, &req_version) == 2)
     {
-        if (i != VER_MAJOR ||
-            req_version < VER_MINOR_SUPPORTED) /* unsupported format requested */
+        if (i != VER_MAJOR) /* unsupported format requested */
             return FALSE;
-        if (req_version > VER_MINOR) /* fallback to maximal supported format */
-            req_version = VER_MINOR;
     }
+    if (req_version < VER_MINOR_SUPPORTED) /* unsupported format requested */
+        return FALSE;
+    if (req_version > VER_MINOR) /* fallback to maximal supported format */
+        req_version = VER_MINOR;
     all_apps = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, menu_app_free);
     for (i = 0; i < N_KNOWN_DESKTOPS; i++)
         DEs = g_slist_append(DEs, (gpointer)g_intern_static_string(de_names[i]));
