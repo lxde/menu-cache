@@ -5,6 +5,9 @@
     - list of categories is added to contents of cache file;
     - list of keywords is added to contents of cache file.
 
+* Fixed crash in menu_cache_item_get_file_dirname() for a non-existent
+    file (might happen for directories without .directory file).
+
 
 Changes in 0.7.0 since 0.6.1:
 
