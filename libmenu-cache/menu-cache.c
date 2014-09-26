@@ -254,7 +254,7 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     if (G_UNLIKELY(line == NULL))
         return;
     if (G_LIKELY(len > 0))
-        app->try_exec = line;
+        app->try_exec = g_strchomp(line);
     else
         g_free(line);
 
@@ -1226,9 +1226,13 @@ guint32 menu_cache_app_get_show_flags( MenuCacheApp* app )
 
 static gboolean _can_be_exec(MenuCacheApp *app)
 {
+    char *path;
+
     if (app->try_exec == NULL)
         return TRUE;
-    return (g_file_test(app->try_exec, G_FILE_TEST_IS_EXECUTABLE));
+    path = g_find_program_in_path(app->try_exec);
+    g_free(path);
+    return (path != NULL);
 }
 
 /**
