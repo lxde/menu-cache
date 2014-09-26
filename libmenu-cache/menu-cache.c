@@ -258,6 +258,15 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     else
         g_free(line);
 
+    /* Path */
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if (G_UNLIKELY(line == NULL))
+        return;
+    if (G_LIKELY(len > 0))
+        app->working_dir = line;
+    else
+        g_free(line);
+
     /* Categories */
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if (G_UNLIKELY(line == NULL))
@@ -833,6 +842,7 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
             MenuCacheApp* app = MENU_CACHE_APP(item);
             g_free( app->exec );
             g_free(app->try_exec);
+            g_free(app->working_dir);
             g_strfreev(app->categories);
             g_strfreev(app->keywords);
             g_slice_free( MenuCacheApp, app );

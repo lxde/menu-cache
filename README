@@ -82,6 +82,7 @@ seperated by ;
      bitmask flags: (use terminal)|(use startup notification)|(not displayed)
      show_in_flags: bitwise or of masks for various DEs.
      [**] executable name to test for availability
+     [**] working dir for exec
      [**] categories: list divided by semicolon
      [**] keywords: list divided by comma
     +sub dir id

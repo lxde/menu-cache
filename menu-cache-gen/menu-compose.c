@@ -158,7 +158,8 @@ static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
                                       G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
     app->try_exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
                                           G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
-    //app->wd =
+    app->wd = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
+                                    G_KEY_FILE_DESKTOP_KEY_PATH, NULL);
     app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES,
                                                     FALSE, FALSE);
     app->keywords = menu_app_intern_key_file_list(kf, "Keywords", TRUE, FALSE);
@@ -894,7 +895,8 @@ static gboolean write_app_extra(FILE *f, MenuApp *app)
         return TRUE;
     cats = g_strjoinv(";", app->categories ? (char **)app->categories : null_list);
     keywords = g_strjoinv(",", app->keywords ? (char **)app->keywords : null_list);
-    ret = fprintf(f, "%s\n%s\n%s\n", NONULL(app->try_exec), cats, keywords) > 0;
+    ret = fprintf(f, "%s\n%s\n%s\n%s\n", NONULL(app->try_exec), NONULL(app->wd),
+                                         cats, keywords) > 0;
     g_free(cats);
     g_free(keywords);
     return ret;

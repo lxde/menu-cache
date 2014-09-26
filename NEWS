@@ -2,11 +2,14 @@
     - invisible directories (NoDisplay=true or empty) can be put into the
         cache too but with flag (not displayed) set;
     - content of TryExec field is added to contents of cache file;
+    - the working dir to execute application;
     - list of categories is added to contents of cache file;
     - list of keywords is added to contents of cache file.
 
 * Fixed crash in menu_cache_item_get_file_dirname() for a non-existent
     file (might happen for directories without .directory file).
+
+* Made menu_cache_app_get_working_dir() actually work.
 
 
 Changes in 0.7.0 since 0.6.1:
