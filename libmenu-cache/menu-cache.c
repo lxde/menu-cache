@@ -111,7 +111,7 @@ struct _MenuCacheApp
     guint32 show_in_flags;
     guint32 flags;
     char* try_exec;
-    char** categories;
+    const char **categories;
     char** keywords;
 };
 
@@ -271,8 +271,21 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if (G_UNLIKELY(line == NULL))
         return;
-    /* if (G_LIKELY(len > 0))
-        app->categories = g_strsplit(line, ";", 0); */
+    if (G_LIKELY(len > 0))
+    {
+        const char **x;
+
+        /* split and intern all the strings so categories can be processed
+           later for search doing g_quark_try_string()+g_quark_to_string() */
+        app->categories = x = (const char **)g_strsplit(line, ";", 0);
+        while (*x != NULL)
+        {
+            char *cat = (char *)*x;
+            *x = g_intern_string(cat);
+            g_free(cat);
+            x++;
+        }
+    }
     g_free(line);
 
     /* Keywords */
@@ -843,7 +856,7 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
             g_free( app->exec );
             g_free(app->try_exec);
             g_free(app->working_dir);
-            g_strfreev(app->categories);
+            g_free(app->categories);
             g_strfreev(app->keywords);
             g_slice_free( MenuCacheApp, app );
         }
@@ -1182,12 +1195,21 @@ const char* menu_cache_app_get_working_dir( MenuCacheApp* app )
     return app->working_dir;
 }
 
-/*
-char** menu_cache_app_get_categories( MenuCacheApp* app )
+/**
+ * menu_cache_app_get_categories
+ * @app: a menu cache item
+ *
+ * Retrieves list of categories for @app. Returned data are owned by menu
+ * cache and should be not freed by caller.
+ *
+ * Returns: (transfer none): list of categories or %NULL.
+ *
+ * Since: 1.0.0
+ */
+const char * const * menu_cache_app_get_categories(MenuCacheApp* app)
 {
-    return NULL;
+    return app->categories;
 }
-*/
 
 /**
  * menu_cache_app_get_use_terminal
