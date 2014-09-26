@@ -1211,6 +1211,13 @@ guint32 menu_cache_app_get_show_flags( MenuCacheApp* app )
     return app->show_in_flags;
 }
 
+static gboolean _can_be_exec(MenuCacheApp *app)
+{
+    if (app->try_exec == NULL)
+        return TRUE;
+    return (g_file_test(app->try_exec, G_FILE_TEST_IS_EXECUTABLE));
+}
+
 /**
  * menu_cache_app_get_is_visible
  * @app: a menu cache item
@@ -1227,7 +1234,8 @@ gboolean menu_cache_app_get_is_visible( MenuCacheApp* app, guint32 de_flags )
 {
     if(app->flags & FLAG_IS_NODISPLAY)
         return FALSE;
-    return !app->show_in_flags || (app->show_in_flags & de_flags);
+    return (!app->show_in_flags || (app->show_in_flags & de_flags)) &&
+           _can_be_exec(app);
 }
 
 /*
