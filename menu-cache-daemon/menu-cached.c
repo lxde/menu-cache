@@ -157,7 +157,7 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
     for( i = 0, x = 0; i < n; ++i )
     {
         int len;
-        GFile *gfile;
+
         if( ! fgets( line, G_N_ELEMENTS(line), f ) )
             return FALSE;
 
@@ -165,8 +165,7 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
         if( len <= 1 )
             return FALSE;
         files[ x ] = g_strndup( line, len - 1 ); /* don't include \n */
-        gfile = g_file_new_for_path(files[x]+1);
-        if (g_file_query_exists(gfile, NULL))
+        if (g_file_test(files[x]+1, G_FILE_TEST_EXISTS))
             x++;
         else
         {
@@ -174,7 +173,6 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
             g_free(files[x]);
             files[x] = NULL;
         }
-        g_object_unref(gfile);
     }
     *n_files = x;
     *used_files = files;
