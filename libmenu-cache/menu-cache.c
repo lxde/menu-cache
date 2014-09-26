@@ -99,6 +99,7 @@ struct _MenuCacheDir
 {
     MenuCacheItem item;
     GSList* children;
+    guint32 flags;
 };
 
 struct _MenuCacheApp
@@ -108,8 +109,10 @@ struct _MenuCacheApp
     char* exec;
     char* working_dir;
     guint32 show_in_flags;
-/*    char** categories;    */
     guint32 flags;
+    char* try_exec;
+    char** categories;
+    char** keywords;
 };
 
 struct _MenuCache
@@ -164,6 +167,18 @@ static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache,
                      MenuCacheFileDir** all_used_files, int n_all_used_files)
 {
     MenuCacheItem* item;
+    char *line;
+    gsize len;
+
+    /* nodisplay flag */
+    if (cache->version >= 2)
+    {
+        line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+        if (G_UNLIKELY(line == NULL))
+            return;
+        dir->flags = (guint32)atoi(line);
+        g_free(line);
+    }
 
     /* load child items in the dir */
     while( (item = read_item( f, cache, all_used_files, n_all_used_files )) )
@@ -175,6 +190,10 @@ static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache,
     }
 
     dir->children = g_slist_reverse( dir->children );
+
+    /* set flag by children if works with old cache generator */
+    if (cache->version == 1 && dir->children == NULL)
+        dir->flags = FLAG_IS_NODISPLAY;
 }
 
 static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
@@ -212,6 +231,34 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     if(G_UNLIKELY(line == NULL))
         return;
     app->show_in_flags = (guint32)atol(line);
+    g_free(line);
+
+    if (cache->version < 2)
+        return;
+
+    /* TryExec */
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if (G_UNLIKELY(line == NULL))
+        return;
+    if (G_LIKELY(len > 0))
+        app->try_exec = line;
+    else
+        g_free(line);
+
+    /* Categories */
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if (G_UNLIKELY(line == NULL))
+        return;
+    /* if (G_LIKELY(len > 0))
+        app->categories = g_strsplit(line, ";", 0); */
+    g_free(line);
+
+    /* Keywords */
+    line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
+    if (G_UNLIKELY(line == NULL))
+        return;
+    /* if (G_LIKELY(len > 0))
+        app->keywords = g_strsplit(line, ",", 0); */
     g_free(line);
 }
 
@@ -772,6 +819,9 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
         {
             MenuCacheApp* app = MENU_CACHE_APP(item);
             g_free( app->exec );
+            g_free(app->try_exec);
+            g_strfreev(app->categories);
+            g_strfreev(app->keywords);
             g_slice_free( MenuCacheApp, app );
         }
     }
@@ -1074,7 +1124,7 @@ MenuCacheItem *menu_cache_find_child_by_name(MenuCacheDir *dir, const char *name
  */
 gboolean menu_cache_dir_is_visible(MenuCacheDir *dir)
 {
-    return (dir->children != NULL);
+    return ((dir->flags & FLAG_IS_NODISPLAY) == 0);
 }
 
 /**
@@ -1917,6 +1967,3 @@ MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id)
     MENU_CACHE_UNLOCK;
     return item;
 }
-
-/* TODO:
-const char **menu_cache_app_get_categories(MenuCacheApp *app) */

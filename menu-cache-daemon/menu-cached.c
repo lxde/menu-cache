@@ -140,7 +140,8 @@ static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )
         return FALSE;
     if( sscanf(line, "%d.%d", &ver_maj, &ver_min)< 2 )
         return FALSE;
-    if( ver_maj != VER_MAJOR || ver_min != VER_MINOR )
+    if (ver_maj != VER_MAJOR ||
+        ver_min > VER_MINOR || ver_min < VER_MINOR_SUPPORTED)
         return FALSE;
 
     /* skip the second line containing menu name */

@@ -984,10 +984,11 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     tmp = (char *)g_getenv("CACHE_GEN_VERSION");
     if (sscanf(tmp, "%d.%u", &i, &req_version) == 2)
     {
-        if (i != 1 || req_version < 1) /* unsupported format requested */
+        if (i != VER_MAJOR ||
+            req_version < VER_MINOR_SUPPORTED) /* unsupported format requested */
             return FALSE;
-        if (req_version > 2) /* fallback to maximal supported format */
-            req_version = 2;
+        if (req_version > VER_MINOR) /* fallback to maximal supported format */
+            req_version = VER_MINOR;
     }
     all_apps = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, menu_app_free);
     for (i = 0; i < N_KNOWN_DESKTOPS; i++)
