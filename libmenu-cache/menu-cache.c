@@ -191,9 +191,22 @@ static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache,
 
     dir->children = g_slist_reverse( dir->children );
 
-    /* set flag by children if works with old cache generator */
-    if (cache->version == 1 && dir->children == NULL)
-        dir->flags = FLAG_IS_NODISPLAY;
+    /* set flag by children if working with old cache generator */
+    if (cache->version == 1)
+    {
+        if (dir->children == NULL)
+            dir->flags = FLAG_IS_NODISPLAY;
+        else if ((line = menu_cache_item_get_file_path(MENU_CACHE_ITEM(dir))) != NULL)
+        {
+            GKeyFile *kf = g_key_file_new();
+            if (g_key_file_load_from_file(kf, line, G_KEY_FILE_NONE, NULL) &&
+                g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
+                                       G_KEY_FILE_DESKTOP_KEY_NO_DISPLAY, NULL))
+                dir->flags = FLAG_IS_NODISPLAY;
+            g_key_file_free(kf);
+            g_free(line);
+        }
+    }
 }
 
 static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
