@@ -3,9 +3,7 @@ NULL =
 INCLUDES =				\
 	-I$(top_srcdir)/libmenu-cache	\
 	$(GLIB_CFLAGS)			\
-	$(MONITOR_CFLAGS)		\
 	$(DEBUG_CFLAGS)			\
-	$(WARN_CFLAGS)			\
 	$(ADDITIONAL_FLAGS) \
 	-DMENUCACHE_LIBEXECDIR="\"$(pkglibexecdir)\"" \
 	-Werror-implicit-function-declaration \
@@ -22,6 +20,4 @@ menu_cached_LDADD = 		\
 	$(NULL)
 menu_cached_LDFLAGS =			\
 	-no-undefined				\
-	$(NULL)
-EXTRA_DIST =				\
 	$(NULL)
