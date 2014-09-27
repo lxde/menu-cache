@@ -105,7 +105,6 @@ void menu_cache_init(int flags);
 
 MenuCache* menu_cache_lookup( const char* menu_name );
 MenuCache* menu_cache_lookup_sync( const char* menu_name );
-/* MenuCache* menu_cache_lookup_by_cache_id( const char* md5 ); */
 
 MenuCache* menu_cache_ref(MenuCache* cache);
 void menu_cache_unref(MenuCache* cache);
@@ -128,7 +127,6 @@ MenuCacheNotifyId menu_cache_add_reload_notify(MenuCache* cache,
 void menu_cache_remove_reload_notify(MenuCache* cache, MenuCacheNotifyId notify_id);
 
 guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_env );
-
 
 MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item);
 gboolean menu_cache_item_unref(MenuCacheItem* item);
@@ -166,6 +164,8 @@ gboolean menu_cache_app_get_use_terminal( MenuCacheApp* app );
 gboolean menu_cache_app_get_use_sn( MenuCacheApp* app );
 
 GSList* menu_cache_list_all_apps(MenuCache* cache);
+GSList *menu_cache_list_all_for_category(MenuCache* cache, const char *category);
+GSList *menu_cache_list_all_for_keyword(MenuCache* cache, const char *keyword);
 
 MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id);
 /*
@@ -174,4 +174,3 @@ MenuCacheApp* menu_cache_find_app_by_exec( const char* exec );
 G_END_DECLS
 
 #endif
-

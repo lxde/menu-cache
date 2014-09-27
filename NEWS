@@ -2,7 +2,7 @@
     - invisible directories (NoDisplay=true or empty) can be put into the
         cache too but with flag (not displayed) set;
     - content of TryExec field is added to contents of cache file;
-    - the working dir to execute application;
+    - the working dir to execute application is added to cache file;
     - list of categories is added to contents of cache file;
     - list of keywords is added to contents of cache file.
 
@@ -11,15 +11,19 @@
 
 * Made menu_cache_app_get_working_dir() actually work.
 
-* Added new API menu_cache_app_get_categories() to get list of categories
-    for the application.
-
 * Made menu_cache_lookup() faster (do not load cache immediately but on
     idle instead).
 
 * Eliminated secondary cache reload in menu_cache_lookup_sync() - server
-    responce in such case will be ahead of idle reload (since main thread
+    response in such case will be ahead of idle reload (since main thread
     is in wait ATM) and therefore idle call will be supressed.
+
+* Added new API menu_cache_app_get_categories() to get list of categories
+    for the application.
+
+* Added new APIs for applications: menu_cache_list_all_for_category() and
+    menu_cache_list_all_for_keyword() that return list of applications
+    matching criteria.
 
 
 Changes in 0.7.0 since 0.6.1:

@@ -112,7 +112,7 @@ struct _MenuCacheApp
     guint32 flags;
     char* try_exec;
     const char **categories;
-    char** keywords;
+    char* keywords;
 };
 
 struct _MenuCache
@@ -214,6 +214,7 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
 {
     char *line;
     gsize len;
+    GString *str;
 
     /* generic name */
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
@@ -290,11 +291,37 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     g_free(line);
 
     /* Keywords */
+    str = g_string_new(MENU_CACHE_ITEM(app)->name);
+    if (G_LIKELY(app->exec != NULL))
+    {
+        char *sp = strchr(app->exec, ' ');
+        char *bn = strrchr(app->exec, G_DIR_SEPARATOR);
+
+        g_string_append_c(str, ',');
+        if (bn == NULL && sp == NULL)
+            g_string_append(str, app->exec);
+        else if (bn == NULL || (sp != NULL && sp < bn))
+            g_string_append_len(str, app->exec, sp - app->exec);
+        else if (sp == NULL)
+            g_string_append(str, &bn[1]);
+        else
+            g_string_append_len(str, &bn[1], sp - &bn[1]);
+    }
+    if (app->generic_name != NULL)
+    {
+        g_string_append_c(str, ',');
+        g_string_append(str, app->generic_name);
+    }
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if (G_UNLIKELY(line == NULL))
         return;
-    /* if (G_LIKELY(len > 0))
-        app->keywords = g_strsplit(line, ",", 0); */
+    if (len > 0)
+    {
+        g_string_append_c(str, ',');
+        g_string_append(str, line);
+    }
+    app->keywords = g_utf8_casefold(str->str, str->len);
+    g_string_free(str, TRUE);
     g_free(line);
 }
 
@@ -761,6 +788,7 @@ gboolean menu_cache_reload( MenuCache* cache )
     else
         goto _fail;
 
+    g_debug("menu cache: got file version 1.%d", ver_min);
     /* the second line is menu name */
     line = g_data_input_stream_read_line(f, &len, cache->cancellable, NULL);
     if(G_UNLIKELY(line == NULL))
@@ -875,7 +903,7 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
             g_free(app->try_exec);
             g_free(app->working_dir);
             g_free(app->categories);
-            g_strfreev(app->keywords);
+            g_free(app->keywords);
             g_slice_free( MenuCacheApp, app );
         }
     }
@@ -2042,4 +2070,121 @@ MenuCacheItem *menu_cache_find_item_by_id(MenuCache *cache, const char *id)
         menu_cache_item_ref(item);
     MENU_CACHE_UNLOCK;
     return item;
+}
+
+static GSList* list_app_in_dir_for_cat(MenuCacheDir *dir, GSList *list, const char *id)
+{
+    const char **cat;
+    GSList *l;
+
+    for (l = dir->children; l; l = l->next)
+    {
+        MenuCacheItem *item = MENU_CACHE_ITEM(l->data);
+        switch (item->type)
+        {
+        case MENU_CACHE_TYPE_DIR:
+            list = list_app_in_dir_for_cat(MENU_CACHE_DIR(item), list, id);
+            break;
+        case MENU_CACHE_TYPE_APP:
+            cat = MENU_CACHE_APP(item)->categories;
+            if (cat) while (*cat)
+                if (*cat++ == id)
+                {
+                    list = g_slist_prepend(list, menu_cache_item_ref(item));
+                    break;
+                }
+            break;
+        case MENU_CACHE_TYPE_NONE:
+        case MENU_CACHE_TYPE_SEP:
+            break;
+        }
+    }
+    return list;
+}
+
+/**
+ * menu_cache_list_all_for_category
+ * @cache: a menu cache descriptor
+ * @category: category to list items
+ *
+ * Retrieves list of applications in menu cache which have @category in
+ * their list of categories. The search is case-sensitive. Returned list
+ * should be freed with g_slist_free_full(list, menu_cache_item_unref)
+ * after usage.
+ *
+ * Returns: (transfer full) (element-type MenuCacheItem): list of items.
+ *
+ * Since: 1.0.0
+ */
+GSList *menu_cache_list_all_for_category(MenuCache* cache, const char *category)
+{
+    GQuark q;
+    GSList *list;
+
+    g_return_val_if_fail(cache != NULL && category != NULL, NULL);
+    q = g_quark_try_string(category);
+    if (q == 0)
+        return NULL;
+    MENU_CACHE_LOCK;
+    if (G_UNLIKELY(cache->root_dir == NULL))
+        list = NULL;
+    else
+        list = list_app_in_dir_for_cat(cache->root_dir, NULL, g_quark_to_string(q));
+    MENU_CACHE_UNLOCK;
+    return list;
+}
+
+static GSList* list_app_in_dir_for_kw(MenuCacheDir *dir, GSList *list, const char *kw)
+{
+    GSList *l;
+
+    for (l = dir->children; l; l = l->next)
+    {
+        MenuCacheItem *item = MENU_CACHE_ITEM(l->data);
+        switch (item->type)
+        {
+        case MENU_CACHE_TYPE_DIR:
+            list = list_app_in_dir_for_kw(MENU_CACHE_DIR(item), list, kw);
+            break;
+        case MENU_CACHE_TYPE_APP:
+            if (strstr(MENU_CACHE_APP(item)->keywords, kw) != NULL)
+                list = g_slist_prepend(list, menu_cache_item_ref(item));
+            break;
+        case MENU_CACHE_TYPE_NONE:
+        case MENU_CACHE_TYPE_SEP:
+            break;
+        }
+    }
+    return list;
+}
+
+/**
+ * menu_cache_list_all_for_keyword
+ * @cache: a menu cache descriptor
+ * @keyword: a keyword to search
+ *
+ * Retrieves list of applications in menu cache which have a @keyword
+ * as either a word or part of word in exec command, name, generic name
+ * or defined keywords. The search is case-insensitive. Returned list
+ * should be freed with g_slist_free_full(list, menu_cache_item_unref)
+ * after usage.
+ *
+ * Returns: (transfer full) (element-type MenuCacheItem): list of items.
+ *
+ * Since: 1.0.0
+ */
+GSList *menu_cache_list_all_for_keyword(MenuCache* cache, const char *keyword)
+{
+    char *casefolded = g_utf8_casefold(keyword, -1);
+    GSList *list;
+
+    g_return_val_if_fail(cache != NULL && keyword != NULL, NULL);
+    MENU_CACHE_LOCK;
+    if (G_UNLIKELY(cache->root_dir == NULL))
+        list = NULL;
+    else
+        list = list_app_in_dir_for_kw(cache->root_dir, NULL, casefolded);
+    MENU_CACHE_UNLOCK;
+    g_free(casefolded);
+    return list;
 }
