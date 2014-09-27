@@ -128,6 +128,7 @@ struct _MenuCache
     GThread* thr;
     GCancellable* cancellable;
     guint version;
+    guint reload_id;
     gboolean ready : 1; /* used for sync access */
 };
 
@@ -521,6 +522,7 @@ void menu_cache_unref(MenuCache* cache)
     MENU_CACHE_LOCK;
     if( g_atomic_int_dec_and_test(&cache->n_ref) )
     {
+        /* g_assert(cache->reload_id != 0); */
         unregister_menu_from_server( cache );
         /* DEBUG("unregister to server"); */
         g_hash_table_remove( hash, cache->menu_name );
@@ -619,6 +621,14 @@ MenuCacheItem* menu_cache_item_ref(MenuCacheItem* item)
     return item;
 }
 
+static gboolean menu_cache_reload_idle(gpointer cache)
+{
+    /* do reload once */
+    if (!g_source_is_destroyed(g_main_current_source()))
+        menu_cache_reload(cache);
+    return FALSE;
+}
+
 typedef struct _CacheReloadNotifier
 {
     MenuCacheReloadNotify func;
@@ -654,10 +664,13 @@ MenuCacheNotifyId menu_cache_add_reload_notify(MenuCache* cache, MenuCacheReload
     MENU_CACHE_LOCK;
     is_first = (cache->root_dir == NULL && cache->notifiers == NULL);
     cache->notifiers = g_slist_concat( cache->notifiers, l );
-    MENU_CACHE_UNLOCK;
     /* reload existing file first so it will be ready right away */
-    if(is_first)
-        menu_cache_reload(cache);
+    if(is_first && cache->reload_id == 0)
+        cache->reload_id = g_idle_add_full(G_PRIORITY_HIGH_IDLE,
+                                           menu_cache_reload_idle,
+                                           menu_cache_ref(cache),
+                                           (GDestroyNotify)menu_cache_unref);
+    MENU_CACHE_UNLOCK;
     return (MenuCacheNotifyId)l;
 }
 
@@ -716,6 +729,11 @@ gboolean menu_cache_reload( MenuCache* cache )
     int i, n;
     int ver_maj, ver_min;
 
+    MENU_CACHE_LOCK;
+    if (cache->reload_id)
+        g_source_remove(cache->reload_id);
+    cache->reload_id = 0;
+    MENU_CACHE_UNLOCK;
     file = g_file_new_for_path(cache->cache_file);
     if(!file)
         return FALSE;
@@ -1784,13 +1802,14 @@ static gpointer menu_cache_loader_thread(gpointer data)
 
 /**
  * menu_cache_lookup
- * @menu_name: a menu cache root
+ * @menu_name: a menu name
  *
- * Searches for connection to menu-cached for @menu_name. If no such
- * connection exists then creates new one. Caller can be notified when
- * cache is ready by adding callback.
+ * Searches for connection to menu-cached for @menu_name. If there is no
+ * such connection exist then creates new one. Caller can be notified
+ * when cache is (re)loaded by adding callback. Caller should check if
+ * the cache is already loaded trying to retrieve its root.
  *
- * See also: menu_cache_add_reload_notify().
+ * See also: menu_cache_add_reload_notify(), menu_cache_item_dup_parent().
  *
  * Returns: (transfer full): menu cache descriptor.
  *
@@ -1835,7 +1854,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
 
 /**
  * menu_cache_lookup_sync
- * @menu_name: a menu cache root
+ * @menu_name: a menu name
  *
  * Searches for data from menu-cached for @menu_name. If no connection
  * exists yet then creates new one and retrieves all data.

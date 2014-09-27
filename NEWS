@@ -14,6 +14,13 @@
 * Added new API menu_cache_app_get_categories() to get list of categories
     for the application.
 
+* Made menu_cache_lookup() faster (do not load cache immediately but on
+    idle instead).
+
+* Eliminated secondary cache reload in menu_cache_lookup_sync() - server
+    responce in such case will be ahead of idle reload (since main thread
+    is in wait ATM) and therefore idle call will be supressed.
+
 
 Changes in 0.7.0 since 0.6.1:
 
