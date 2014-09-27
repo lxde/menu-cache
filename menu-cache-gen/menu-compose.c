@@ -67,6 +67,33 @@ static void menu_app_free(gpointer data)
     g_slice_free(MenuApp, app);
 }
 
+static char *_escape_lf(char *str)
+{
+    char *c;
+
+    if (str != NULL && (c = strchr(str, '\n')) != NULL)
+    {
+        GString *s = g_string_new_len(str, c - str);
+
+        while (*c)
+        {
+            if (*c == '\n')
+                g_string_append(s, "\\n");
+            else
+                g_string_append_c(s, *c);
+            c++;
+        }
+        g_free(str);
+        str = g_string_free(s, FALSE);
+    }
+    return str;
+}
+
+static char *_get_string(GKeyFile *kf, const char *key)
+{
+    return _escape_lf(g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP, key, NULL));
+}
+
 /* g_key_file_get_locale_string is too much limited so implement replacement */
 static char *_get_language_string(GKeyFile *kf, const char *key)
 {
@@ -76,12 +103,24 @@ static char *_get_language_string(GKeyFile *kf, const char *key)
     for (lang = languages; lang[0] != NULL; lang++)
     {
         try_key = g_strdup_printf("%s[%s]", key, lang[0]);
-        str = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP, try_key, NULL);
+        str = _get_string(kf, try_key);
         g_free(try_key);
         if (str != NULL)
             return str;
     }
-    return g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP, key, languages[0], NULL);
+    return _escape_lf(g_key_file_get_locale_string(kf, G_KEY_FILE_DESKTOP_GROUP,
+                                                   key, languages[0], NULL));
+}
+
+static char **_get_string_list(GKeyFile *kf, const char *key, gsize *lp)
+{
+    char **str, **p;
+
+    str = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key, lp, NULL);
+    if (str != NULL)
+        for (p = str; p[0] != NULL; p++)
+            p[0] = _escape_lf(p[0]);
+    return str;
 }
 
 static char **_get_language_string_list(GKeyFile *kf, const char *key, gsize *lp)
@@ -92,13 +131,17 @@ static char **_get_language_string_list(GKeyFile *kf, const char *key, gsize *lp
     for (lang = languages; lang[0] != NULL; lang++)
     {
         try_key = g_strdup_printf("%s[%s]", key, lang[0]);
-        str = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, try_key, lp, NULL);
+        str = _get_string_list(kf, try_key, lp);
         g_free(try_key);
         if (str != NULL)
             return str;
     }
-    return g_key_file_get_locale_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key,
-                                             languages[0], lp, NULL);
+    str = g_key_file_get_locale_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key,
+                                            languages[0], lp, NULL);
+    if (str != NULL)
+        for (lang = str; lang[0] != NULL; lang++)
+            lang[0] = _escape_lf(lang[0]);
+    return str;
 }
 
 static void _fill_menu_from_file(MenuMenu *menu, const char *path)
@@ -112,8 +155,7 @@ static void _fill_menu_from_file(MenuMenu *menu, const char *path)
         goto exit;
     menu->title = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_NAME);
     menu->comment = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_COMMENT);
-    menu->icon = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                       G_KEY_FILE_DESKTOP_KEY_ICON, NULL);
+    menu->icon = _get_string(kf, G_KEY_FILE_DESKTOP_KEY_ICON);
     menu->layout.nodisplay = g_key_file_get_boolean(kf, G_KEY_FILE_DESKTOP_GROUP,
                                                     G_KEY_FILE_DESKTOP_KEY_NO_DISPLAY, NULL);
     menu->layout.is_set = TRUE;
@@ -132,7 +174,7 @@ static const char **menu_app_intern_key_file_list(GKeyFile *kf, const char *key,
     if (localized)
         val = _get_language_string_list(kf, key, &len);
     else
-        val = g_key_file_get_string_list(kf, G_KEY_FILE_DESKTOP_GROUP, key, &len, NULL);
+        val = _get_string_list(kf, key, &len);
     if (val == NULL)
         return NULL;
     res = (const char **)g_new(char *, len + 1);
@@ -151,15 +193,11 @@ static void _fill_app_from_key_file(MenuApp *app, GKeyFile *kf)
 {
     app->title = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_NAME);
     app->comment = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_COMMENT);
-    app->icon = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                      G_KEY_FILE_DESKTOP_KEY_ICON, NULL);
+    app->icon = _get_string(kf, G_KEY_FILE_DESKTOP_KEY_ICON);
     app->generic_name = _get_language_string(kf, G_KEY_FILE_DESKTOP_KEY_GENERIC_NAME);
-    app->exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                      G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
-    app->try_exec = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                          G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
-    app->wd = g_key_file_get_string(kf, G_KEY_FILE_DESKTOP_GROUP,
-                                    G_KEY_FILE_DESKTOP_KEY_PATH, NULL);
+    app->exec = _get_string(kf, G_KEY_FILE_DESKTOP_KEY_EXEC);
+    app->try_exec = _get_string(kf, G_KEY_FILE_DESKTOP_KEY_TRY_EXEC);
+    app->wd = _get_string(kf, G_KEY_FILE_DESKTOP_KEY_PATH);
     app->categories = menu_app_intern_key_file_list(kf, G_KEY_FILE_DESKTOP_KEY_CATEGORIES,
                                                     FALSE, FALSE);
     app->keywords = menu_app_intern_key_file_list(kf, "Keywords", TRUE, FALSE);

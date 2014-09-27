@@ -210,6 +210,30 @@ static void read_dir(GDataInputStream* f, MenuCacheDir* dir, MenuCache* cache,
     }
 }
 
+static char *_unescape_lf(char *str)
+{
+    char *c, *p = str;
+    gsize len = 0;
+
+    while ((c = strchr(p, '\\')) != NULL)
+    {
+        if (p != &str[len])
+            memmove(&str[len], p, c - p);
+        len += (c - p);
+        if (c[1] == 'n')
+        {
+            str[len++] = '\n';
+            c++;
+        }
+        else if (c != &str[len])
+            str[len++] = *c;
+        p = &c[1];
+    }
+    if (p != &str[len])
+        memmove(&str[len], p, strlen(p) + 1);
+    return str;
+}
+
 static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
 {
     char *line;
@@ -221,7 +245,7 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     if(G_UNLIKELY(line == NULL))
         return;
     if(G_LIKELY(len > 0))
-        app->generic_name = line;
+        app->generic_name = _unescape_lf(line);
     else
         g_free(line);
 
@@ -230,7 +254,7 @@ static void read_app(GDataInputStream* f, MenuCacheApp* app, MenuCache* cache)
     if(G_UNLIKELY(line == NULL))
         return;
     if(G_LIKELY(len > 0))
-        app->exec = line;
+        app->exec = _unescape_lf(line);
     else
         g_free(line);
 
@@ -375,7 +399,7 @@ static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache,
     if(G_UNLIKELY(line == NULL))
         goto _fail;
     if(G_LIKELY(len > 0))
-        item->name = line;
+        item->name = _unescape_lf(line);
     else
         g_free(line);
 
@@ -384,7 +408,7 @@ static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache,
     if(G_UNLIKELY(line == NULL))
         goto _fail;
     if(G_LIKELY(len > 0))
-        item->comment = line;
+        item->comment = _unescape_lf(line);
     else
         g_free(line);
 

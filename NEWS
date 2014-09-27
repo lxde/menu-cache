@@ -25,6 +25,10 @@
     menu_cache_list_all_for_keyword() that return list of applications
     matching criteria.
 
+* Fixed problem if some string in the desktop entry file contained a new
+    line character. That broke cache file format, now it's replaced with
+    a "\n" string and converted back into new line in the library.
+
 
 Changes in 0.7.0 since 0.6.1:
 
