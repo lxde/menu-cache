@@ -29,7 +29,7 @@ SCANGOBJ_OPTIONS=
 
 # Extra options to supply to gtkdoc-scan.
 # e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED"
-SCAN_OPTIONS=--rebuild-types --deprecated-guards="G_DISABLE_DEPRECATED"
+SCAN_OPTIONS=--rebuild-sections --rebuild-types --deprecated-guards="G_DISABLE_DEPRECATED"
 
 # Extra options to supply to gtkdoc-mkdb.
 # e.g. MKDB_OPTIONS=--xml-mode --output-format=xml
@@ -92,6 +92,9 @@ EXTRA_DIST +=
 # for --rebuild-types in $(SCAN_OPTIONS), e.g. $(DOC_MODULE).types
 # for --rebuild-sections in $(SCAN_OPTIONS) e.g. $(DOC_MODULE)-sections.txt
 #DISTCLEANFILES +=
+
+# Fix parallel build - we need this file built before continuing
+$(DOC_MAIN_SGML_FILE): sgml-build.stamp
 
 # Comment this out if you want 'make check' to test you doc status
 # and run some sanity checks
