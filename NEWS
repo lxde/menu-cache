@@ -1,3 +1,5 @@
+Changes in 1.0.0 since 0.7.0:
+
 * Added new cache file format generation support with changes:
     - invisible directories (NoDisplay=true or empty) can be put into the
         cache too but with flag (not displayed) set;
