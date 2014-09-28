@@ -1,5 +1,9 @@
+dnl Process this file with autoconf to produce a configure script.
+
 AC_INIT([menu-cache], [0.7.99],
         [http://lxde.org/])
+
+AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([no-dist-gzip dist-xz])
 AM_CONFIG_HEADER(config.h)

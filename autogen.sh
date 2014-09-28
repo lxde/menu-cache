@@ -24,8 +24,10 @@ case "$AM_INSTALLED_VERSION" in
 esac
 
 if [ "x${ACLOCAL_DIR}" != "x" ]; then
-  ACLOCAL_ARG=-I ${ACLOCAL_DIR}
+  ACLOCAL_ARG="-I ${ACLOCAL_DIR}"
 fi
+
+test -d m4 || mkdir m4
 
 if gtkdocize --copy; then
     echo "Files needed by gtk-doc are generated."
