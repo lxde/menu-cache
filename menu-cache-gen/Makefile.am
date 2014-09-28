@@ -1,6 +1,7 @@
 NULL =
 
 AM_CPPFLAGS = \
+	-I$(top_builddir)/libmenu-cache \
 	-I$(top_srcdir)/libmenu-cache \
 	$(GLIB_CFLAGS) \
 	$(LIBFM_EXTRA_CFLAGS) \

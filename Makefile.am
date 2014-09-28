@@ -4,9 +4,12 @@ SUBDIRS_DOCS = docs
 
 EXTRA_DIST_DOCS = \
 	gtk-doc.make \
-	docs/Makefile.* \
-	docs/reference/Makefile.* \
-	docs/reference/libmenu-cache/Makefile.* \
+	docs/Makefile.am \
+	docs/Makefile.in \
+	docs/reference/Makefile.am \
+	docs/reference/Makefile.in \
+	docs/reference/libmenu-cache/Makefile.am \
+	docs/reference/libmenu-cache/Makefile.in \
 	$(NULL)
 
 ALL_SUBDIRS = 			\
@@ -27,3 +30,5 @@ SUBDIRS += $(SUBDIRS_DOCS)
 else
 EXTRA_DIST += $(EXTRA_DIST_DOCS)
 endif
+
+DISTCHECK_CONFIGURE_FLAGS=--enable-gtk-doc
