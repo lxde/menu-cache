@@ -1,6 +1,6 @@
 NULL =
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_srcdir)/libmenu-cache \
 	$(GLIB_CFLAGS) \
 	$(LIBFM_EXTRA_CFLAGS) \

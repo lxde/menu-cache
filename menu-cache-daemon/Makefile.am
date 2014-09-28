@@ -1,9 +1,9 @@
 NULL =
 
-INCLUDES =				\
-	-I$(top_srcdir)/libmenu-cache	\
-	$(GLIB_CFLAGS)			\
-	$(DEBUG_CFLAGS)			\
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/libmenu-cache \
+	$(GLIB_CFLAGS) \
+	$(DEBUG_CFLAGS) \
 	$(ADDITIONAL_FLAGS) \
 	-DMENUCACHE_LIBEXECDIR="\"$(pkglibexecdir)\"" \
 	-Werror-implicit-function-declaration \

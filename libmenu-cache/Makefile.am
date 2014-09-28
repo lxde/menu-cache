@@ -1,7 +1,7 @@
 NULL =
 
-INCLUDES =				\
-	$(GLIB_CFLAGS)			\
+AM_CPPFLAGS = \
+	$(GLIB_CFLAGS) \
 	$(DEBUG_CFLAGS) \
 	$(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
