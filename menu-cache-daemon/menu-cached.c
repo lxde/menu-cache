@@ -3,7 +3,7 @@
  *
  *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
  *      Copyright 2009 Jürgen Hötzel <juergen@archlinux.org>
- *      Copyright 2012-2013 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2012-2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -408,6 +408,7 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
             cache_mtime = st.st_mtime;
             if( read_all_used_files(f, &n, &files) )
             {
+#if 0
                 for( i =0; i < n; ++i )
                 {
                     /* files[i][0] is 'D' or 'F' indicating file type. */
@@ -417,6 +418,7 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
                         break;
                 }
                 if( i >= n )
+#endif
                 {
                     ret = TRUE;
                     *n_used_files = n;
@@ -590,6 +592,12 @@ retry:
                 {
                     DEBUG("regeneration of cache failed!!");
                 }
+            }
+            else
+            {
+                /* file loaded, schedule update anyway */
+                cache->delayed_reload_handler = g_timeout_add_seconds_full(G_PRIORITY_LOW, 3,
+                                                    (GSourceFunc)delayed_reload, cache, NULL);
             }
             memcpy( cache->md5, md5, 33 );
             cache->n_files = n_files;

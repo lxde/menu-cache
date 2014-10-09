@@ -31,6 +31,11 @@ Changes in 1.0.0 since 0.7.0:
     line character. That broke cache file format, now it's replaced with
     a "\n" string and converted back into new line in the library.
 
+* Fixed bug when cache was not updated while it should: check if the last
+    modification time for directory is more recent than modification time
+    for cache may not always be valid - some .desktop entry might be just
+    changed by update and that will lead to falsed cache contents.
+
 
 Changes in 0.7.0 since 0.6.1:
 
