@@ -36,6 +36,8 @@ Changes in 1.0.0 since 0.7.0:
     for cache may not always be valid - some .desktop entry might be just
     changed by update and that will lead to falsed cache contents.
 
+* Added Log Domain "Menu-Cache" for better library logging messages.
+
 
 Changes in 0.7.0 since 0.6.1:
 

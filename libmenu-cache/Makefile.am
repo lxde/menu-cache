@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 	$(ADDITIONAL_FLAGS) \
 	-Werror-implicit-function-declaration \
 	-DMENUCACHE_LIBEXECDIR="\"$(pkglibexecdir)\"" \
+	-DG_LOG_DOMAIN=\"Menu-Cache\" \
 	$(NULL)
 
 lib_LTLIBRARIES = libmenu-cache.la
