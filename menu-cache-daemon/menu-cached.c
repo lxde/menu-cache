@@ -427,8 +427,7 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
                 }
             }
 #else
-            if (read_all_used_files(f, n_used_files, used_files))
-                ret = TRUE;
+            ret = read_all_used_files(f, n_used_files, used_files);
 #endif
         }
         fclose( f );
