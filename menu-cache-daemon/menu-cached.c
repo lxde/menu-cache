@@ -395,9 +395,11 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
 {
     gboolean ret = FALSE;
     struct stat st;
+#if 0
     time_t cache_mtime;
     char** files;
     int n, i;
+#endif
     FILE* f;
 
     f = fopen( cache_file, "r" );
@@ -405,10 +407,10 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
     {
         if( fstat( fileno(f), &st) == 0 )
         {
+#if 0
             cache_mtime = st.st_mtime;
             if( read_all_used_files(f, &n, &files) )
             {
-#if 0
                 for( i =0; i < n; ++i )
                 {
                     /* files[i][0] is 'D' or 'F' indicating file type. */
@@ -418,13 +420,16 @@ static gboolean cache_file_is_updated( const char* cache_file, int* n_used_files
                         break;
                 }
                 if( i >= n )
-#endif
                 {
                     ret = TRUE;
                     *n_used_files = n;
                     *used_files = files;
                 }
             }
+#else
+            if (read_all_used_files(f, n_used_files, used_files))
+                ret = TRUE;
+#endif
         }
         fclose( f );
     }
