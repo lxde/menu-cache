@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([menu-cache], [1.0.0-rc1],
+AC_INIT([menu-cache], [1.0.0],
         [http://lxde.org/])
 
 AC_CONFIG_MACRO_DIR([m4])
