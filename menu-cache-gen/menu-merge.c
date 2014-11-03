@@ -1355,7 +1355,7 @@ restart:
         g_free(merged);
         /* destroy all KDELegacyDirs */
         for (l = children; l; l = l->next)
-            if (fm_xml_file_item_get_tag(l->data) == menuTag_KDELegacyDirs)
+            if (l->data && fm_xml_file_item_get_tag(l->data) == menuTag_KDELegacyDirs)
             {
                 fm_xml_file_item_destroy(l->data);
                 l->data = NULL;
