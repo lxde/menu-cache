@@ -1,6 +1,9 @@
 * Fixed crash on generating menu with both tags <DefaultAppDirs/> and
     <KDELegacyDirs/> present.
 
+* Fixed crash when menu-cache-gen ran manually without CACHE_GEN_VERSION.
+
+
 Changes in 1.0.0 since 0.7.0:
 
 * Added new cache file format generation support with changes:

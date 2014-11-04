@@ -1023,7 +1023,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     gboolean ok = FALSE;
 
     tmp = (char *)g_getenv("CACHE_GEN_VERSION");
-    if (sscanf(tmp, "%d.%u", &i, &req_version) == 2)
+    if (tmp && sscanf(tmp, "%d.%u", &i, &req_version) == 2)
     {
         if (i != VER_MAJOR) /* unsupported format requested */
             return FALSE;
