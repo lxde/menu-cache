@@ -1,7 +1,7 @@
 /*
  *      menu-compose.c : scans appropriate .desktop files and composes cache file.
  *
- *      Copyright 2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2014-2015 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -723,6 +723,8 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
                 if (l != NULL)
                     available = g_list_remove_link(available, l);
             }
+            if (l != NULL)
+                app->menus = g_list_prepend(app->menus, menu);
             result = g_list_concat(l, result);
             break;
         case MENU_CACHE_TYPE_SEP: /* MenuSep */
