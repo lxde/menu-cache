@@ -734,6 +734,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         case MENU_CACHE_TYPE_NONE: /* MenuMerge */
             VDBG("composing Merge type %d", ((MenuMerge *)app)->merge_type);
             next = NULL;
+            tag = 0;
             switch (((MenuMerge *)app)->merge_type) {
             case MERGE_FILES:
                 tag = 1; /* use it as mark to not add dirs */
@@ -756,7 +757,7 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
                 available = NULL;
                 /* continue with menus */
             case MERGE_MENUS:
-                for (l = menu->children; l; )
+                if (tag != 1) for (l = menu->children; l; )
                 {
                     if (((MenuMenu *)l->data)->layout.type == MENU_CACHE_TYPE_DIR)
                     {

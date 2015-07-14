@@ -3,7 +3,10 @@
 
 * Fixed crash when menu-cache-gen ran manually without CACHE_GEN_VERSION.
 
-* Fixed crash on <Filename/> in menu layout with <OnlyUnallocated/> tag.
+* Fixed crash in menu-cache-gen on <Filename/> in menu layout with
+    <OnlyUnallocated/> tag present.
+
+* Fixed incorrect processing of <Merge type="files"> in menu-cache-gen.
 
 
 Changes in 1.0.0 since 0.7.0:
