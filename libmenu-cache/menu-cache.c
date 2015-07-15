@@ -3,7 +3,7 @@
  *
  *      Copyright 2008 PCMan <pcman.tw@gmail.com>
  *      Copyright 2009 Jürgen Hötzel <juergen@archlinux.org>
- *      Copyright 2012-2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2012-2015 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
@@ -1517,7 +1517,7 @@ static void get_socket_name( char* buf, int len )
     if(dpy && *dpy)
     {
         char* p = strchr(dpy, ':');
-        for(++p; *p && *p != '.';)
+        for(++p; *p && *p != '.' && *p != '\n';)
             ++p;
         if(*p)
             *p = '\0';
@@ -1743,16 +1743,31 @@ retry:
 #define __num2str(s) __def2str(s)
 #define __def2str(s) #s
 
+static inline char *_validate_env(const char *env)
+{
+    char *res, *c;
+
+    if (env)
+        res = g_strdup(env);
+    else
+        res = g_strdup("");
+    for (c = res; *c; c++)
+        if (*c == '\n' || *c == '\t')
+            *c = ' ';
+    return res;
+}
+
 static MenuCache* menu_cache_create(const char* menu_name)
 {
     MenuCache* cache;
     const gchar * const * langs = g_get_language_names();
-    const char* xdg_cfg = g_getenv("XDG_CONFIG_DIRS");
-    const char* xdg_prefix = g_getenv("XDG_MENU_PREFIX");
-    const char* xdg_data = g_getenv("XDG_DATA_DIRS");
-    const char* xdg_cfg_home = g_getenv("XDG_CONFIG_HOME");
-    const char* xdg_data_home = g_getenv("XDG_DATA_HOME");
-    const char* xdg_cache_home = g_getenv("XDG_CACHE_HOME");
+    const char* xdg_cfg_env = g_getenv("XDG_CONFIG_DIRS");
+    const char* xdg_prefix_env = g_getenv("XDG_MENU_PREFIX");
+    const char* xdg_data_env = g_getenv("XDG_DATA_DIRS");
+    const char* xdg_cfg_home_env = g_getenv("XDG_CONFIG_HOME");
+    const char* xdg_data_home_env = g_getenv("XDG_DATA_HOME");
+    const char* xdg_cache_home_env = g_getenv("XDG_CACHE_HOME");
+    char *xdg_cfg, *xdg_prefix, *xdg_data, *xdg_cfg_home, *xdg_data_home, *xdg_cache_home;
     char* buf;
     const char* md5;
     char* file_name;
@@ -1760,21 +1775,18 @@ static MenuCache* menu_cache_create(const char* menu_name)
     GChecksum *sum;
     char *langs_list;
 
-    if( !xdg_cfg )
-        xdg_cfg = "";
-    if( ! xdg_prefix )
-        xdg_prefix = "";
-    if( ! xdg_data )
-        xdg_data = "";
-    if( ! xdg_cfg_home )
-        xdg_cfg_home = "";
-    if( ! xdg_data_home )
-        xdg_data_home = "";
-    if( ! xdg_cache_home )
-        xdg_cache_home = "";
+    xdg_cfg = _validate_env(xdg_cfg_env);
+    xdg_prefix = _validate_env(xdg_prefix_env);
+    xdg_data = _validate_env(xdg_data_env);
+    xdg_cfg_home = _validate_env(xdg_cfg_home_env);
+    xdg_data_home = _validate_env(xdg_data_home_env);
+    xdg_cache_home = _validate_env(xdg_cache_home_env);
 
     /* reconstruct languages list in form as it should be in $LANGUAGES */
     langs_list = g_strjoinv(":", (char **)langs);
+    for (buf = langs_list; *buf; buf++) /* reusing buf var as char pointer */
+        if (*buf == '\n' || *buf == '\t')
+            *buf = ' ';
 
     buf = g_strdup_printf( "REG:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" CACHE_VERSION
                            "\t00000000000000000000000000000000\n",
@@ -1801,6 +1813,12 @@ static MenuCache* menu_cache_create(const char* menu_name)
     cache->menu_name = g_strdup(menu_name);
     g_free( file_name );
     g_free(langs_list);
+    g_free(xdg_cfg);
+    g_free(xdg_prefix);
+    g_free(xdg_data);
+    g_free(xdg_cfg_home);
+    g_free(xdg_data_home);
+    g_free(xdg_cache_home);
 
     g_checksum_free(sum); /* md5 is also freed here */
 

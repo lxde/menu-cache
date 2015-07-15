@@ -8,6 +8,8 @@
 
 * Fixed incorrect processing of <Merge type="files"> in menu-cache-gen.
 
+* Added safeguards against environment variables containing newlines.
+
 
 Changes in 1.0.0 since 0.7.0:
 

@@ -3,7 +3,7 @@
  *
  *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
  *      Copyright 2009 Jürgen Hötzel <juergen@archlinux.org>
- *      Copyright 2012-2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2012-2015 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -441,7 +441,7 @@ static void get_socket_name( char* buf, int len )
     if(dpy && *dpy)
     {
         char* p = strchr(dpy, ':');
-        for(++p; *p && *p != '.';)
+        for(++p; *p && *p != '.' && *p != '\n';)
             ++p;
         if(*p)
             *p = '\0';
