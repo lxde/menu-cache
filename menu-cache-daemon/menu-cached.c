@@ -600,6 +600,7 @@ retry:
             else
             {
                 /* file loaded, schedule update anyway */
+                cache->need_reload = TRUE;
                 cache->delayed_reload_handler = g_timeout_add_seconds_full(G_PRIORITY_LOW, 3,
                                                     (GSourceFunc)delayed_reload, cache, NULL);
             }
