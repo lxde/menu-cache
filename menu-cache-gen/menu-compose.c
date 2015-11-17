@@ -708,20 +708,26 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
         case MENU_CACHE_TYPE_APP: /* MemuFilename */
             VDBG("composing Filename %s", ((MenuFilename *)app)->id);
             app = g_hash_table_lookup(all_apps, ((MenuFilename *)app)->id);
-            if (app == NULL || !app->matched || app->excluded)
+            if (app == NULL)
                 /* not available, ignoring it */
                 break;
             l = g_list_find(result, app); /* this might be slow but we have
                                              to do this because app might be
                                              already added into result */
             if (l != NULL)
+            {
                 /* move it out to this place */
                 result = g_list_remove_link(result, l);
+                VVDBG("+++ composing app %s (move)", app->id);
+            }
             else
             {
                 l = g_list_find(available, app);
                 if (l != NULL)
                     available = g_list_remove_link(available, l);
+                else
+                    l = g_list_prepend(NULL, app);
+                VVDBG("+++ composing app %s%s", app->id, (l == NULL) ? " (add)" : "");
             }
             if (l != NULL)
                 app->menus = g_list_prepend(app->menus, menu);

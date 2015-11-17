@@ -10,6 +10,11 @@
 
 * Added safeguards against environment variables containing newlines.
 
+* Fixed case when cache was not updated while it should, it was claimed
+    to be fixed in 1.0.0 but apparently fix was incomplete.
+
+* Fixed ignored <Filename> tags inside of <Layout> tag.
+
 
 Changes in 1.0.0 since 0.7.0:
 
