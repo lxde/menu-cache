@@ -250,8 +250,8 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
             if (is_legacy)
             {
                 MenuMenu *submenu = g_slice_new0(MenuMenu);
-                MenuMerge def_files = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_FILES };
-                MenuMerge def_menus = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_MENUS };
+                static MenuMerge def_files = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_FILES };
+                static MenuMerge def_menus = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_MENUS };
                 submenu->layout = menu->layout; /* copy all */
                 submenu->layout.items = g_list_prepend(g_list_prepend(NULL, &def_files), &def_menus);
                 submenu->layout.inline_limit_is_set = TRUE; /* marker */
@@ -723,11 +723,11 @@ static void _stage1(MenuMenu *menu, GList *dirs, GList *apps, GList *legacy, GLi
             else
             {
                 l = g_list_find(available, app);
+                VVDBG("+++ composing app %s%s", app->id, (l == NULL) ? " (add)" : "");
                 if (l != NULL)
                     available = g_list_remove_link(available, l);
                 else
                     l = g_list_prepend(NULL, app);
-                VVDBG("+++ composing app %s%s", app->id, (l == NULL) ? " (add)" : "");
             }
             if (l != NULL)
                 app->menus = g_list_prepend(app->menus, menu);
