@@ -217,6 +217,21 @@ static GHashTable *all_apps = NULL;
 
 static GSList *loaded_dirs = NULL;
 
+static GList *_make_def_layout(void)
+{
+    MenuMerge *mm;
+    GList *layout;
+
+    mm = g_slice_new(MenuMerge);
+    mm->type = MENU_CACHE_TYPE_NONE;
+    mm->merge_type = MERGE_FILES;
+    layout = g_list_prepend(NULL, mm);
+    mm = g_slice_new(MenuMerge);
+    mm->type = MENU_CACHE_TYPE_NONE;
+    mm->merge_type = MERGE_MENUS;
+    return g_list_prepend(layout, mm);
+}
+
 static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
                                 gboolean is_legacy)
 {
@@ -250,10 +265,8 @@ static void _fill_apps_from_dir(MenuMenu *menu, GList *lptr, GString *prefix,
             if (is_legacy)
             {
                 MenuMenu *submenu = g_slice_new0(MenuMenu);
-                static MenuMerge def_files = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_FILES };
-                static MenuMerge def_menus = { .type = MENU_CACHE_TYPE_NONE, .merge_type = MERGE_MENUS };
                 submenu->layout = menu->layout; /* copy all */
-                submenu->layout.items = g_list_prepend(g_list_prepend(NULL, &def_files), &def_menus);
+                submenu->layout.items = _make_def_layout(); /* default layout */
                 submenu->layout.inline_limit_is_set = TRUE; /* marker */
                 submenu->name = g_strdup(name);
                 submenu->dir = g_intern_string(filename);
