@@ -1,3 +1,5 @@
+Changes in 1.0.1 since 1.0.0:
+
 * Fixed crash on generating menu with both tags <DefaultAppDirs/> and
     <KDELegacyDirs/> present.
 
