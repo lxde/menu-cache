@@ -2059,6 +2059,8 @@ guint32 menu_cache_get_desktop_env_flag( MenuCache* cache, const char* desktop_e
             flags |= SHOW_IN_LXDE;
         else if (strcmp(envs[j], "ROX") == 0)
             flags |= SHOW_IN_ROX;
+        else if (strcmp(envs[j], "LXQT") == 0)
+            flags |= SHOW_IN_LXQT;
     }
     MENU_CACHE_UNLOCK;
     g_strfreev(envs);
