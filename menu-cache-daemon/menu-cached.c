@@ -261,12 +261,22 @@ static void do_reload(Cache* cache)
     int i;
     GFile* gf;
 
+    int new_n_files;
+    char **new_files = NULL;
+
     /* DEBUG("Re-generation of cache is needed!"); */
     /* DEBUG("call menu-cache-gen to re-generate the cache"); */
     memcpy( buf, "REL:", 4 );
     memcpy( buf + 4, cache->md5, 32 );
     buf[36] = '\n';
     buf[37] = '\0';
+
+    if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache->cache_file,
+                            cache->env, &new_n_files, &new_files ) )
+    {
+        DEBUG("regeneration of cache failed.");
+        return;
+    }
 
     /* cancel old file monitors */
     g_strfreev(cache->files);
@@ -280,11 +290,9 @@ static void do_reload(Cache* cache)
     g_file_monitor_cancel(cache->cache_mon);
     g_object_unref(cache->cache_mon);
 */
-    if( ! regenerate_cache( cache->menu_name, cache->lang_name, cache->cache_file,
-                            cache->env, &cache->n_files, &cache->files ) )
-    {
-        DEBUG("regeneration of cache failed.");
-    }
+
+    cache->n_files = new_n_files;
+    cache->files = new_files;
 
     cache->mons = g_realloc( cache->mons, sizeof(GFileMonitor*)*(cache->n_files+1) );
     /* create required file monitors */
@@ -321,10 +329,13 @@ static gboolean delayed_reload( Cache* cache )
     if(g_source_is_destroyed(g_main_current_source()))
         return FALSE;
 
-    cache->delayed_reload_handler = 0;
     if(cache->need_reload)
         do_reload(cache);
 
+    if (cache->need_reload)
+      return TRUE;
+
+    cache->delayed_reload_handler = 0;
     return FALSE;
 }
 
@@ -385,8 +396,12 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
         g_source_remove(cache->delayed_reload_handler);
     }
     else
+    {
         /* no reload in last 3 seconds... good, do it immediately */
+        /* mark need_reload anyway. If do_reload succeeds, it is cleaned up */
+        cache->need_reload = TRUE;
         do_reload(cache);
+    }
 
     cache->delayed_reload_handler = g_timeout_add_seconds_full( G_PRIORITY_LOW, 3, (GSourceFunc)delayed_reload, cache, NULL );
 }
