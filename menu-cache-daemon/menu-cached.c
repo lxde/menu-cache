@@ -4,6 +4,7 @@
  *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
  *      Copyright 2009 Jürgen Hötzel <juergen@archlinux.org>
  *      Copyright 2012-2015 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2016 Mamoru TASAKA <mtasaka@fedoraproject.org>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -322,10 +323,11 @@ static void do_reload(Cache* cache)
 */
 
     /* notify the clients that reload is needed. */
-    for( l = cache->clients; l; l = l->next )
+    for( l = cache->clients; l; )
     {
         ClientIO *channel_io = (ClientIO *)l->data;
         GIOChannel* ch = channel_io->channel;
+        l = l->next; /* do it beforehand, as client may be removed below */
         if(write(g_io_channel_unix_get_fd(ch), buf, 37) < 37)
         {
             on_client_closed(channel_io);

@@ -1,3 +1,10 @@
+Changes in 1.0.2 since 1.0.1:
+
+* Fixed crash in menu-cached if cache regeneration fails.
+
+* Fixed 100% CPU load by menu-cached in some rare conditions.
+
+
 Changes in 1.0.1 since 1.0.0:
 
 * Fixed crash on generating menu with both tags <DefaultAppDirs/> and
