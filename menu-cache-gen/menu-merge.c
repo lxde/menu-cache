@@ -1,7 +1,7 @@
 /*
  *      menu-file.c : parses <name>.menu file and merges all XML tags.
  *
- *      Copyright 2013-2014 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2013-2016 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -1500,20 +1500,24 @@ static GList *_layout_items_copy(GList *orig)
         case MENU_CACHE_TYPE_NONE:
             item = g_slice_new(MenuMerge);
             memcpy(item, sep, sizeof(MenuMerge));
+            VVDBG("*** new menu layout: MenuMerge");
             break;
         case MENU_CACHE_TYPE_SEP:
             item = g_slice_new(MenuSep);
             memcpy(item, sep, sizeof(MenuSep));
+            VVDBG("*** new menu layout: MenuSeparator");
             break;
         case MENU_CACHE_TYPE_APP:
             item = g_slice_new(MenuFilename);
             memcpy(item, sep, sizeof(MenuFilename));
             ((MenuFilename *)item)->id = g_strdup(((MenuFilename *)sep)->id);
+            VVDBG("*** new menu layout: MenuFilename %s", ((MenuFilename *)item)->id);
             break;
         case MENU_CACHE_TYPE_DIR:
             item = g_slice_new(MenuMenuname);
             memcpy(item, sep, sizeof(MenuMenuname));
             ((MenuMenuname *)item)->name = g_strdup(((MenuMenuname *)sep)->name);
+            VVDBG("*** new menu layout: MenuMenuname %s", ((MenuMenuname *)item)->name);
         }
         copy = g_list_prepend(copy, item);
         orig = orig->next;
@@ -1557,7 +1561,13 @@ static MenuMenu *_make_menu_node(FmXmlFileItem *node, MenuLayout *def)
     }
     /* find default layout if any and subst */
     if (layout != NULL)
-        def = layout;
+    {
+        /* new DefaultLayout might be empty, ignore it then */
+        if (layout->items == NULL)
+            layout = NULL;
+        else
+            def = layout;
+    }
     /* find layout, if not found then fill from default */
     if (item != NULL)
         layout = _find_layout(item, FALSE);

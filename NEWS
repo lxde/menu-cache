@@ -4,6 +4,8 @@ Changes in 1.0.2 since 1.0.1:
 
 * Fixed 100% CPU load by menu-cached in some rare conditions.
 
+* Invalid empty <DefaultLayout> should be ignored, see specification.
+
 
 Changes in 1.0.1 since 1.0.0:
 
