@@ -442,9 +442,13 @@ replace_from_system_config_dirs:
                         g_free(file);
                         dirs++;
                     }
-                    return TRUE;
+                    if (dirs[0] != NULL) /* a file for merge was found */
+                        return TRUE;
                 }
                 /* FIXME: what to do if parsed file is not in some config dirs? */
+                VDBG("No file for <MergeFile type=\"parent\"/> found, ignoring");
+                fm_xml_file_item_destroy(item);
+                return TRUE;
             }
             break;
         }
