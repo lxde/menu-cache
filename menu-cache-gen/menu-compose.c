@@ -888,12 +888,13 @@ static gint _stage2(MenuMenu *menu, gboolean with_hidden)
                 VDBG("removing from %s as only_unallocated %s",menu->name,app->id);
                 /* it is more than in one menu */
                 menu->children = g_list_delete_link(menu->children, child);
-                child = next;
                 app->menus = g_list_remove(app->menus, menu);
-                break;
             }
-            child = next;
-            count++;
+            else if (app->hidden && !with_hidden)
+                /* should be not displayed */
+                menu->children = g_list_delete_link(menu->children, child);
+            else
+                count++;
             break;
         case MENU_CACHE_TYPE_DIR: /* MenuMenu */
             /* do recursion */
@@ -901,15 +902,14 @@ static gint _stage2(MenuMenu *menu, gboolean with_hidden)
                 count++;
             else if (!with_hidden || req_version < 2)
                 to_delete = g_list_prepend(to_delete, child);
-            child = next;
             break;
         default:
             /* separator */
             if (child == menu->children || next == NULL ||
                 (app = next->data)->type == MENU_CACHE_TYPE_SEP)
                 menu->children = g_list_delete_link(menu->children, child);
-            child = next;
         }
+        child = next;
     }
     VVDBG("stage 2: counted '%s': %d", menu->name, count);
     if (count > 0 && with_hidden)

@@ -9,6 +9,8 @@ Changes in 1.0.2 since 1.0.1:
 * Fixed crash in menu-cache-gen on <MergeFile type="parent"/> if no file
     to merge found.
 
+* Fixed showing empty Other menu in some cases.
+
 
 Changes in 1.0.1 since 1.0.0:
 
