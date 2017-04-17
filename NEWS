@@ -1,3 +1,6 @@
+* Fixed crash with invalid <Name> tag in a menu.
+
+
 Changes in 1.0.2 since 1.0.1:
 
 * Fixed crash in menu-cached if cache regeneration fails.

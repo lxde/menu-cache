@@ -1,7 +1,7 @@
 /*
  *      menu-file.c : parses <name>.menu file and merges all XML tags.
  *
- *      Copyright 2013-2016 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2013-2017 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *
  *      This file is a part of libmenu-cache package and created program
  *      should be not used without the library.
@@ -138,11 +138,13 @@ static gboolean _menu_xml_handler_Name(FmXmlFileItem *item, GList *children,
                                        guint n_attributes, gint line, gint pos,
                                        GError **error, gpointer user_data)
 {
+    FmXmlFileItem *name_item;
     const char *name;
 
     RETURN_IF_IN_LAYOUT(item, error);
-    item = fm_xml_file_item_find_child(item, FM_XML_FILE_TEXT);
-    if (item == NULL || (name = fm_xml_file_item_get_data(item, NULL)) == NULL ||
+    name_item = fm_xml_file_item_find_child(item, FM_XML_FILE_TEXT);
+    if (name_item == NULL ||
+        (name = fm_xml_file_item_get_data(name_item, NULL)) == NULL ||
         strchr(name, '/') != NULL) /* empty or invalid tag */
     {
         RETURN_TRUE_AND_DESTROY_IF_QUIET(item);
