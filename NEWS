@@ -1,5 +1,8 @@
 * Fixed crash with invalid <Name> tag in a menu.
 
+* Added new API menu_cache_app_get_generic_name() to get generic
+    name for application.
+
 
 Changes in 1.0.2 since 1.0.1:
 

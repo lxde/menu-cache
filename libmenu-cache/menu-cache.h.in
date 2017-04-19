@@ -151,6 +151,7 @@ MenuCacheItem *menu_cache_find_child_by_name(MenuCacheDir *dir, const char *name
 
 char* menu_cache_dir_make_path( MenuCacheDir* dir );
 
+const char* menu_cache_app_get_generic_name( MenuCacheApp* app );
 const char* menu_cache_app_get_exec( MenuCacheApp* app );
 const char* menu_cache_app_get_working_dir( MenuCacheApp* app );
 const char* const *menu_cache_app_get_categories(MenuCacheApp* app);

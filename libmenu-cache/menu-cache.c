@@ -1234,6 +1234,22 @@ gboolean menu_cache_dir_is_visible(MenuCacheDir *dir)
 }
 
 /**
+ * menu_cache_app_get_generic_name
+ * @app: a menu cache item
+ *
+ * Retrieves generic name for @app. Returned data are owned by menu
+ * cache and should not be freed by caller.
+ *
+ * Returns: (transfer none): app's generic name or %NULL.
+ *
+ * Since: 1.0.3
+ */
+const char* menu_cache_app_get_generic_name( MenuCacheApp* app )
+{
+	return app->generic_name;
+}
+
+/**
  * menu_cache_app_get_exec
  * @app: a menu cache item
  *
