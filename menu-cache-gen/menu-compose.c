@@ -883,7 +883,7 @@ static gint _stage2(MenuMenu *menu, gboolean with_hidden)
         next = child->next;
         switch (app->type) {
         case MENU_CACHE_TYPE_APP: /* Menu App */
-            if (menu->layout.only_unallocated && app->menus->next != NULL)
+            if (menu->layout.only_unallocated && app->menus != NULL && app->menus->next != NULL)
             {
                 VDBG("removing from %s as only_unallocated %s",menu->name,app->id);
                 /* it is more than in one menu */
