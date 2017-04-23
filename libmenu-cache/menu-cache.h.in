@@ -71,6 +71,7 @@ typedef enum
  * @SHOW_IN_KDE: show in KDE
  * @SHOW_IN_XFCE: show in XFCE
  * @SHOW_IN_ROX: show in ROX
+ * @SHOW_IN_LXQT: show in LXQT
  *
  * bitmask of desktop environments where the item should be visible.
  */
@@ -81,8 +82,9 @@ typedef enum
     SHOW_IN_KDE = 1 << 2,
     SHOW_IN_XFCE = 1 << 3,
     SHOW_IN_ROX = 1 << 4,
+    SHOW_IN_LXQT = 1 << 5,
     /*< private >*/
-    N_KNOWN_DESKTOPS = 5
+    N_KNOWN_DESKTOPS = 6
 }MenuCacheShowFlag;
 
 /**

@@ -56,6 +56,7 @@ namespace Mc {
 		IN_KDE,
 		IN_XFCE,
 		IN_ROX,
+		IN_LXQT,
 		N_KNOWN_DESKTOPS
 	}
 	[CCode (cname="MenuCacheType", cheader_filename = "menu-cache.h", cprefix = "MENU_CACHE_TYPE_", has_type_id = false)]

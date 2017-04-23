@@ -1037,7 +1037,8 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
                                                "GNOME",
                                                "KDE",
                                                "XFCE",
-                                               "ROX" };
+                                               "ROX",
+                                               "LXQT" };
     char *tmp;
     FILE *f = NULL;
     GSList *l;
@@ -1095,7 +1096,7 @@ gboolean save_menu_cache(MenuMenu *layout, const char *menuname, const char *fil
     for (l = MenuFiles; l; l = l->next)
         if (fprintf(f, "F%s\n", (const char *)l->data) < 0)
             goto failed;
-    for (l = g_slist_nth(DEs, 5); l; l = l->next)
+    for (l = g_slist_nth(DEs, N_KNOWN_DESKTOPS); l; l = l->next)
         if (fprintf(f, "%s;", (const char *)l->data) < 0)
             goto failed;
     fputc('\n', f);
