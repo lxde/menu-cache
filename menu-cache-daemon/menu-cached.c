@@ -818,12 +818,12 @@ int main(int argc, char** argv)
         g_error("can't change directory to /");
     }
 
+    /* don't hold open fd opened besides server socket and std{in,out,err} */
     open_max = sysconf (_SC_OPEN_MAX);
-    for (i = 0; i < open_max; i++)
+    for (i = 3; i < open_max; i++)
     {
-        /* don't hold open fd opened besides server socket */
         if (i != server_fd)
-            fcntl (i, F_SETFD, FD_CLOEXEC);
+            close (i);
     }
 
     /* /dev/null for stdin, stdout, stderr */
