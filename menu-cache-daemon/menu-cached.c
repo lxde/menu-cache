@@ -492,6 +492,8 @@ static int create_socket(struct sockaddr_un *addr)
         return -1;
     }
 
+    fcntl (fd, F_SETFD, FD_CLOEXEC);
+
     /* remove previous socket file */
     if (unlink(addr->sun_path) < 0) {
         if (errno != ENOENT)
@@ -737,6 +739,8 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
         DEBUG("accept error");
         return TRUE;
     }
+
+    fcntl (client, F_SETFD, FD_CLOEXEC);
 
     child = g_io_channel_unix_new(client);
     g_io_channel_set_close_on_unref( child, TRUE );
