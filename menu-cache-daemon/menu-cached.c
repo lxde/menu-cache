@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <gio/gio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
