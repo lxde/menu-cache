@@ -6,6 +6,9 @@
 * Fixed potential access violation, use runtime user dir instead of tmp dir.
     It limits libmenu-cache compatibility to menu-cached >= 0.7.0.
 
+* Directory $XDG_DATA_HOME/applications will be created if it does not
+    exist so it will be monitored in any case.
+
 
 Changes in 1.0.2 since 1.0.1:
 

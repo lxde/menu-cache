@@ -3,7 +3,7 @@
  *
  *      Copyright 2008 - 2010 PCMan <pcman.tw@gmail.com>
  *      Copyright 2009 Jürgen Hötzel <juergen@archlinux.org>
- *      Copyright 2012-2015 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
+ *      Copyright 2012-2017 Andriy Grytsenko (LStranger) <andrej@rep.kiev.ua>
  *      Copyright 2016 Mamoru TASAKA <mtasaka@fedoraproject.org>
  *
  *      This file is a part of libmenu-cache package and created program
@@ -232,6 +232,16 @@ static gboolean regenerate_cache( const char* menu_name,
     argv[6] = cache_file;
 
     /* DEBUG("cmd: %s", g_strjoinv(" ", argv)); */
+
+    /* create $XDG_DATA_HOME/applications if it does not exist yet */
+    if (g_file_test(env[5], G_FILE_TEST_IS_DIR) ||
+        g_mkdir(env[5], 0700) == 0)
+    {
+        char *local_app_path = g_build_filename(env[5], "applications", NULL);
+        if (!g_file_test(local_app_path, G_FILE_TEST_IS_DIR))
+            g_mkdir(local_app_path, 0700);
+        g_free(local_app_path);
+    }
 
     /* run menu-cache-gen */
     /* FIXME: is cast to (char**) valid here? */
