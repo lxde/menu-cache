@@ -222,6 +222,7 @@ static gboolean regenerate_cache( const char* menu_name,
     FILE* f;
     int n_files, status = 0;
     char** files;
+    const char *user_data_dir = env[5];
     const char* argv[] = {
         MENUCACHE_LIBEXECDIR "/menu-cache-gen",
         "-l", NULL,
@@ -235,10 +236,12 @@ static gboolean regenerate_cache( const char* menu_name,
     /* DEBUG("cmd: %s", g_strjoinv(" ", argv)); */
 
     /* create $XDG_DATA_HOME/applications if it does not exist yet */
-    if (g_file_test(env[5], G_FILE_TEST_IS_DIR) ||
-        g_mkdir(env[5], 0700) == 0)
+    if (!user_data_dir || !user_data_dir[0])
+        user_data_dir = g_get_user_data_dir();
+    if (g_file_test(user_data_dir, G_FILE_TEST_IS_DIR) ||
+        g_mkdir(user_data_dir, 0700) == 0)
     {
-        char *local_app_path = g_build_filename(env[5], "applications", NULL);
+        char *local_app_path = g_build_filename(user_data_dir, "applications", NULL);
         if (!g_file_test(local_app_path, G_FILE_TEST_IS_DIR))
             g_mkdir(local_app_path, 0700);
         g_free(local_app_path);
