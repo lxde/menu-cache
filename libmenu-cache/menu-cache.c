@@ -1719,6 +1719,9 @@ retry:
         G_UNLOCK(connect);
         return FALSE;
     }
+
+    fcntl (fd, F_SETFD, FD_CLOEXEC);
+
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
 

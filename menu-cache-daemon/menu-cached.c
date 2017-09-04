@@ -520,6 +520,8 @@ static int create_socket(struct sockaddr_un *addr)
         return -1;
     }
 
+    fcntl (fd, F_SETFD, FD_CLOEXEC);
+
     /* remove previous socket file */
     if (unlink(addr->sun_path) < 0) {
         if (errno != ENOENT)
@@ -766,6 +768,8 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
         return TRUE;
     }
 
+    fcntl (client, F_SETFD, FD_CLOEXEC);
+
     child = g_io_channel_unix_new(client);
     g_io_channel_set_close_on_unref( child, TRUE );
 
@@ -846,12 +850,12 @@ int main(int argc, char** argv)
         g_error("can't change directory to /");
     }
 
+    /* don't hold open fd opened besides server socket and std{in,out,err} */
     open_max = sysconf (_SC_OPEN_MAX);
-    for (i = 0; i < open_max; i++)
+    for (i = 3; i < open_max; i++)
     {
-        /* don't hold open fd opened besides server socket */
         if (i != server_fd)
-            fcntl (i, F_SETFD, FD_CLOEXEC);
+            close (i);
     }
 
     /* /dev/null for stdin, stdout, stderr */
