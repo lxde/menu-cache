@@ -390,25 +390,39 @@ void on_file_changed( GFileMonitor* mon, GFile* gf, GFile* other,
         if( G_LIKELY(idx < cache->n_files) && cache->files[idx][0] == 'D' )
         {
             char* changed_file = g_file_get_path(gf);
-            char* dir_path = cache->files[idx]+1;
-            int len = strlen(dir_path);
-            /* if the changed file is a file in the monitored dir */
-            if( strncmp(changed_file, dir_path, len) == 0 && changed_file[len] == '/' )
+            /* Regenerate the cache if the changed file is a directory.
+             *
+             * The file monitor isn't recursive, so imagine we add a
+             * subdirectory to /usr/share/applications, and subsequently
+             * add a desktop entry to that. If we ignore the new
+             * subdirectory, we won't notice when the desktop entry is
+             * added. By regenerating the cache, the subdirectory will
+             * be mentioned there, picked up by read_all_used_files(),
+             * and monitored for subsequent changes.
+             */
+            if (!g_file_test(changed_file, G_FILE_TEST_IS_DIR))
             {
-                char* base_name = changed_file + len + 1;
-                gboolean skip = TRUE;
-                /* only *.desktop and *.directory files can affect the content of the menu. */
-                if( g_str_has_suffix(base_name, ".desktop") )
+                char* dir_path = cache->files[idx]+1;
+                int len = strlen(dir_path);
+                /* if the changed file is a file in the monitored dir */
+                if( strncmp(changed_file, dir_path, len) == 0 && changed_file[len] == '/' )
                 {
+                    char* base_name = changed_file + len + 1;
+                    gboolean skip = TRUE;
+                    /* only *.desktop and *.directory files can affect the content of the menu. */
+                    if( g_str_has_suffix(base_name, ".desktop") )
+                    {
+                            skip = FALSE;
+                    }
+                    else if( g_str_has_suffix(base_name, ".directory") )
                         skip = FALSE;
-                }
-                else if( g_str_has_suffix(base_name, ".directory") )
-                    skip = FALSE;
 
-                if( skip )
-                {
-                    DEBUG("files are changed, but no re-generation is needed.");
-                    return;
+                    if( skip )
+                    {
+                        DEBUG("files are changed, but no re-generation is needed.");
+                        g_free(changed_file);
+                        return;
+                    }
                 }
             }
             g_free(changed_file);
