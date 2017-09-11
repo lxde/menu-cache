@@ -132,12 +132,12 @@ static gboolean delayed_cache_free(gpointer data)
 
 static void cache_free(Cache* cache)
 {
-    /* shutdown cache in 10 minutes of inactivity */
+    /* shutdown cache in 6 seconds of inactivity */
     if(!cache->delayed_free_handler)
-        cache->delayed_free_handler = g_timeout_add_seconds(600,
+        cache->delayed_free_handler = g_timeout_add_seconds(6,
                                                             delayed_cache_free,
                                                             cache);
-    DEBUG("menu %p cache unused, removing in 600s", cache);
+    DEBUG("menu %p cache unused, removing in 6s", cache);
 }
 
 static gboolean read_all_used_files( FILE* f, int* n_files, char*** used_files )

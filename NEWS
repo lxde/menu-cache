@@ -9,6 +9,12 @@
 * Directory $XDG_DATA_HOME/applications will be created if it does not
     exist so it will be monitored in any case.
 
+* Fixed issue when subdirectories added would be skipped in monitoring.
+
+* Fixed potential file descriptors leak.
+
+* Reduced inactivity timer to 6 seconds (from 600 seconds).
+
 
 Changes in 1.0.2 since 1.0.1:
 
