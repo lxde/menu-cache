@@ -509,18 +509,25 @@ static void get_socket_name( char* buf, int len )
     g_free(dpy);
 }
 
-static int create_socket(struct sockaddr_un *addr)
+static gboolean socket_is_alive(struct sockaddr_un *addr)
 {
-    int fd = -1;
+    int fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    socklen_t len = sizeof(sa_family_t) + strlen(addr->sun_path) + 1;
 
-    fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
     {
         DEBUG("Failed to create socket");
-        return -1;
+        /* still return TRUE to drop attempt */
+        return TRUE;
     }
-
-    fcntl (fd, F_SETFD, FD_CLOEXEC);
+    if (connect(fd, (struct sockaddr*)addr, len) >= 0)
+    {
+        /* there is a listener on the socket */
+        close(fd);
+        DEBUG("Another menu-cached seems to reside on the socket");
+        return TRUE;
+    }
+    close(fd);
 
     /* remove previous socket file */
     if (unlink(addr->sun_path) < 0) {
@@ -530,19 +537,57 @@ static int create_socket(struct sockaddr_un *addr)
     /* remove of previous socket file successful */
     else
         g_warning("removed previous socket file %s", addr->sun_path);
+    return FALSE;
+}
 
-    if(bind(fd, (struct sockaddr *)addr, sizeof(*addr)) < 0)
+static int create_socket(struct sockaddr_un *addr)
+{
+    int fd = -1;
+    char *lockfile;
+
+    lockfile = g_strconcat(addr->sun_path, ".lock", NULL);
+    fd = open(lockfile, O_CREAT | O_EXCL | O_WRONLY, 0700);
+    if (fd < 0)
+    {
+        DEBUG("Cannot create lock file %s: %s", lockfile, strerror(errno));
+        g_free(lockfile);
+        return -1;
+    }
+    close(fd);
+
+    fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        DEBUG("Failed to create socket");
+    }
+
+    /* remove previous socket file */
+    else if (g_file_test(addr->sun_path, G_FILE_TEST_EXISTS) &&
+             socket_is_alive(addr))
+    {
+        close(fd);
+        fd = -1;
+    }
+
+    else if(bind(fd, (struct sockaddr *)addr, sizeof(*addr)) < 0)
     {
         DEBUG("Failed to bind to socket");
         close(fd);
-        return -1;
+        fd = -1;
     }
-    if(listen(fd, 30) < 0)
+
+    else if(listen(fd, 30) < 0)
     {
         DEBUG( "Failed to listen to socket" );
         close(fd);
-        return -1;
+        fd = -1;
     }
+
+    else
+        fcntl(fd, F_SETFD, FD_CLOEXEC);
+
+    unlink(lockfile);
+    g_free(lockfile);
     return fd;
 }
 
