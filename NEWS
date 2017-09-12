@@ -18,6 +18,8 @@
 * Fixed an issue with multiple daemons started: test if daemon is already
     running on socket before killing old socket file.
 
+* Fixed 100% CPU load by menu-cached due to invalid dup2() call.
+
 
 Changes in 1.0.2 since 1.0.1:
 

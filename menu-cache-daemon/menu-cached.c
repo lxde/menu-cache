@@ -795,6 +795,14 @@ retry:
     return ret;
 }
 
+static void terminate(int sig)
+{
+/* #ifndef HAVE_ABSTRACT_SOCKETS */
+    unlink(socket_file);
+    exit(0);
+/* #endif */
+}
+
 static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer user_data)
 {
     int server, client;
@@ -810,7 +818,12 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     if( client == -1 )
     {
         DEBUG("accept error");
-        return TRUE;
+        if (errno == ECONNABORTED)
+            /* client failed, just continue */
+            return TRUE;
+        /* else it's socket error, terminate server */
+        terminate(SIGTERM);
+        return FALSE;
     }
 
     fcntl (client, F_SETFD, FD_CLOEXEC);
@@ -829,14 +842,6 @@ static gboolean on_new_conn_incoming(GIOChannel* ch, GIOCondition cond, gpointer
     return TRUE;
 }
 
-static void terminate(int sig)
-{
-/* #ifndef HAVE_ABSTRACT_SOCKETS */
-    unlink(socket_file);
-    exit(0);
-/* #endif */
-}
-
 static gboolean on_server_conn_close(GIOChannel* ch, GIOCondition cond, gpointer user_data)
 {
     /* FIXME: is this possible? */
@@ -851,7 +856,7 @@ int main(int argc, char** argv)
     int server_fd;
     struct sockaddr_un addr;
 #ifndef DISABLE_DAEMONIZE
-    int fd, pid;
+    pid_t pid;
 
     long open_max;
     long i;
@@ -904,19 +909,9 @@ int main(int argc, char** argv)
     }
 
     /* /dev/null for stdin, stdout, stderr */
-    fd = open ("/dev/null", O_RDONLY);
-    if (fd != -1)
-    {
-        dup2 (fd, 0);
-        close (fd);
-    }
-    fd = open ("/dev/null", O_WRONLY);
-    if (fd != -1)
-    {
-        dup2 (fd, 1);
-        dup2 (fd, 2);
-        close (fd);
-    }
+    if (freopen("/dev/null", "r", stdin)) i = i;
+    if (freopen("/dev/null", "w", stdout)) i = i;
+    if (freopen("/dev/null", "w", stderr)) i = i;
 #endif
 
     signal(SIGHUP, terminate);
