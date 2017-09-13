@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <utime.h>
+#include <sys/wait.h>
 
 #ifdef G_ENABLE_DEBUG
 #define DEBUG(...)  g_debug(__VA_ARGS__)
@@ -857,9 +858,45 @@ int main(int argc, char** argv)
     struct sockaddr_un addr;
 #ifndef DISABLE_DAEMONIZE
     pid_t pid;
+    int status;
 
     long open_max;
     long i;
+#endif
+
+#ifndef DISABLE_DAEMONIZE
+    /* Become a daemon */
+    if ((pid = fork()) < 0) {
+        g_error("can't fork");
+        return 2;
+    }
+    else if (pid != 0) {
+        /* wait for result of child */
+        while ((i = waitpid(pid, &status, 0)) < 0 && errno == EINTR);
+        if (i < 0 || !WIFEXITED(status)) /* system error or child crashed */
+            return 127;
+        /* exit parent */
+        return WEXITSTATUS(status);
+    }
+
+    /* reset session to forget about parent process completely */
+    setsid();
+
+    /* change working directory to root, so previous working directory
+     * can be unmounted */
+    if (chdir("/") < 0) {
+        g_error("can't change directory to /");
+    }
+
+    /* don't hold open fd opened besides server socket and std{in,out,err} */
+    open_max = sysconf (_SC_OPEN_MAX);
+    for (i = 3; i < open_max; i++)
+        close (i);
+
+    /* /dev/null for stdin, stdout, stderr */
+    if (freopen("/dev/null", "r", stdin)) i = i;
+    if (freopen("/dev/null", "w", stdout)) i = i;
+    if (freopen("/dev/null", "w", stderr)) i = i;
 #endif
 
     memset(&addr, 0, sizeof(addr));
@@ -882,36 +919,20 @@ int main(int argc, char** argv)
         return 1;
 
 #ifndef DISABLE_DAEMONIZE
-    /* Become a daemon */
+    /* Second fork to let parent get a result */
     if ((pid = fork()) < 0) {
         g_error("can't fork");
+        close(server_fd);
+        unlink(socket_file);
+        return 2;
+    } else if (pid != 0) {
+        /* wait for result of child */
+        if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status))
+            return 127;
+        /* exit child */
+        return 0;
     }
-    else if (pid != 0) {
-        /* exit parent */
-        exit(0);
-    }
-
-    /* reset session to forget about parent process completely */
-    setsid();
-
-    /* change working directory to root, so previous working directory
-     * can be unmounted */
-    if (chdir("/") < 0) {
-        g_error("can't change directory to /");
-    }
-
-    /* don't hold open fd opened besides server socket and std{in,out,err} */
-    open_max = sysconf (_SC_OPEN_MAX);
-    for (i = 3; i < open_max; i++)
-    {
-        if (i != server_fd)
-            close (i);
-    }
-
-    /* /dev/null for stdin, stdout, stderr */
-    if (freopen("/dev/null", "r", stdin)) i = i;
-    if (freopen("/dev/null", "w", stdout)) i = i;
-    if (freopen("/dev/null", "w", stderr)) i = i;
+    /* We are in grandchild now, daemonized */
 #endif
 
     signal(SIGHUP, terminate);
