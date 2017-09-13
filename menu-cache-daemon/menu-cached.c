@@ -926,9 +926,6 @@ int main(int argc, char** argv)
         unlink(socket_file);
         return 2;
     } else if (pid != 0) {
-        /* wait for result of child */
-        if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status))
-            return 127;
         /* exit child */
         return 0;
     }
