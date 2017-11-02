@@ -22,7 +22,7 @@ libmenu_cache_la_LIBADD = 		\
 libmenu_cache_la_LDFLAGS =			\
 	-no-undefined				\
 	-export-symbols-regex menu_cache	\
-	-version-info 4:1:1 \
+	-version-info 5:0:2 \
 	$(NULL)
 
 lib_menu_cache_includedir = $(includedir)/menu-cache
