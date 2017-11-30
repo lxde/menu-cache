@@ -379,11 +379,15 @@ static MenuCacheItem* read_item(GDataInputStream* f, MenuCache* cache,
             else /* separator */
             {
                 item->type = MENU_CACHE_TYPE_SEP;
+                g_free(line);
                 return item;
             }
         }
         else
+        {
+            g_free(line);
             return NULL;
+        }
 
         item->id = g_strndup( line + 1, len - 1 );
         g_free(line);
@@ -923,6 +927,7 @@ gboolean menu_cache_item_unref(MenuCacheItem* item)
         else
         {
             MenuCacheApp* app = MENU_CACHE_APP(item);
+            g_free(app->generic_name);
             g_free( app->exec );
             g_free(app->try_exec);
             g_free(app->working_dir);
