@@ -51,7 +51,6 @@ intltool-extract.in
 intltool-merge.in
 intltool-update.in
 src/xml-purge
-libmenu-cache/libmenu-cache-uninstalled.pc
 libmenu-cache/libmenu-cache.pc
 libmenu-cache/menu-cache.h
 menu-cache-daemon/menu-cached
