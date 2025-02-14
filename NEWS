@@ -1,3 +1,12 @@
+Changes in 1.1.1 since 1.1.0:
+
+* Fixed memory leaks.
+
+* GCC 10 compilation support.
+
+* Removed unused libmenu-cache-uninstalled.pc.in.
+
+
 Changes in 1.1.0 since 1.0.2:
 
 * Fixed crash with invalid <Name> tag in a menu.
