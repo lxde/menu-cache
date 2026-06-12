@@ -12,13 +12,14 @@ Advantages:
 
 Installing:
 
-Since version 0.7.0 the Libmenu-cache requires Libfm-extra for the
-menu-cache-gen menu cache generation binary. Since Libfm depends on
-Libmenu-cache, there is some hint for bootstrapers how to build those
-libraries together: you need create Libfm-extra first, you can easily
-do this by passing '--with-extra-only' option to configure script and
-installing Libfm-extra. Then you can succesfully build Libmenu-cache
-and therefore build full version of Libfm.
+Since version 0.7.0, libmenu-cache requires libfm-extra for the
+menu-cache-gen binary that generates the menu cache. Since libfm
+depends on libmenu-cache, there are instructions for bootstrappers
+on how to build these libraries together. First, you need to create
+libfm-extra. You can easily do this by passing the '--with-extra-only'
+option to the libfm configure script and by temporarily installing
+libfm-extra. Then, you can successfully build libmenu-cache, followed
+by building the full version of libfm.
 
 Diagnostics:
 
