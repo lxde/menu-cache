@@ -1960,7 +1960,7 @@ MenuCache* menu_cache_lookup( const char* menu_name )
  *
  * Returns: (transfer full): menu cache descriptor.
  *
- * Since: 0.3.1
+ * Since: 0.3.2
  */
 MenuCache* menu_cache_lookup_sync( const char* menu_name )
 {
